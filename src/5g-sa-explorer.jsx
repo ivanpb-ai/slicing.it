@@ -306,6 +306,11 @@ export default function FiveGSAExplorer() {
               From 5G to <span style={{ color: P.green }}>5G-Advanced</span> to <span style={{ color: P.magenta }}>6G</span>
             </h2>
             <EvoTimeline active={active === 6} />
+            <div style={{ marginTop: 28, padding: "16px 24px", background: "rgba(255,255,255,0.03)", border: `1px solid rgba(255,255,255,0.06)`, borderRadius: 12, opacity: active === 6 ? 1 : 0, transition: "opacity 0.6s ease 0.5s" }}>
+              <div style={{ fontSize: 12, color: P.muted, lineHeight: 1.7, fontStyle: "italic", textAlign: "center" }}>
+                <span style={{ color: P.dim, fontStyle: "normal", fontWeight: 600 }}>Note:</span> When a standard is ready, network suppliers need 1–3 years to implement it. Following that, mobile operators need 2–4 years to integrate the new solution in the network considering both business support systems (BSS) and operations &amp; management systems (OSS).
+              </div>
+            </div>
           </div>
         </div>
 

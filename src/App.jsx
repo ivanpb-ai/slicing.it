@@ -70,11 +70,64 @@ function SliceCard({ title, icon, qos, latency, bandwidth, color, desc, active, 
 
 function EvoTimeline({ active }) {
   const items = [
-    { year: "Rel-15/16", period: "2018–2020", label: "5G Foundation", color: P.blue, items: ["5G NR air interface", "eMBB, URLLC, mMTC defined", "NSA & SA architectures", "First network slicing specs", "V2X & Industrial IoT support"] },
-    { year: "Rel-17", period: "2021–2022", label: "5G Expansion", color: P.cyan, items: ["Non-Terrestrial Networks (NTN)", "RedCap (NR-Light) for IoT", "Enhanced positioning (<1m indoor)", "Sidelink for D2D communication", "Multi-SIM & small data optimization"] },
-    { year: "Rel-18", period: "2023–2024", label: "5G-Advanced", color: P.green, items: ["AI/ML for RAN optimization", "XR (AR/VR) support", "Enhanced MIMO & duplex", "Multicast-Broadcast Services", "Network energy saving"] },
-    { year: "Rel-19", period: "2025–2026", label: "5G-Advanced Phase 2", color: P.gold, items: ["AI/ML on air interface", "Sub-band full duplex (SBFD)", "ISAC channel modeling", "Ambient IoT (ultra-low power)", "FR3 spectrum (7-24 GHz) studies"] },
-    { year: "Rel-20/21", period: "2027–2030", label: "Bridge to 6G", color: P.magenta, items: ["First 6G study items", "6G RAN specification (Rel-21)", "Sub-THz frequencies", "Integrated sensing & communication", "AI-native network architecture"] },
+    { year: "Rel-15/16", period: "2018–2020", label: "5G Foundation", color: P.blue, items: [
+      "5G NR air interface (New Radio standard)",
+      "eMBB, URLLC, mMTC service categories defined",
+      "NSA & SA deployment architectures",
+      "First network slicing specifications",
+      "Service-Based Architecture (SBA) for 5G Core",
+      "Control/User Plane Separation (CUPS)",
+      "V2X communication for automotive (C-V2X)",
+      "Industrial IoT (IIoT) foundation — 5G-ACIA use cases",
+      "NR positioning framework (basic, >10m accuracy)",
+    ] },
+    { year: "Rel-17", period: "2021–2022", label: "5G Expansion", color: P.cyan, items: [
+      "NTN Phase 1 — first satellite access specs for NR",
+      "NTN for IoT — NB-IoT & eMTC over satellite (study)",
+      "RedCap / NR-Light — reduced capability for mid-tier IoT",
+      "Enhanced positioning (<1m indoor accuracy)",
+      "Sidelink enhancements for D2D & V2X",
+      "Multi-SIM & small data transmission optimization",
+      "MIMO enhancements for uplink coverage",
+      "Network slicing Phase 2 — improved inter-slice management",
+      "Edge computing integration (MEC) with 5G Core",
+    ] },
+    { year: "Rel-18", period: "2023–2024", label: "5G-Advanced", color: P.green, items: [
+      "AI/ML framework for RAN optimization & beam management",
+      "NTN Phase 2 — NR satellite with mobility & handover",
+      "NTN for IoT Phase 2 — NB-IoT/eMTC satellite normative specs",
+      "XR (AR/VR) traffic handling & QoS enhancements",
+      "Enhanced MIMO & sub-band non-overlapping full duplex study",
+      "Multicast-Broadcast Services (MBS) for efficient delivery",
+      "Network energy saving techniques",
+      "RedCap evolution — improved mobility & power efficiency",
+      "FRMCS — Future Railway Mobile Communication System",
+      "Sidelink relay for coverage extension",
+    ] },
+    { year: "Rel-19", period: "2025–2026", label: "5G-Adv. Phase 2", color: P.gold, items: [
+      "AI/ML on the air interface — positioning & beam management",
+      "NTN Phase 3 — enhanced satellite mobility, regenerative payloads",
+      "NTN for IoT Phase 3 — store-and-forward, improved coverage",
+      "Sub-band full duplex (SBFD) for TDD systems",
+      "ISAC channel modeling (Integrated Sensing & Communication)",
+      "FR3 spectrum studies (7–24 GHz / upper mid-band)",
+      "Ambient IoT — ultra-low-power backscatter connectivity",
+      "Low-Power Wake-Up Signal (LP-WUS) for battery life",
+      "Enhanced XR & immersive communication support",
+      "Conditional handover & L1/L2 mobility improvements",
+    ] },
+    { year: "Rel-20/21", period: "2027–2030", label: "Bridge to 6G", color: P.magenta, items: [
+      "NTN Phase 4 — full NTN/terrestrial convergence study",
+      "Direct-to-device satellite (D2D-NTN) for consumer handsets",
+      "First 6G study items (Rel-20) & 6G RAN specs (Rel-21)",
+      "ISAC normative work — sensing as a network service",
+      "Sub-THz frequency exploration for 6G",
+      "AI-native network architecture & self-optimizing RAN",
+      "Post-quantum cryptography migration",
+      "Immersive holographic communication studies",
+      "Energy efficiency as a service criteria",
+      "IMT-2030 submission to ITU-R — 6G commercial launch ~2030",
+    ] },
   ];
 
   const [expanded, setExpanded] = useState(null);
@@ -99,7 +152,7 @@ function EvoTimeline({ active }) {
           <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: items[expanded].color, letterSpacing: 2, marginBottom: 14, textTransform: "uppercase" }}>
             {items[expanded].label} — {items[expanded].period}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 24px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px 20px" }}>
             {items[expanded].items.map((item, j) => (
               <div key={j} style={{ display: "flex", gap: 8, fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.5 }}>
                 <span style={{ color: items[expanded].color, fontSize: 7, marginTop: 6, flexShrink: 0 }}>◆</span>
@@ -163,7 +216,7 @@ export default function FiveGSAExplorer() {
             <h1 style={{ fontSize: "clamp(44px, 8vw, 90px)", fontWeight: 800, fontFamily: "'Outfit', sans-serif", margin: 0, lineHeight: 0.95, background: `linear-gradient(135deg, ${P.white} 0%, ${P.cyan} 50%, ${P.blue} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: -2 }}>5G Standalone</h1>
             <p style={{ fontSize: 20, color: P.dim, marginTop: 24, lineHeight: 1.6 }}>The end-to-end 5G network that transforms connectivity<br /><span style={{ fontSize: 15, color: P.muted }}>from one-size-fits-all to purpose-built for every use case</span></p>
             <div style={{ display: "flex", justifyContent: "center", gap: 36, marginTop: 48 }}>
-              {[{ v: "1ms", l: "Latency" }, { v: "20", l: "Gbps Peak" }, { v: "1M", l: "Devices/km²" }, { v: "99.999%", l: "Reliability" }].map((item, i) => (
+              {[{ v: "<10ms", l: "Latency" }, { v: "20", l: "Gbps Peak" }, { v: "1M", l: "Devices/km²" }, { v: "99.999%", l: "Reliability" }].map((item, i) => (
                 <div key={i} style={{ textAlign: "center", animation: "fadeUp 1s ease", animationDelay: `${0.3 + i * 0.12}s`, animationFillMode: "both" }}>
                   <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 28, fontWeight: 700, color: P.cyan }}>{item.v}</div>
                   <div style={{ fontSize: 11, color: P.muted, marginTop: 4, letterSpacing: 1 }}>{item.l}</div>
@@ -306,9 +359,39 @@ export default function FiveGSAExplorer() {
               From 5G to <span style={{ color: P.green }}>5G-Advanced</span> to <span style={{ color: P.magenta }}>6G</span>
             </h2>
             <EvoTimeline active={active === 6} />
-            <div style={{ marginTop: 28, padding: "16px 24px", background: "rgba(255,255,255,0.03)", border: `1px solid rgba(255,255,255,0.06)`, borderRadius: 12, opacity: active === 6 ? 1 : 0, transition: "opacity 0.6s ease 0.5s" }}>
-              <div style={{ fontSize: 12, color: P.muted, lineHeight: 1.7, fontStyle: "italic", textAlign: "center" }}>
-                <span style={{ color: P.dim, fontStyle: "normal", fontWeight: 600 }}>Note:</span> When a standard is ready, network suppliers need 1–3 years to implement it. Following that, mobile operators need 2–4 years to integrate the new solution in the network considering both business support systems (BSS) and operations &amp; management systems (OSS).
+            <div style={{ marginTop: 24, padding: "18px 28px", background: `${P.gold}10`, border: `1px solid ${P.gold}30`, borderRadius: 12, opacity: active === 6 ? 1 : 0, transition: "opacity 0.6s ease 0.5s" }}>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.7, textAlign: "center" }}>
+                <span style={{ color: P.gold, fontWeight: 700, fontSize: 12, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1 }}>⚠ IMPLEMENTATION NOTE: </span>
+                When a standard is ready, network suppliers need <strong style={{ color: P.white }}>1–3 years</strong> to implement it. Following that, mobile operators need <strong style={{ color: P.white }}>2–4 years</strong> to integrate the new solution in the network considering both business support systems (BSS) and operations &amp; management systems (OSS).
+              </div>
+            </div>
+            <div style={{ marginTop: 16, padding: "16px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, opacity: active === 6 ? 1 : 0, transition: "opacity 0.6s ease 0.7s" }}>
+              <div style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: P.muted, letterSpacing: 1, marginBottom: 8, textTransform: "uppercase" }}>Acronym Legend</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "4px 20px", fontSize: 11, color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>
+                <span><strong style={{ color: P.dim }}>NR</strong> — New Radio</span>
+                <span><strong style={{ color: P.dim }}>NTN</strong> — Non-Terrestrial Networks</span>
+                <span><strong style={{ color: P.dim }}>eMBB</strong> — Enhanced Mobile Broadband</span>
+                <span><strong style={{ color: P.dim }}>URLLC</strong> — Ultra-Reliable Low-Latency Comm.</span>
+                <span><strong style={{ color: P.dim }}>mMTC</strong> — Massive Machine-Type Comm.</span>
+                <span><strong style={{ color: P.dim }}>MIMO</strong> — Multiple-Input Multiple-Output</span>
+                <span><strong style={{ color: P.dim }}>ISAC</strong> — Integrated Sensing &amp; Comm.</span>
+                <span><strong style={{ color: P.dim }}>SBFD</strong> — Sub-Band Full Duplex</span>
+                <span><strong style={{ color: P.dim }}>MEC</strong> — Multi-Access Edge Computing</span>
+                <span><strong style={{ color: P.dim }}>SBA</strong> — Service-Based Architecture</span>
+                <span><strong style={{ color: P.dim }}>CUPS</strong> — Control/User Plane Separation</span>
+                <span><strong style={{ color: P.dim }}>RedCap</strong> — Reduced Capability (NR-Light)</span>
+                <span><strong style={{ color: P.dim }}>V2X</strong> — Vehicle-to-Everything</span>
+                <span><strong style={{ color: P.dim }}>D2D</strong> — Device-to-Device</span>
+                <span><strong style={{ color: P.dim }}>XR</strong> — Extended Reality (AR/VR/MR)</span>
+                <span><strong style={{ color: P.dim }}>MBS</strong> — Multicast-Broadcast Services</span>
+                <span><strong style={{ color: P.dim }}>FRMCS</strong> — Future Railway Mobile Comm. Sys.</span>
+                <span><strong style={{ color: P.dim }}>LP-WUS</strong> — Low-Power Wake-Up Signal</span>
+                <span><strong style={{ color: P.dim }}>FR3</strong> — Frequency Range 3 (7–24 GHz)</span>
+                <span><strong style={{ color: P.dim }}>BSS</strong> — Business Support Systems</span>
+                <span><strong style={{ color: P.dim }}>OSS</strong> — Operations &amp; Management Systems</span>
+                <span><strong style={{ color: P.dim }}>ITU-R</strong> — Int'l Telecom Union – Radio</span>
+                <span><strong style={{ color: P.dim }}>IMT-2030</strong> — ITU framework for 6G</span>
+                <span><strong style={{ color: P.dim }}>5G-ACIA</strong> — 5G Alliance for Connected Industries</span>
               </div>
             </div>
           </div>

@@ -427,10 +427,10 @@ export default function FiveGSAExplorer() {
               Network slicing creates isolated virtual networks — each with its own SLA, security, and performance profile
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              <SliceCard active={active === 3} delay={0.2} title="Enhanced Mobile Broadband" icon="📱" qos="eMBB" latency="~10ms" bandwidth="Up to 20 Gbps" color={P.cyan} desc="High-throughput connectivity for streaming, AR/VR, cloud gaming, and mobile broadband — the consumer slice." />
-              <SliceCard active={active === 3} delay={0.3} title="Ultra-Reliable Low Latency" icon="🏭" qos="URLLC" latency="<1ms" bandwidth="Guaranteed" color={P.red} desc="Mission-critical communications for factory automation, remote surgery, autonomous vehicles, and real-time control." />
-              <SliceCard active={active === 3} delay={0.4} title="Massive Machine-Type" icon="🌐" qos="mMTC" latency="Relaxed" bandwidth="Low per device" color={P.green} desc="1 million devices per km² — smart cities, agriculture sensors, environmental monitoring, and massive IoT deployments." />
-              <SliceCard active={active === 3} delay={0.5} title="Public Safety & Defense" icon="🛡️" qos="Mission-Critical" latency="<5ms" bandwidth="Prioritized" color={P.gold} desc="Pre-emptive priority for first responders, military comms, and emergency services — always-on, never degraded." />
+              <SliceCard active={active === 5} delay={0.2} title="Enhanced Mobile Broadband" icon="📱" qos="eMBB" latency="~10ms" bandwidth="Up to 20 Gbps" color={P.cyan} desc="High-throughput connectivity for streaming, AR/VR, cloud gaming, and mobile broadband — the consumer slice." />
+              <SliceCard active={active === 5} delay={0.3} title="Ultra-Reliable Low Latency" icon="🏭" qos="URLLC" latency="<1ms" bandwidth="Guaranteed" color={P.red} desc="Mission-critical communications for factory automation, remote surgery, autonomous vehicles, and real-time control." />
+              <SliceCard active={active === 5} delay={0.4} title="Massive Machine-Type" icon="🌐" qos="mMTC" latency="Relaxed" bandwidth="Low per device" color={P.green} desc="1 million devices per km² — smart cities, agriculture sensors, environmental monitoring, and massive IoT deployments." />
+              <SliceCard active={active === 5} delay={0.5} title="Public Safety & Defense" icon="🛡️" qos="Mission-Critical" latency="<5ms" bandwidth="Prioritized" color={P.gold} desc="Pre-emptive priority for first responders, military comms, and emergency services — always-on, never degraded." />
             </div>
           </div>
         </div>
@@ -469,14 +469,14 @@ export default function FiveGSAExplorer() {
             <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 32px", opacity: active === 7 ? 1 : 0, transform: active === 7 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
               4G LTE vs <span style={{ color: P.cyan }}>5G Standalone</span>
             </h2>
-            <CompBar active={active === 5} delay={0} label="Peak Throughput" val4g={5} val5g={95} />
-            <CompBar active={active === 5} delay={0.06} label="Latency (lower = better)" val4g={70} val5g={5} color5g={P.green} />
-            <CompBar active={active === 5} delay={0.12} label="Device Density" val4g={10} val5g={90} />
-            <CompBar active={active === 5} delay={0.18} label="Network Slicing" val4g={5} val5g={95} />
-            <CompBar active={active === 5} delay={0.24} label="Edge Computing" val4g={10} val5g={85} />
-            <CompBar active={active === 5} delay={0.30} label="Positioning Accuracy" val4g={15} val5g={90} color5g={P.gold} />
-            <CompBar active={active === 5} delay={0.36} label="Reliability (Five 9s)" val4g={20} val5g={95} color5g={P.green} />
-            <CompBar active={active === 5} delay={0.42} label="API Programmability" val4g={5} val5g={85} color5g={P.magenta} />
+            <CompBar active={active === 7} delay={0} label="Peak Throughput" val4g={5} val5g={95} />
+            <CompBar active={active === 7} delay={0.06} label="Latency (lower = better)" val4g={70} val5g={5} color5g={P.green} />
+            <CompBar active={active === 7} delay={0.12} label="Device Density" val4g={10} val5g={90} />
+            <CompBar active={active === 7} delay={0.18} label="Network Slicing" val4g={5} val5g={95} />
+            <CompBar active={active === 7} delay={0.24} label="Edge Computing" val4g={10} val5g={85} />
+            <CompBar active={active === 7} delay={0.30} label="Positioning Accuracy" val4g={15} val5g={90} color5g={P.gold} />
+            <CompBar active={active === 7} delay={0.36} label="Reliability (Five 9s)" val4g={20} val5g={95} color5g={P.green} />
+            <CompBar active={active === 7} delay={0.42} label="API Programmability" val4g={5} val5g={85} color5g={P.magenta} />
           </div>
         </div>
 
@@ -487,7 +487,7 @@ export default function FiveGSAExplorer() {
             <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 32px", opacity: active === 8 ? 1 : 0, transform: active === 8 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
               From 5G to <span style={{ color: P.green }}>5G-Advanced</span> to <span style={{ color: P.magenta }}>6G</span>
             </h2>
-            <EvoTimeline active={active === 6} />
+            <EvoTimeline active={active === 8} />
             <div style={{ marginTop: 24, padding: "18px 28px", background: `${P.gold}10`, border: `1px solid ${P.gold}30`, borderRadius: 12, opacity: active === 8 ? 1 : 0, transition: "opacity 0.6s ease 0.5s" }}>
               <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.7, textAlign: "center" }}>
                 <span style={{ color: P.gold, fontWeight: 700, fontSize: 12, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1 }}>⚠ IMPLEMENTATION NOTE: </span>

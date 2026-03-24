@@ -9,17 +9,19 @@ const P = {
 };
 
 const SECTIONS = [
-  { id: "hero", label: "" },
-  { id: "gap", label: "The Leap" },
-  { id: "architecture", label: "Architecture" },
-  { id: "slicing", label: "Network Slicing" },
-  { id: "usecases", label: "Use Cases" },
-  { id: "comparison", label: "4G vs 5G SA" },
-  { id: "evolution", label: "Evolution" },
-  { id: "global", label: "Global Status" },
-  { id: "monetization", label: "Monetization" },
-  { id: "quickwins", label: "Quick Wins" },
-  { id: "future", label: "The Future" },
+  { id: "hero", label: "" },              // 0
+  { id: "gap", label: "The Leap" },       // 1
+  { id: "whymatters", label: "Why Now" },  // 2 NEW
+  { id: "architecture", label: "Architecture" }, // 3
+  { id: "nsatosa", label: "NSA → SA" },    // 4 NEW
+  { id: "slicing", label: "Network Slicing" },   // 5
+  { id: "usecases", label: "Use Cases" },         // 6
+  { id: "comparison", label: "4G vs 5G SA" },     // 7
+  { id: "evolution", label: "Evolution" },         // 8
+  { id: "global", label: "Global Status" },        // 9
+  { id: "monetization", label: "Monetization" },   // 10
+  { id: "quickwins", label: "Quick Wins" },        // 11
+  { id: "future", label: "The Future" },           // 12
 ];
 
 function NavDots({ active, onNav }) {
@@ -35,14 +37,21 @@ function NavDots({ active, onNav }) {
 
 function CompBar({ label, val4g, val5g, active, delay = 0, color5g = P.cyan }) {
   return (
-    <div style={{ marginBottom: 16, opacity: active ? 1 : 0, transform: active ? "translateX(0)" : "translateX(-20px)", transition: `all 0.5s ease ${delay}s` }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: 0.5 }}>
-        <span style={{ color: P.white }}>{label}</span>
-        <span style={{ color: P.muted }}><span style={{ color: "#888" }}>4G</span> vs <span style={{ color: color5g }}>5G SA</span></span>
+    <div style={{ marginBottom: 20, opacity: active ? 1 : 0, transform: active ? "translateX(0)" : "translateX(-20px)", transition: `all 0.5s ease ${delay}s` }}>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: P.white, marginBottom: 8, letterSpacing: 0.5 }}>{label}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#888", width: 42, textAlign: "right", flexShrink: 0 }}>4G</span>
+        <div style={{ flex: 1, height: 14, background: "rgba(255,255,255,0.04)", borderRadius: 7, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: active ? `${val4g}%` : "0%", background: "rgba(255,255,255,0.12)", borderRadius: 7, transition: `width 1s ease ${0.3 + delay}s` }} />
+        </div>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#666", width: 30, flexShrink: 0 }}>{val4g}%</span>
       </div>
-      <div style={{ position: "relative", height: 20, background: "rgba(255,255,255,0.03)", borderRadius: 10, overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: active ? `${val4g}%` : "0%", background: "rgba(255,255,255,0.08)", borderRadius: 10, transition: `width 1s ease ${0.3 + delay}s` }} />
-        <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: active ? `${val5g}%` : "0%", background: `linear-gradient(90deg, ${P.blue}, ${color5g})`, borderRadius: 10, transition: `width 1.2s cubic-bezier(0.16,1,0.3,1) ${0.3 + delay}s`, boxShadow: `0 0 12px ${P.blue}44` }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: color5g, width: 42, textAlign: "right", flexShrink: 0 }}>5G SA</span>
+        <div style={{ flex: 1, height: 14, background: "rgba(255,255,255,0.04)", borderRadius: 7, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: active ? `${val5g}%` : "0%", background: `linear-gradient(90deg, ${P.blue}, ${color5g})`, borderRadius: 7, transition: `width 1.2s cubic-bezier(0.16,1,0.3,1) ${0.3 + delay}s`, boxShadow: `0 0 10px ${P.blue}33` }} />
+        </div>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: color5g, width: 30, flexShrink: 0 }}>{val5g}%</span>
       </div>
     </div>
   );
@@ -262,11 +271,53 @@ export default function FiveGSAExplorer() {
           </div>
         </div>
 
+
+        {/* WHY 5G SA MATTERS */}
+        <div style={S}>
+          <div style={{ maxWidth: 860 }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.magenta, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 2 ? 1 : 0, transition: "opacity 0.5s" }}>Why It Matters Now</div>
+            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 24px", opacity: active === 2 ? 1 : 0, transform: active === 2 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
+              The shift from <span style={{ color: P.magenta }}>connectivity</span> to <span style={{ color: P.cyan }}>assured experiences</span>
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <div style={{ gridColumn: "1 / -1", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", gap: 12 }}>
+                {[
+                  { icon: "📉", title: "NSA is Commoditizing", desc: "5G NSA offers faster speeds but no differentiation — every operator has the same 'fast pipe'. SA enables unique value.", color: "#FF8A65" },
+                  { icon: "🛡️", title: "Resilience Drives Value", desc: "Enterprises pay for predictability and uptime, not just speed. SA's guaranteed QoS creates willingness to pay.", color: P.red },
+                  { icon: "💰", title: "New Business Models", desc: "Quality tiers, SLA-backed services, and programmable APIs unlock revenue streams impossible on NSA.", color: P.gold },
+                  { icon: "🔧", title: "Programmable Platform", desc: "5G SA is the foundation for Advanced Connectivity — where the network becomes an API-driven platform, not just infrastructure.", color: P.cyan },
+                  { icon: "🔮", title: "Path to 6G", desc: "Every 5G SA investment builds toward 6G. Without SA, operators will lack the architecture for next-generation services.", color: P.magenta },
+                ].map((item, i) => (
+                  <div key={i} style={{ background: `${item.color}08`, border: `1px solid ${item.color}18`, borderRadius: 14, padding: "18px 14px", opacity: active === 2 ? 1 : 0, transform: active === 2 ? "translateY(0)" : "translateY(16px)", transition: `all 0.5s ease ${0.2 + i * 0.08}s` }}>
+                    <div style={{ fontSize: 24, marginBottom: 8 }}>{item.icon}</div>
+                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: item.color }}>{item.title}</div>
+                    <div style={{ fontSize: 11, color: P.dim, lineHeight: 1.55 }}>{item.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ marginTop: 24, display: "flex", justifyContent: "center", gap: 4, alignItems: "center", opacity: active === 2 ? 1 : 0, transition: "opacity 0.5s ease 0.6s" }}>
+              {[
+                { year: "2020", label: "5G NSA", sub: "New Radio, New Spectrum", color: "#888" },
+                { year: "2025", label: "5G SA", sub: "Nationwide 5G Radio + Next-Gen Core", color: P.cyan },
+                { year: "2030", label: "6G", sub: "Sovereign Network", color: P.magenta },
+              ].map((era, i) => (
+                <div key={i} style={{ flex: 1, textAlign: "center" }}>
+                  <div style={{ height: 4, background: `linear-gradient(90deg, ${i === 0 ? '#444' : era.color}88, ${era.color})`, borderRadius: 2, marginBottom: 10 }} />
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 700, color: era.color }}>{era.year}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: P.white, marginTop: 4 }}>{era.label}</div>
+                  <div style={{ fontSize: 10, color: P.muted, marginTop: 2 }}>{era.sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* ARCHITECTURE */}
         <div style={S}>
           <div style={{ maxWidth: 860 }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.blue, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 2 ? 1 : 0, transition: "opacity 0.5s" }}>End-to-End Architecture</div>
-            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 32px", opacity: active === 2 ? 1 : 0, transform: active === 2 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.blue, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 3 ? 1 : 0, transition: "opacity 0.5s" }}>End-to-End Architecture</div>
+            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 32px", opacity: active === 3 ? 1 : 0, transform: active === 3 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
               Three pillars of <span style={{ color: P.cyan }}>5G SA</span>
             </h2>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
@@ -275,7 +326,7 @@ export default function FiveGSAExplorer() {
                 { title: "5G Core (5GC)", subtitle: "The Brain", color: P.blue, items: ["Service-Based Architecture (SBA)", "Cloud-native microservices", "Control/user plane separation (CUPS)", "Network function virtualization", "Standardized APIs (NEF, NWDAF)"] },
                 { title: "Edge & Transport", subtitle: "The Fabric", color: P.green, items: ["Multi-access edge computing (MEC)", "Local breakout / UPF placement", "Network slicing across all layers", "TSN integration for determinism", "AI/ML-driven orchestration"] },
               ].map((pillar, i) => (
-                <div key={i} style={{ background: `${pillar.color}08`, border: `1px solid ${pillar.color}22`, borderRadius: 16, padding: "24px 20px", opacity: active === 2 ? 1 : 0, transform: active === 2 ? "translateY(0)" : "translateY(20px)", transition: `all 0.5s ease ${0.2 + i * 0.12}s` }}>
+                <div key={i} style={{ background: `${pillar.color}08`, border: `1px solid ${pillar.color}22`, borderRadius: 16, padding: "24px 20px", opacity: active === 3 ? 1 : 0, transform: active === 3 ? "translateY(0)" : "translateY(20px)", transition: `all 0.5s ease ${0.2 + i * 0.12}s` }}>
                   <div style={{ width: 8, height: 8, borderRadius: "50%", background: pillar.color, marginBottom: 14, boxShadow: `0 0 12px ${pillar.color}88` }} />
                   <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 4 }}>{pillar.title}</div>
                   <div style={{ fontSize: 11, color: pillar.color, fontFamily: "'JetBrains Mono', monospace", marginBottom: 14, letterSpacing: 1 }}>{pillar.subtitle}</div>
@@ -290,14 +341,89 @@ export default function FiveGSAExplorer() {
           </div>
         </div>
 
+
+        {/* FROM NSA TO SA */}
+        <div style={S}>
+          <div style={{ maxWidth: 880 }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#FF8A65", letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 4 ? 1 : 0, transition: "opacity 0.5s" }}>The Transition</div>
+            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 28px", opacity: active === 4 ? 1 : 0, transform: active === 4 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
+              From 5G NSA to <span style={{ color: P.cyan }}>5G SA</span>
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 60px 1fr", gap: 0, alignItems: "start" }}>
+              {/* NSA side */}
+              <div style={{ background: "rgba(255,140,100,0.06)", border: "1px solid rgba(255,140,100,0.2)", borderRadius: 16, padding: "28px 24px", opacity: active === 4 ? 1 : 0, transform: active === 4 ? "translateX(0)" : "translateX(-30px)", transition: "all 0.6s ease 0.2s" }}>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#FF8A65", letterSpacing: 2, marginBottom: 12 }}>5G NON-STANDALONE (NSA)</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ background: "rgba(255,140,100,0.15)", borderRadius: 8, padding: "10px 14px", textAlign: "center" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#FF8A65" }}>4G CORE</div>
+                    <div style={{ fontSize: 10, color: P.muted, marginTop: 2 }}>EPC — the brain remains 4G</div>
+                  </div>
+                  <div style={{ textAlign: "center", fontSize: 20, color: P.muted }}>↕</div>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "10px 12px", textAlign: "center" }}>
+                      <div style={{ fontSize: 12, fontWeight: 600 }}>4G LTE</div>
+                      <div style={{ fontSize: 10, color: P.muted }}>Radio</div>
+                    </div>
+                    <div style={{ flex: 1, background: "rgba(255,140,100,0.1)", borderRadius: 8, padding: "10px 12px", textAlign: "center" }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#FF8A65" }}>5G NR</div>
+                      <div style={{ fontSize: 10, color: P.muted }}>Radio (new)</div>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "center", fontSize: 20, color: P.muted }}>↕</div>
+                  <div style={{ textAlign: "center", fontSize: 11, color: P.muted }}>📱 Device</div>
+                </div>
+                <div style={{ marginTop: 16, fontSize: 11, color: P.dim, lineHeight: 1.6 }}>
+                  5G radio bolted onto 4G core. Faster downloads, but control plane stays on 4G — no slicing, no true low latency, no independent 5G capabilities.
+                </div>
+              </div>
+              {/* Arrow */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", opacity: active === 4 ? 1 : 0, transition: "opacity 0.5s ease 0.4s" }}>
+                <div style={{ fontSize: 28, color: P.cyan }}>→</div>
+              </div>
+              {/* SA side */}
+              <div style={{ background: `${P.cyan}08`, border: `1px solid ${P.cyan}22`, borderRadius: 16, padding: "28px 24px", opacity: active === 4 ? 1 : 0, transform: active === 4 ? "translateX(0)" : "translateX(30px)", transition: "all 0.6s ease 0.3s" }}>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: P.cyan, letterSpacing: 2, marginBottom: 12 }}>5G STANDALONE (SA)</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "10px 12px", textAlign: "center", opacity: 0.5 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#888" }}>4G CORE</div>
+                      <div style={{ fontSize: 10, color: P.muted }}>Legacy (remains)</div>
+                    </div>
+                    <div style={{ flex: 1, background: `${P.cyan}18`, borderRadius: 8, padding: "10px 12px", textAlign: "center", boxShadow: `0 0 12px ${P.cyan}22` }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: P.cyan }}>5G CORE</div>
+                      <div style={{ fontSize: 10, color: P.dim }}>Cloud-native SBA</div>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "center", fontSize: 20, color: P.muted }}>↕</div>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "10px 12px", textAlign: "center" }}>
+                      <div style={{ fontSize: 12, fontWeight: 600 }}>4G LTE</div>
+                      <div style={{ fontSize: 10, color: P.muted }}>Radio</div>
+                    </div>
+                    <div style={{ flex: 1, background: `${P.cyan}12`, borderRadius: 8, padding: "10px 12px", textAlign: "center" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: P.cyan }}>5G NR</div>
+                      <div style={{ fontSize: 10, color: P.dim }}>Full 5G Radio</div>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "center", fontSize: 20, color: P.muted }}>↕</div>
+                  <div style={{ textAlign: "center", fontSize: 11, color: P.dim }}>📱 Device</div>
+                </div>
+                <div style={{ marginTop: 16, fontSize: 11, color: P.dim, lineHeight: 1.6 }}>
+                  End-to-end 5G with dedicated cloud-native core. Full network slicing, sub-10ms latency, edge compute, API exposure — the complete 5G SA experience.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* NETWORK SLICING */}
         <div style={S}>
           <div style={{ maxWidth: 880 }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.green, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 3 ? 1 : 0, transition: "opacity 0.5s" }}>Differentiated Connectivity</div>
-            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 12px", opacity: active === 3 ? 1 : 0, transform: active === 3 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.green, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 5 ? 1 : 0, transition: "opacity 0.5s" }}>Differentiated Connectivity</div>
+            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 12px", opacity: active === 5 ? 1 : 0, transform: active === 5 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
               One network. <span style={{ color: P.green }}>Infinite purposes.</span>
             </h2>
-            <p style={{ textAlign: "center", fontSize: 14, color: P.dim, marginBottom: 28, opacity: active === 3 ? 1 : 0, transition: "opacity 0.5s ease 0.2s" }}>
+            <p style={{ textAlign: "center", fontSize: 14, color: P.dim, marginBottom: 28, opacity: active === 5 ? 1 : 0, transition: "opacity 0.5s ease 0.2s" }}>
               Network slicing creates isolated virtual networks — each with its own SLA, security, and performance profile
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
@@ -312,20 +438,20 @@ export default function FiveGSAExplorer() {
         {/* USE CASES */}
         <div style={S}>
           <div style={{ maxWidth: 860 }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.magenta, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 4 ? 1 : 0, transition: "opacity 0.5s" }}>Real-World Impact</div>
-            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 28px", opacity: active === 4 ? 1 : 0, transform: active === 4 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.magenta, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 6 ? 1 : 0, transition: "opacity 0.5s" }}>Real-World Impact</div>
+            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 28px", opacity: active === 6 ? 1 : 0, transform: active === 6 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
               What becomes <span style={{ color: P.magenta }}>possible</span>
             </h2>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
               {[
                 { icon: "🚗", title: "Autonomous Vehicles", desc: "V2X communication with <1ms latency enables real-time coordination between vehicles, infrastructure, and pedestrians.", why: "URLLC + Edge" },
                 { icon: "⛏️", title: "Smart Mining", desc: "Remote-controlled machinery 750m underground with positioning accuracy of 1-2 meters and guaranteed connectivity.", why: "URLLC + Positioning" },
-                { icon: "🏥", title: "Remote Surgery", desc: "Haptic feedback over 5G SA enables surgeons to operate robotic instruments with zero perceptible delay.", why: "URLLC + Slicing" },
+                { icon: "🚑", title: "Prehospital Telemedicine", desc: "Hospital clinicians remotely assess and guide treatment before arrival — live 4K video from ambulances, real-time ECG/ultrasound/SpO₂ via URLLC (<10ms), dedicated slices isolating critical data from public traffic.", why: "URLLC + eMBB + Slicing" },
                 { icon: "🏭", title: "Industry 4.0", desc: "Deterministic networking (TSN over 5G) for factory automation with microsecond timing precision.", why: "URLLC + TSN" },
                 { icon: "🎮", title: "Cloud Gaming & XR", desc: "Immersive AR/VR with edge-rendered graphics streamed at 120fps — no local GPU needed.", why: "eMBB + Edge" },
                 { icon: "🛰️", title: "Satellite + Terrestrial", desc: "NTN integration provides seamless coverage from deep mines to open oceans — no dead zones.", why: "NTN + mMTC" },
               ].map((uc, i) => (
-                <div key={i} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 14, padding: "20px 16px", opacity: active === 4 ? 1 : 0, transform: active === 4 ? "translateY(0)" : "translateY(16px)", transition: `all 0.5s ease ${0.15 + i * 0.08}s` }}>
+                <div key={i} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 14, padding: "20px 16px", opacity: active === 6 ? 1 : 0, transform: active === 6 ? "translateY(0)" : "translateY(16px)", transition: `all 0.5s ease ${0.15 + i * 0.08}s` }}>
                   <div style={{ fontSize: 26, marginBottom: 10 }}>{uc.icon}</div>
                   <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>{uc.title}</div>
                   <div style={{ fontSize: 12, color: P.dim, lineHeight: 1.55, marginBottom: 10 }}>{uc.desc}</div>
@@ -339,8 +465,8 @@ export default function FiveGSAExplorer() {
         {/* COMPARISON */}
         <div style={S}>
           <div style={{ maxWidth: 750, width: "100%" }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.accent, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 5 ? 1 : 0, transition: "opacity 0.5s" }}>Head to Head</div>
-            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 32px", opacity: active === 5 ? 1 : 0, transform: active === 5 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.accent, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 7 ? 1 : 0, transition: "opacity 0.5s" }}>Head to Head</div>
+            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 32px", opacity: active === 7 ? 1 : 0, transform: active === 7 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
               4G LTE vs <span style={{ color: P.cyan }}>5G Standalone</span>
             </h2>
             <CompBar active={active === 5} delay={0} label="Peak Throughput" val4g={5} val5g={95} />
@@ -357,18 +483,18 @@ export default function FiveGSAExplorer() {
         {/* EVOLUTION */}
         <div style={S}>
           <div style={{ maxWidth: 950, width: "100%" }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.green, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 6 ? 1 : 0, transition: "opacity 0.5s" }}>Standards Evolution</div>
-            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 32px", opacity: active === 6 ? 1 : 0, transform: active === 6 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.green, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 8 ? 1 : 0, transition: "opacity 0.5s" }}>Standards Evolution</div>
+            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 32px", opacity: active === 8 ? 1 : 0, transform: active === 8 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
               From 5G to <span style={{ color: P.green }}>5G-Advanced</span> to <span style={{ color: P.magenta }}>6G</span>
             </h2>
             <EvoTimeline active={active === 6} />
-            <div style={{ marginTop: 24, padding: "18px 28px", background: `${P.gold}10`, border: `1px solid ${P.gold}30`, borderRadius: 12, opacity: active === 6 ? 1 : 0, transition: "opacity 0.6s ease 0.5s" }}>
+            <div style={{ marginTop: 24, padding: "18px 28px", background: `${P.gold}10`, border: `1px solid ${P.gold}30`, borderRadius: 12, opacity: active === 8 ? 1 : 0, transition: "opacity 0.6s ease 0.5s" }}>
               <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.7, textAlign: "center" }}>
                 <span style={{ color: P.gold, fontWeight: 700, fontSize: 12, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1 }}>⚠ IMPLEMENTATION NOTE: </span>
                 When a standard is ready, network suppliers need <strong style={{ color: P.white }}>1–3 years</strong> to implement it. Following that, mobile operators need <strong style={{ color: P.white }}>2–4 years</strong> to integrate the new solution in the network considering both business support systems (BSS) and operations &amp; management systems (OSS).
               </div>
             </div>
-            <div style={{ marginTop: 16, padding: "16px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, opacity: active === 6 ? 1 : 0, transition: "opacity 0.6s ease 0.7s" }}>
+            <div style={{ marginTop: 16, padding: "16px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, opacity: active === 8 ? 1 : 0, transition: "opacity 0.6s ease 0.7s" }}>
               <div style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: P.muted, letterSpacing: 1, marginBottom: 8, textTransform: "uppercase" }}>Acronym Legend</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "4px 20px", fontSize: 11, color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>
                 <span><strong style={{ color: P.dim }}>NR</strong> — New Radio</span>
@@ -403,11 +529,11 @@ export default function FiveGSAExplorer() {
         {/* GLOBAL STATUS */}
         <div style={S}>
           <div style={{ maxWidth: 880 }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.accent, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 7 ? 1 : 0, transition: "opacity 0.5s" }}>Global Landscape</div>
-            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 12px", opacity: active === 7 ? 1 : 0, transform: active === 7 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.accent, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 9 ? 1 : 0, transition: "opacity 0.5s" }}>Global Landscape</div>
+            <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 12px", opacity: active === 9 ? 1 : 0, transform: active === 9 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
               5G SA Deployments <span style={{ color: P.accent }}>Worldwide</span>
             </h2>
-            <p style={{ textAlign: "center", fontSize: 14, color: P.dim, marginBottom: 28, opacity: active === 7 ? 1 : 0, transition: "opacity 0.5s ease 0.2s" }}>
+            <p style={{ textAlign: "center", fontSize: 14, color: P.dim, marginBottom: 28, opacity: active === 9 ? 1 : 0, transition: "opacity 0.5s ease 0.2s" }}>
               5G NSA is commonplace and undergoing fast commoditization. SA adoption is slower but accelerating — and it's the only path to true differentiation.
             </p>
             <div style={{ display: "flex", justifyContent: "center", gap: 24, marginBottom: 28 }}>
@@ -417,7 +543,7 @@ export default function FiveGSAExplorer() {
                 { v: "~10%", l: "SA share of 5G operators", color: P.gold },
                 { v: "55%", l: "Global pop. reached by SA", color: P.green },
               ].map((s, i) => (
-                <div key={i} style={{ textAlign: "center", opacity: active === 7 ? 1 : 0, transform: active === 7 ? "translateY(0)" : "translateY(15px)", transition: `all 0.5s ease ${0.2 + i * 0.08}s` }}>
+                <div key={i} style={{ textAlign: "center", opacity: active === 9 ? 1 : 0, transform: active === 9 ? "translateY(0)" : "translateY(15px)", transition: `all 0.5s ease ${0.2 + i * 0.08}s` }}>
                   <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 28, fontWeight: 700, color: s.color }}>{s.v}</div>
                   <div style={{ fontSize: 10, color: P.muted, marginTop: 4, letterSpacing: 0.5, maxWidth: 120 }}>{s.l}</div>
                 </div>
@@ -429,7 +555,7 @@ export default function FiveGSAExplorer() {
                 { title: "Segmented Premium Services", color: P.gold, operators: "Singtel, EE UK, Elisa", examples: "Priority access during congestion, gaming/streaming optimization, premium subscription tiers" },
                 { title: "Mass Market / FWA & Broadband", color: P.green, operators: "Verizon, Elisa, EE", examples: "FWA with performance tiers, try-and-buy self-install, stability-focused broadband as fiber alternative" },
               ].map((cat, i) => (
-                <div key={i} style={{ background: `${cat.color}08`, border: `1px solid ${cat.color}22`, borderRadius: 14, padding: "20px 18px", opacity: active === 7 ? 1 : 0, transform: active === 7 ? "translateY(0)" : "translateY(16px)", transition: `all 0.5s ease ${0.3 + i * 0.1}s` }}>
+                <div key={i} style={{ background: `${cat.color}08`, border: `1px solid ${cat.color}22`, borderRadius: 14, padding: "20px 18px", opacity: active === 9 ? 1 : 0, transform: active === 9 ? "translateY(0)" : "translateY(16px)", transition: `all 0.5s ease ${0.3 + i * 0.1}s` }}>
                   <div style={{ width: 8, height: 8, borderRadius: "50%", background: cat.color, marginBottom: 12, boxShadow: `0 0 10px ${cat.color}88` }} />
                   <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: P.white }}>{cat.title}</div>
                   <div style={{ fontSize: 11, color: cat.color, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, letterSpacing: 0.5 }}>{cat.operators}</div>
@@ -437,7 +563,7 @@ export default function FiveGSAExplorer() {
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 20, textAlign: "center", fontSize: 11, color: P.muted, opacity: active === 7 ? 1 : 0, transition: "opacity 0.5s ease 0.6s" }}>
+            <div style={{ marginTop: 20, textAlign: "center", fontSize: 11, color: P.muted, opacity: active === 9 ? 1 : 0, transition: "opacity 0.5s ease 0.6s" }}>
               Early SA use cases focus on Enterprise &amp; FWA, with consumer adoption yet to scale. Momentum is building as SA drives 5G core market growth.
             </div>
           </div>
@@ -446,11 +572,11 @@ export default function FiveGSAExplorer() {
         {/* MONETIZATION */}
         <div style={S}>
           <div style={{ maxWidth: 900 }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.purple, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 8 ? 1 : 0, transition: "opacity 0.5s" }}>Telia's 5G SA Journey</div>
-            <h2 style={{ fontSize: "clamp(24px, 4vw, 38px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 12px", opacity: active === 8 ? 1 : 0, transform: active === 8 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.purple, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 10 ? 1 : 0, transition: "opacity 0.5s" }}>Telia's 5G SA Journey</div>
+            <h2 style={{ fontSize: "clamp(24px, 4vw, 38px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 12px", opacity: active === 10 ? 1 : 0, transform: active === 10 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
               From Network to <span style={{ color: P.purple }}>Business Platform</span>
             </h2>
-            <p style={{ textAlign: "center", fontSize: 13, color: P.dim, marginBottom: 24, maxWidth: 700, margin: "0 auto 24px", opacity: active === 8 ? 1 : 0, transition: "opacity 0.5s ease 0.2s", lineHeight: 1.6 }}>
+            <p style={{ textAlign: "center", fontSize: 13, color: P.dim, marginBottom: 24, maxWidth: 700, margin: "0 auto 24px", opacity: active === 10 ? 1 : 0, transition: "opacity 0.5s ease 0.2s", lineHeight: 1.6 }}>
               Telia's monetization roadmap scales 5G SA commercial value across three phases — from structured launch to full platform economics.
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 20 }}>
@@ -477,7 +603,7 @@ export default function FiveGSAExplorer() {
                   "Predictive assurance reduces SLA risk",
                 ] },
               ].map((phase, i) => (
-                <div key={i} style={{ background: `${phase.color}08`, border: `1px solid ${phase.color}22`, borderRadius: 14, padding: "20px 18px", opacity: active === 8 ? 1 : 0, transform: active === 8 ? "translateY(0)" : "translateY(16px)", transition: `all 0.5s ease ${0.2 + i * 0.12}s` }}>
+                <div key={i} style={{ background: `${phase.color}08`, border: `1px solid ${phase.color}22`, borderRadius: 14, padding: "20px 18px", opacity: active === 10 ? 1 : 0, transform: active === 10 ? "translateY(0)" : "translateY(16px)", transition: `all 0.5s ease ${0.2 + i * 0.12}s` }}>
                   <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 700, color: phase.color, marginBottom: 4 }}>{phase.year}</div>
                   <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12, color: P.white }}>{phase.title}</div>
                   {phase.items.map((item, j) => (
@@ -497,7 +623,7 @@ export default function FiveGSAExplorer() {
                 { title: "Edge & Low-Latency", desc: "Video analytics, manufacturing automation, real-time decision systems. Processing at the edge.", metric: "Solution-based pricing", color: P.gold },
                 { title: "Converged Bundles", desc: "Mobile + FWA + IoT + Security in one package. Higher contract value through bundling.", metric: "Bundle ARPU uplift", color: P.accent },
               ].map((offer, i) => (
-                <div key={i} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 10, padding: "14px 14px", opacity: active === 8 ? 1 : 0, transform: active === 8 ? "translateY(0)" : "translateY(12px)", transition: `all 0.4s ease ${0.4 + i * 0.06}s` }}>
+                <div key={i} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 10, padding: "14px 14px", opacity: active === 10 ? 1 : 0, transform: active === 10 ? "translateY(0)" : "translateY(12px)", transition: `all 0.4s ease ${0.4 + i * 0.06}s` }}>
                   <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 6, color: offer.color }}>{offer.title}</div>
                   <div style={{ fontSize: 11, color: P.dim, lineHeight: 1.5, marginBottom: 8 }}>{offer.desc}</div>
                   <div style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: P.muted }}>{offer.metric}</div>
@@ -510,11 +636,11 @@ export default function FiveGSAExplorer() {
         {/* QUICK WINS */}
         <div style={S}>
           <div style={{ maxWidth: 860 }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.green, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 9 ? 1 : 0, transition: "opacity 0.5s" }}>Near-Term Opportunities</div>
-            <h2 style={{ fontSize: "clamp(24px, 4vw, 38px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 12px", opacity: active === 9 ? 1 : 0, transform: active === 9 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: P.green, letterSpacing: 4, marginBottom: 16, textTransform: "uppercase", textAlign: "center", opacity: active === 11 ? 1 : 0, transition: "opacity 0.5s" }}>Near-Term Opportunities</div>
+            <h2 style={{ fontSize: "clamp(24px, 4vw, 38px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 12px", opacity: active === 11 ? 1 : 0, transform: active === 11 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
               Quick Wins: <span style={{ color: P.green }}>Next 1–2 Years</span>
             </h2>
-            <p style={{ textAlign: "center", fontSize: 13, color: P.dim, marginBottom: 28, maxWidth: 650, margin: "0 auto 28px", opacity: active === 9 ? 1 : 0, transition: "opacity 0.5s ease 0.2s", lineHeight: 1.6 }}>
+            <p style={{ textAlign: "center", fontSize: 13, color: P.dim, marginBottom: 28, maxWidth: 650, margin: "0 auto 28px", opacity: active === 11 ? 1 : 0, transition: "opacity 0.5s ease 0.2s", lineHeight: 1.6 }}>
               Focus where demand and willingness to pay are proven
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
@@ -523,7 +649,7 @@ export default function FiveGSAExplorer() {
                 { title: "Enterprise Private Networks", icon: "🏥", color: P.red, why: "High willingness to pay. Strategic customers. Strong differentiation vs. competitors.", action: "Focus on 2–3 verticals: Healthcare, Transport, Public Sector. Deploy vEMN with dedicated slices." },
                 { title: "FWA+ Business Connectivity", icon: "🏢", color: P.gold, why: "Strong demand in underserved locations. Faster time-to-market vs. fiber. Ideal as primary or backup.", action: "Launch business-grade performance tiers (SLA light / SLA+). Bundle with VPN, SD-WAN, security." },
               ].map((win, i) => (
-                <div key={i} style={{ background: `${win.color}08`, border: `1px solid ${win.color}22`, borderRadius: 16, padding: "24px 20px", opacity: active === 9 ? 1 : 0, transform: active === 9 ? "translateY(0)" : "translateY(20px)", transition: `all 0.5s ease ${0.2 + i * 0.12}s` }}>
+                <div key={i} style={{ background: `${win.color}08`, border: `1px solid ${win.color}22`, borderRadius: 16, padding: "24px 20px", opacity: active === 11 ? 1 : 0, transform: active === 11 ? "translateY(0)" : "translateY(20px)", transition: `all 0.5s ease ${0.2 + i * 0.12}s` }}>
                   <div style={{ fontSize: 30, marginBottom: 14 }}>{win.icon}</div>
                   <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 12, color: P.white }}>{win.title}</div>
                   <div style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: win.color, letterSpacing: 1, marginBottom: 8 }}>WHY NOW</div>
@@ -533,7 +659,7 @@ export default function FiveGSAExplorer() {
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 24, padding: "16px 24px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, opacity: active === 9 ? 1 : 0, transition: "opacity 0.5s ease 0.5s" }}>
+            <div style={{ marginTop: 24, padding: "16px 24px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, opacity: active === 11 ? 1 : 0, transition: "opacity 0.5s ease 0.5s" }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 24px", fontSize: 12, color: P.dim }}>
                 <div><span style={{ color: P.gold, fontWeight: 700 }}>⚙️ Ecosystem readiness:</span> Device support, vendor feature maturity, roaming ecosystem</div>
                 <div><span style={{ color: P.cyan, fontWeight: 700 }}>🧩 Internal readiness:</span> BSS/pricing models, product packaging, sales enablement</div>
@@ -547,15 +673,15 @@ export default function FiveGSAExplorer() {
         {/* FUTURE */}
         <div style={S}>
           <div style={{ maxWidth: 700, textAlign: "center" }}>
-            <div style={{ fontSize: "clamp(32px, 5.5vw, 56px)", fontWeight: 800, fontFamily: "'Outfit', sans-serif", lineHeight: 1.15, opacity: active === 10 ? 1 : 0, transform: active === 10 ? "translateY(0)" : "translateY(25px)", transition: "all 0.6s ease" }}>
+            <div style={{ fontSize: "clamp(32px, 5.5vw, 56px)", fontWeight: 800, fontFamily: "'Outfit', sans-serif", lineHeight: 1.15, opacity: active === 12 ? 1 : 0, transform: active === 12 ? "translateY(0)" : "translateY(25px)", transition: "all 0.6s ease" }}>
               5G SA is not just <span style={{ color: P.cyan }}>faster wireless</span>.<br />
               It's a <span style={{ background: `linear-gradient(135deg, ${P.blue}, ${P.cyan}, ${P.green})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>programmable platform</span>.
             </div>
-            <p style={{ fontSize: 16, color: P.dim, marginTop: 24, lineHeight: 1.7, opacity: active === 10 ? 1 : 0, transition: "opacity 0.6s ease 0.3s" }}>
+            <p style={{ fontSize: 16, color: P.dim, marginTop: 24, lineHeight: 1.7, opacity: active === 12 ? 1 : 0, transition: "opacity 0.6s ease 0.3s" }}>
               With cloud-native architecture, network slicing, edge compute, and AI-driven automation, 5G Standalone transforms mobile networks from dumb pipes into intelligent platforms — purpose-built for every industry, every application, every moment.
             </p>
 
-            <div style={{ marginTop: 36, opacity: active === 10 ? 1 : 0, transition: "opacity 0.6s ease 0.5s" }}>
+            <div style={{ marginTop: 36, opacity: active === 12 ? 1 : 0, transition: "opacity 0.6s ease 0.5s" }}>
               <a href="https://northstar-program.com/5g-sa-architecture-diagram" target="_blank" rel="noopener"
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 32px", background: `linear-gradient(135deg, ${P.blue}, ${P.cyan})`, color: P.white, borderRadius: 12, textDecoration: "none", fontWeight: 600, fontSize: 14, border: "none", transition: "transform 0.2s, box-shadow 0.2s" }}
                 onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 6px 24px ${P.blue}55`; }}

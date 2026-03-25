@@ -35,23 +35,20 @@ function NavDots({ active, onNav }) {
   );
 }
 
-function CompBar({ label, val4g, val5g, active, delay = 0, color5g = P.cyan }) {
+function CompRow({ label, val4g, val5g, icon, active, delay = 0, color5g = P.cyan }) {
   return (
-    <div style={{ marginBottom: 20, opacity: active ? 1 : 0, transform: active ? "translateX(0)" : "translateX(-20px)", transition: `all 0.5s ease ${delay}s` }}>
-      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: P.white, marginBottom: 8, letterSpacing: 0.5 }}>{label}</div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#888", width: 42, textAlign: "right", flexShrink: 0 }}>4G</span>
-        <div style={{ flex: 1, height: 14, background: "rgba(255,255,255,0.04)", borderRadius: 7, overflow: "hidden" }}>
-          <div style={{ height: "100%", width: active ? `${val4g}%` : "0%", background: "rgba(255,255,255,0.12)", borderRadius: 7, transition: `width 1s ease ${0.3 + delay}s` }} />
-        </div>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#666", width: 30, flexShrink: 0 }}>{val4g}%</span>
+    <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 1fr", gap: 12, alignItems: "center", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", opacity: active ? 1 : 0, transform: active ? "translateX(0)" : "translateX(-15px)", transition: `all 0.5s ease ${delay}s` }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 16 }}>{icon}</span>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: P.white }}>{label}</span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: color5g, width: 42, textAlign: "right", flexShrink: 0 }}>5G SA</span>
-        <div style={{ flex: 1, height: 14, background: "rgba(255,255,255,0.04)", borderRadius: 7, overflow: "hidden" }}>
-          <div style={{ height: "100%", width: active ? `${val5g}%` : "0%", background: `linear-gradient(90deg, ${P.blue}, ${color5g})`, borderRadius: 7, transition: `width 1.2s cubic-bezier(0.16,1,0.3,1) ${0.3 + delay}s`, boxShadow: `0 0 10px ${P.blue}33` }} />
-        </div>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: color5g, width: 30, flexShrink: 0 }}>{val5g}%</span>
+      <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "8px 14px", textAlign: "center" }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 700, color: "#888" }}>{val4g}</div>
+        <div style={{ fontSize: 9, color: P.muted, marginTop: 2 }}>4G LTE</div>
+      </div>
+      <div style={{ background: `${color5g}10`, border: `1px solid ${color5g}22`, borderRadius: 8, padding: "8px 14px", textAlign: "center" }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 700, color: color5g }}>{val5g}</div>
+        <div style={{ fontSize: 9, color: P.dim, marginTop: 2 }}>5G SA</div>
       </div>
     </div>
   );
@@ -469,14 +466,14 @@ export default function FiveGSAExplorer() {
             <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 700, fontFamily: "'Outfit', sans-serif", textAlign: "center", margin: "0 0 32px", opacity: active === 7 ? 1 : 0, transform: active === 7 ? "translateY(0)" : "translateY(20px)", transition: "all 0.5s ease" }}>
               4G LTE vs <span style={{ color: P.cyan }}>5G Standalone</span>
             </h2>
-            <CompBar active={active === 7} delay={0} label="Peak Throughput" val4g={5} val5g={95} />
-            <CompBar active={active === 7} delay={0.06} label="Latency (lower = better)" val4g={70} val5g={5} color5g={P.green} />
-            <CompBar active={active === 7} delay={0.12} label="Device Density" val4g={10} val5g={90} />
-            <CompBar active={active === 7} delay={0.18} label="Network Slicing" val4g={5} val5g={95} />
-            <CompBar active={active === 7} delay={0.24} label="Edge Computing" val4g={10} val5g={85} />
-            <CompBar active={active === 7} delay={0.30} label="Positioning Accuracy" val4g={15} val5g={90} color5g={P.gold} />
-            <CompBar active={active === 7} delay={0.36} label="Reliability (Five 9s)" val4g={20} val5g={95} color5g={P.green} />
-            <CompBar active={active === 7} delay={0.42} label="API Programmability" val4g={5} val5g={85} color5g={P.magenta} />
+            <CompRow active={active === 7} delay={0} icon="🚀" label="Peak Throughput" val4g="1 Gbps" val5g="20 Gbps" />
+            <CompRow active={active === 7} delay={0.06} icon="⏱️" label="Latency" val4g="30–50 ms" val5g="<10 ms" color5g={P.green} />
+            <CompRow active={active === 7} delay={0.12} icon="📡" label="Device Density" val4g="~100K / km²" val5g="1M / km²" />
+            <CompRow active={active === 7} delay={0.18} icon="🔀" label="Network Slicing" val4g="Not available" val5g="Full E2E slicing" />
+            <CompRow active={active === 7} delay={0.24} icon="☁️" label="Edge Compute" val4g="Limited" val5g="Native MEC" />
+            <CompRow active={active === 7} delay={0.30} icon="📍" label="Positioning" val4g="~50 m (Cell ID)" val5g="<1 m indoor" color5g={P.gold} />
+            <CompRow active={active === 7} delay={0.36} icon="🛡️" label="Reliability" val4g="99.9%" val5g="99.999%" color5g={P.green} />
+            <CompRow active={active === 7} delay={0.42} icon="🔌" label="API Exposure" val4g="None" val5g="NEF / CAMARA" color5g={P.magenta} />
           </div>
         </div>
 

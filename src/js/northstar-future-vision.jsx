@@ -165,8 +165,8 @@ const COPY = {
   // 4 — LIVE SLICING (iframe)
   slicing: {
     kicker: "Live Simulation",
-    headline: ["Network slicing in ", { t: "real time", c: P.cyan }],
-    body: "Watch slices, radio resource partitions and 5QI flows move across the network. Trigger an L4S simulation inside the Private RRP and observe graceful per-flow degradation under congestion.",
+    headline: ["Radio spectrum ", { t: "used wisely", c: P.cyan }],
+    body: "Radio resource partitions borrow unused spectrum from one another within policy min/max bounds. When a slice goes idle its floor returns to the shared pool so another can burst toward its ceiling — and the instant demand returns, the scheduler hands the capacity straight back.",
   },
 
   // 5 — AI-NATIVE NETWORKS
@@ -1235,7 +1235,7 @@ export default function NorthStarFutureVision() {
                 width: "100%", height: "100%", minHeight: 480, borderRadius: 18, overflow: "hidden",
                 border: `1px solid ${P.purple}33`, boxShadow: `0 20px 60px rgba(0,0,0,0.45), 0 0 24px ${P.purple}33`, background: P.dark,
               }}>
-                <iframe src="5g-sa-architecture-diagram.html?teaser=1" title="5G SA architecture — animated preview" style={{ width: "100%", height: "100%", border: 0, display: "block", pointerEvents: "none" }} loading="lazy" />
+                <iframe src="unified-5g-viz.html?teaser=1" title="Network slicing — animated preview" style={{ width: "100%", height: "100%", border: 0, display: "block", pointerEvents: "none" }} loading="lazy" />
               </div>
             </Reveal>
           </div>
@@ -1252,7 +1252,7 @@ export default function NorthStarFutureVision() {
                 width: "100%", height: "100%", minHeight: 480, borderRadius: 18, overflow: "hidden",
                 border: `1px solid ${P.cyan}33`, boxShadow: `0 20px 60px rgba(0,0,0,0.45), 0 0 24px ${P.cyan}33`, background: P.dark,
               }}>
-                <iframe src="unified-5g-viz.html?teaser=1" title="Network slicing — animated preview" style={{ width: "100%", height: "100%", border: 0, display: "block", pointerEvents: "none" }} loading="lazy" />
+                <iframe src="5g-sa-architecture-diagram.html?teaser=1" title="Radio spectrum — animated preview" style={{ width: "100%", height: "100%", border: 0, display: "block", pointerEvents: "none" }} loading="lazy" />
               </div>
             </Reveal>
           </div>

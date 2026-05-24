@@ -5,8 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>5G SA Architecture: RRP, S-NSSAI, 5QI & DNN Relationships</title>
     <!-- When embedded in an iframe (e.g. the vision presentation), hide "back to main page" nav so it can't recurse into the site. -->
-    <script>if(window.self!==window.top)document.documentElement.classList.add('is-embedded');</script>
-    <style>.is-embedded .back-link,.is-embedded .back-links{display:none!important}</style>
+    <script>
+        if(window.self!==window.top)document.documentElement.classList.add('is-embedded');
+        if(new URLSearchParams(location.search).has('teaser'))document.documentElement.classList.add('teaser-mode');
+    </script>
+    <style>
+        .is-embedded .back-link,.is-embedded .back-links{display:none!important}
+        /* Teaser mode: keep the page hidden until JS isolates the animated policy-envelope plots, then reveal. */
+        .teaser-mode body{visibility:hidden}
+        .teaser-mode.ready body{visibility:visible}
+    </style>
     <link rel="icon" type="image/png" href="assets/images/favicon.png">
     <style>
         /* =====================================================================
@@ -3093,6 +3101,26 @@
 
         render();
         requestAnimationFrame(tick);
+
+        // Teaser mode (?teaser): isolate the animated policy-envelope plots — hide all other page
+        // content and the envelope's own title/subhead/controls, leaving just the moving plots.
+        if (new URLSearchParams(location.search).has('teaser')) {
+            const block = document.querySelector('.policy-envelope');
+            if (block) {
+                let node = block;
+                while (node && node !== document.body && node.parentElement) {
+                    for (const sib of Array.from(node.parentElement.children)) {
+                        if (sib !== node) sib.style.display = 'none';
+                    }
+                    node = node.parentElement;
+                }
+                block.querySelectorAll('.envelope-title, .envelope-subhead, .envelope-controls')
+                    .forEach(el => el.style.display = 'none');
+                document.body.style.margin = '0';
+                document.body.style.pointerEvents = 'none';
+            }
+            document.documentElement.classList.add('ready');
+        }
     }
 
     if (document.readyState === 'loading') {

@@ -178,6 +178,7 @@
     }
 
     connectedCallback() {
+      this._minimal = this.hasAttribute('minimal');
       this.render();
       this._startMacroAnimation();
       this._startFlowAnimation();
@@ -901,6 +902,7 @@
 
       this.shadowRoot.innerHTML = `
         <style>${this.getStyles()}</style>
+        ${this._minimal ? '<style>:host{pointer-events:none;display:block}.container{padding:0!important;background:transparent!important}.container>*:not(.svg-canvas){display:none!important}.svg-canvas{width:100%!important;height:auto!important}</style>' : ''}
         <div class="container">
           <div class="header">
             <h1 class="title">Telia NorthStar: Unified 5G Network Visualization</h1>

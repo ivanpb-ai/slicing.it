@@ -157,7 +157,7 @@ const COPY = {
 
   // 3 — INSIDE THE CORE (iframe)
   core: {
-    kicker: "Architecture · Interactive",
+    kicker: "Architecture · Preview",
     headline: ["Inside the ", { t: "5G SA Core", c: P.purple }],
     body: "Slices, RRPs, 5QIs, DNNs — the programmable fabric beneath every future use case. Explore the relationships that turn one network into many purpose-built ones.",
   },
@@ -1235,7 +1235,7 @@ export default function NorthStarFutureVision() {
                 width: "100%", height: "100%", minHeight: 480, borderRadius: 18, overflow: "hidden",
                 border: `1px solid ${P.purple}33`, boxShadow: `0 20px 60px rgba(0,0,0,0.45), 0 0 24px ${P.purple}33`, background: P.dark,
               }}>
-                <iframe src="5g-sa-architecture-diagram.html" title="5G SA architecture diagram" style={{ width: "100%", height: "100%", border: 0, display: "block" }} loading="lazy" />
+                <iframe src="5g-sa-architecture-diagram.html?teaser=1" title="5G SA architecture — animated preview" style={{ width: "100%", height: "100%", border: 0, display: "block", pointerEvents: "none" }} loading="lazy" />
               </div>
             </Reveal>
           </div>
@@ -1252,7 +1252,7 @@ export default function NorthStarFutureVision() {
                 width: "100%", height: "100%", minHeight: 480, borderRadius: 18, overflow: "hidden",
                 border: `1px solid ${P.cyan}33`, boxShadow: `0 20px 60px rgba(0,0,0,0.45), 0 0 24px ${P.cyan}33`, background: P.dark,
               }}>
-                <iframe src="unified-5g-viz.html" title="Unified 5G slicing and L4S visualization" style={{ width: "100%", height: "100%", border: 0, display: "block" }} loading="lazy" />
+                <iframe src="unified-5g-viz.html?teaser=1" title="Network slicing — animated preview" style={{ width: "100%", height: "100%", border: 0, display: "block", pointerEvents: "none" }} loading="lazy" />
               </div>
             </Reveal>
           </div>

@@ -158,7 +158,7 @@ const COPY = {
   // 3 — INSIDE THE CORE (iframe)
   core: {
     kicker: "Architecture · Preview",
-    headline: ["Inside the ", { t: "5G SA Core", c: P.purple }],
+    headline: ["Inside the ", { t: "5G SA Core", c: P.gold }],
     body: "Slices, RRPs, 5QIs, DNNs — the programmable fabric beneath every future use case. Explore the relationships that turn one network into many purpose-built ones.",
   },
 
@@ -316,7 +316,7 @@ const COPY = {
   // 11 — ROADMAP
   roadmap: {
     kicker: "NorthStar Roadmap · 2025–2029",
-    headline: ["Where Sweden builds the ", { t: "future, first", c: P.purple }],
+    headline: ["Where Sweden builds the ", { t: "future, first", c: P.cyan }],
     cats: [
       { id: "qos",      label: "QoS & Slicing",    icon: "⚙️" },
       { id: "apis",     label: "Network APIs",     icon: "🔌" },
@@ -1227,7 +1227,7 @@ export default function NorthStarFutureVision() {
         {/* ════════════ 3. INSIDE THE CORE — iframe ════════════ */}
         <div style={S}>
           <div style={{ maxWidth: 1280, width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-            <Reveal active={active === 3}><Kicker color={P.purple} mb={8}>{COPY.core.kicker}</Kicker></Reveal>
+            <Reveal active={active === 3}><Kicker color={P.gold} mb={8}>{COPY.core.kicker}</Kicker></Reveal>
             <Reveal active={active === 3} delay={0.08}><Heading parts={COPY.core.headline} size="clamp(24px, 4vw, 42px)" mb={14} /></Reveal>
             <Reveal active={active === 3} delay={0.16}><Lede size={13} mb={16} max={760}>{COPY.core.body}</Lede></Reveal>
             <Reveal active={active === 3} delay={0.24} style={{ flex: 1, minHeight: 0 }}>
@@ -1415,7 +1415,7 @@ export default function NorthStarFutureVision() {
         {/* ════════════ 11. ROADMAP ════════════ */}
         <div style={S}>
           <div style={{ maxWidth: 1080, width: "100%" }}>
-            <Reveal active={active === 11}><Kicker color={P.purple}>{COPY.roadmap.kicker}</Kicker></Reveal>
+            <Reveal active={active === 11}><Kicker color={P.cyan}>{COPY.roadmap.kicker}</Kicker></Reveal>
             <Reveal active={active === 11} delay={0.08}><Heading parts={COPY.roadmap.headline} size="clamp(26px, 5vw, 50px)" mb={22} /></Reveal>
             <RoadmapView active={active === 11} />
           </div>

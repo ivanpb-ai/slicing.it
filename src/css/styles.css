@@ -1,0 +1,1241 @@
+/* =============================================================================
+   Telia brand — NorthStar shared stylesheet (replaces the original styles.css)
+
+   Applies the Telia Company Brand Hub guidelines across all pages that load
+   this file: index.html, northstar-roadmap-explorer.html, network-slice.html.
+
+   Key guideline mappings:
+     • Primary palette: Deep Purple #29003E, Core Purple #990AE3 (ACCENT ONLY —
+       never as body text or plain background, except primary buttons),
+       Light Purple #F4E0FF
+     • Tone-on-tone treatment: Light Purple text on Deep Purple bg
+     • Headings in Deep Purple on light bg, Light Purple on dark bg
+     • Telia Sans typography (Heading used sparingly, Bold, Medium, Regular)
+     • Sentence case, left-aligned, leading 100% for headlines, 120% for body
+     • Info palette Teal #00827C permitted in charts/data
+     • Red #E4175C reserved for sale stickers (not used here)
+     • All off-brand colors (#660066, #880088, #990099, #667eea, #764ba2, etc.)
+       replaced with Telia equivalents
+     • Arial replaced with Telia Sans + system fallbacks
+     • The old background-image has been replaced with a Telia tone-on-tone
+       surface. If you want to keep the photo, reintroduce it behind a
+       semi-transparent Deep Purple overlay — see the `.bg-photo` override
+       comment near `body` below.
+   ============================================================================= */
+
+
+/* -----------------------------------------------------------------------------
+   1. TELIA SANS @font-face
+   Place the font files from the "Telia Sans Complete Family.zip" download
+   (Typography brand hub page) into assets/fonts/ and rename as below, or
+   update the src paths.
+----------------------------------------------------------------------------- */
+@font-face {
+  font-family: "Telia Sans Heading";
+  src: url("../assets/fonts/TeliaSansHeading-Heading.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Telia Sans";
+  src: url("../assets/fonts/TeliaSans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Telia Sans";
+  src: url("../assets/fonts/TeliaSans-RegularItalic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Telia Sans";
+  src: url("../assets/fonts/TeliaSans-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Telia Sans";
+  src: url("../assets/fonts/TeliaSans-MediumItalic.woff2") format("woff2");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Telia Sans";
+  src: url("../assets/fonts/TeliaSans-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Telia Sans";
+  src: url("../assets/fonts/TeliaSans-BoldItalic.woff2") format("woff2");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+
+/* -----------------------------------------------------------------------------
+   2. DESIGN TOKENS (exact HEX from "Color values" in the Colors PDF)
+----------------------------------------------------------------------------- */
+:root {
+  /* Primary */
+  --telia-deep-purple:  #29003E;
+  --telia-core-purple:  #990AE3;
+  --telia-light-purple: #F4E0FF;
+
+  /* Secondary (beige) palette — DEFINED BUT NOT USED on this site.
+     The Colors PDF restricts the secondary palette to own channels only
+     (telia.xx, in-store, reports). northstar-program.com is treated as
+     external communication, so none of the three beige tokens are consumed
+     by any rule below. They're kept here for reference only. */
+  --telia-deep-beige:   #5C524E;
+  --telia-beige:        #ECDED4;
+  --telia-light-beige:  #F8EEE8;
+
+  /* Information */
+  --telia-teal:         #00827C;
+  --telia-red:          #E4175C;          /* sale-sticker only — unused here */
+
+  /* Functional */
+  --telia-off-black:    #121214;
+  --telia-light-gray:   #F4F4F9;
+  --telia-white:        #FFFFFF;
+
+  /* Derived working surface (Deep Purple lifted ~12% for cards on dark) */
+  --telia-deep-purple-2: #3D1556;
+
+  /* Semantic aliases */
+  --bg-page:        var(--telia-deep-purple);
+  --bg-surface:     var(--telia-deep-purple-2);
+  --bg-surface-alt: var(--telia-light-purple);
+  --text-body:      var(--telia-light-purple);
+  --text-heading:   var(--telia-light-purple);
+  --text-on-light:  var(--telia-deep-purple);
+  --text-body-light:var(--telia-off-black);
+  --accent:         var(--telia-core-purple);
+  --accent-hover:   var(--telia-deep-purple);
+  --border-subtle:  rgba(244, 224, 255, 0.14);
+  --border-strong:  rgba(244, 224, 255, 0.28);
+
+  /* Type families */
+  --ff-heading: "Telia Sans Heading", "Telia Sans", system-ui, -apple-system,
+                "Segoe UI", Roboto, sans-serif;
+  --ff-body:    "Telia Sans", system-ui, -apple-system, "Segoe UI", Roboto,
+                sans-serif;
+
+  /* Leading — Typography PDF p.9:
+     100% (set solid) for large headlines, ~120% for body copy */
+  --lh-heading: 1;
+  --lh-body:    1.2;
+}
+
+
+/* -----------------------------------------------------------------------------
+   3. GLOBAL BASE
+----------------------------------------------------------------------------- */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--ff-body);
+  font-weight: 400;
+  font-size: 17px;
+  line-height: var(--lh-body);
+  color: var(--text-body);
+
+  /* Primary tone-on-tone: Deep Purple background, Light Purple foreground.
+     The original "../assets/images/0.jpg" photo background was replaced to
+     comply with the brand guide (Colors PDF p.13): "we strive for a light,
+     fresh expression where our purple colors can be included in a measured
+     way". If you want to restore the photo behind the content, uncomment the
+     `.bg-photo` rules below instead of removing this. */
+  background-color: var(--bg-page);
+  background-image: none;
+  background-attachment: fixed;
+
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Optional: re-enable the original photo as a subtle background by adding
+   class="bg-photo" to <body> and uncommenting the rules below.
+body.bg-photo {
+  background-image:
+    linear-gradient(rgba(41, 0, 62, 0.88), rgba(41, 0, 62, 0.92)),
+    url('../assets/images/0.jpg');
+  background-size: cover;
+  background-position: center center;
+}
+*/
+
+/* Let text fill the available width inside its container.
+   (The containers themselves are already max-width: 1200px.) */
+
+
+/* -----------------------------------------------------------------------------
+   4. HEADINGS
+   Typography PDF pp. 3-6 and 9:
+     • h1 = Heading weight (300), one per viewport, short word count, leading 100%
+     • h2-h6 = Bold (700), leading ~1.15
+     • Sentence case — never ALL CAPS
+   Colors PDF p.12: Deep Purple headings on white/light bg; Light Purple on
+   dark bg (we default to dark here since body is Deep Purple).
+----------------------------------------------------------------------------- */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-heading);
+  text-transform: none;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+h1 {
+  font-family: var(--ff-heading);
+  font-weight: 300;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  line-height: var(--lh-heading);
+  letter-spacing: -0.01em;
+  margin: 0 0 0.35em;
+  max-width: none;
+}
+@media (max-width: 600px) {
+  h1 {
+    font-size: 2rem;
+  }
+}
+
+h2 {
+  font-family: var(--ff-body);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 2.6vw, 2.125rem);
+  line-height: 1.15;
+  margin: 1.25em 0 0.5em;
+}
+
+h3 {
+  font-family: var(--ff-body);
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  margin: 1.2em 0 0.4em;
+}
+
+h4, h5, h6 {
+  font-family: var(--ff-body);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.25;
+  margin: 1em 0 0.4em;
+}
+
+/* Medium weight (500) for inline emphasis — Typography PDF p.6 */
+strong, b {
+  font-weight: 500;
+}
+
+em, i {
+  font-style: italic;
+  font-weight: 400;
+}
+
+
+/* -----------------------------------------------------------------------------
+   5. LINKS
+   Core Purple is permitted as an interactive/UI accent. On dark tone-on-tone
+   backgrounds we use Light Purple with a Core Purple underline for clarity.
+----------------------------------------------------------------------------- */
+a {
+  color: var(--telia-light-purple);
+  text-decoration: underline;
+  text-decoration-color: var(--telia-core-purple);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.2em;
+  transition: color .15s ease, text-decoration-color .15s ease;
+}
+a:hover,
+a:focus-visible {
+  color: var(--telia-white);
+  text-decoration-color: var(--telia-white);
+}
+a:focus-visible {
+  outline: 2px solid var(--telia-core-purple);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+
+/* -----------------------------------------------------------------------------
+   6. CONTAINERS
+   Keep the original layout (max-width, padding, margin) but swap the bluish
+   purple `rgba(147,112,219,…)` for a true Telia tone-on-tone surface.
+----------------------------------------------------------------------------- */
+.container {
+  max-width: 1200px;
+  margin: 32px auto;
+  padding: 32px 28px;
+  border-radius: 12px;
+  color: var(--text-body);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.25);
+  overflow-x: auto;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 18px 16px;
+    margin: 10px;
+    border-radius: 10px;
+  }
+}
+
+
+/* -----------------------------------------------------------------------------
+   7. LOGOS / IMAGE CONTAINERS
+----------------------------------------------------------------------------- */
+.image-container1,
+.image-container2 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 16px 0;
+}
+
+.image-container1 img.logo,
+.image-container2 img.logo {
+  height: 150px;
+  object-fit: contain;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+}
+
+.image-container1 img.Eric  { flex: 1 1 0; }
+.image-container1 img.Telia { flex: 4 1 0; }
+
+.image-container2 img.fiveG { flex: 1 1 0; max-width: 150px; }
+.image-container2 img.EU    { flex: 1 0 0; max-width: 150px; }
+
+
+/* -----------------------------------------------------------------------------
+   8. OVERVIEW / INTRO CARDS
+   Previously used rgba(186,125,248,…) — an off-brand lilac. Replaced with a
+   Light Purple tone-on-tone card, which reads Deep Purple text cleanly.
+----------------------------------------------------------------------------- */
+.overview {
+  background-color: var(--bg-surface-alt);
+  color: var(--text-on-light);
+  padding: 32px 28px;
+  text-align: left;                /* left-aligned per Typography p.7 */
+  border-radius: 12px;
+  margin-bottom: 30px;
+}
+.overview h1,
+.overview h2,
+.overview h3 {
+  color: var(--text-on-light);
+}
+.overview a {
+  color: var(--telia-core-purple);
+  text-decoration-color: var(--telia-core-purple);
+}
+.overview a:hover {
+  color: var(--telia-deep-purple);
+}
+
+/* Intro description — previously h2-styled body text; now proper Regular copy
+   per Typography PDF p.5 ("We use Telia Sans Regular for body copy"). */
+.intro-description {
+  font-family: var(--ff-body);
+  font-size: 1.0625rem;
+  font-weight: 400;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  color: var(--text-on-light);
+}
+
+
+/* -----------------------------------------------------------------------------
+   9. CLICKABLE QUESTIONS TABLE
+   Was lilac rgba(207,159,255,…) with #660066 link text. Now a Light Purple
+   tone-on-tone surface with Deep Purple question links.
+----------------------------------------------------------------------------- */
+.clickable-questions-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: var(--telia-light-purple);
+  margin-top: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.clickable-questions-table th,
+.clickable-questions-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(41, 0, 62, 0.12);
+  text-align: left;
+  font-family: var(--ff-body);
+  font-size: 16px;
+  color: var(--text-on-light);
+}
+
+.clickable-questions-table th {
+  background: var(--telia-deep-purple);
+  color: var(--telia-light-purple);
+  font-weight: 700;
+  border-bottom: none;
+}
+
+.clickable-questions-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Responsive font sizing — kept from original */
+@media (min-width: 768px)  { .clickable-questions-table th, .clickable-questions-table td { font-size: 17px; } }
+@media (min-width: 1024px) { .clickable-questions-table th, .clickable-questions-table td { font-size: 18px; } }
+@media (min-width: 1440px) { .clickable-questions-table th, .clickable-questions-table td { font-size: 19px; } }
+@media (min-width: 1920px) { .clickable-questions-table th, .clickable-questions-table td { font-size: 20px; } }
+
+.predefined-question {
+  color: var(--telia-core-purple);
+  text-decoration: none;
+  transition: color .2s ease;
+  font-weight: 500;                /* Medium — subtle emphasis */
+}
+.predefined-question:hover {
+  color: var(--telia-deep-purple);
+  text-decoration: underline;
+  text-decoration-color: var(--telia-core-purple);
+}
+
+.clickable-question-row {
+  cursor: pointer;
+  background-color: transparent;
+  transition: background-color .2s ease;
+}
+.clickable-question-row:hover {
+  background-color: rgba(153, 10, 227, 0.08);
+}
+
+
+/* -----------------------------------------------------------------------------
+   10. FIND-OUT-MORE SECTION
+----------------------------------------------------------------------------- */
+.find-out-more-section {
+  background-color: var(--bg-surface);
+  color: var(--text-body);
+  padding: 40px 32px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  margin: 40px auto;
+  max-width: 1200px;
+}
+.find-out-more-section h2 {
+  color: var(--text-heading);
+  margin-top: 0;
+}
+
+@media (max-width: 600px) {
+  .find-out-more-section { padding: 24px 18px; margin: 18px 10px; }
+}
+
+
+/* -----------------------------------------------------------------------------
+   11. SEARCH SECTION
+   Was lilac rgba(147,112,219,…). Now a Light Purple surface with a Core
+   Purple primary button (the one place Core Purple is explicitly permitted
+   as a background — Colors PDF p.6: "primary buttons in UI").
+----------------------------------------------------------------------------- */
+.search-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 30px;
+  padding: 24px;
+  border-radius: 12px;
+  background-color: var(--bg-surface-alt);
+  color: var(--text-on-light);
+}
+
+.search-box {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+}
+
+.search-box h2 {
+  margin-top: 0;
+  color: var(--text-on-light);
+}
+
+.search-box input {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 14px 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--telia-deep-purple);
+  font-family: var(--ff-body);
+  font-size: 16px;
+  color: var(--telia-deep-purple);
+  background: var(--telia-white);
+}
+.search-box input::placeholder {
+  color: rgba(41, 0, 62, 0.55);
+}
+.search-box input:focus {
+  outline: 2px solid var(--telia-core-purple);
+  outline-offset: 2px;
+}
+
+.search-box button {
+  min-width: 100px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  border: 0;
+  background-color: var(--telia-core-purple);
+  color: var(--telia-white);
+  cursor: pointer;
+  font-family: var(--ff-body);
+  font-size: 16px;
+  font-weight: 500;             /* Medium */
+  transition: background-color .15s ease, transform .15s ease;
+}
+.search-box button:hover {
+  background-color: var(--telia-deep-purple);
+  color: var(--telia-light-purple);
+  transform: translateY(-1px);
+}
+.search-box button:focus-visible {
+  outline: 3px solid var(--telia-deep-purple);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .search-section { padding: 16px; }
+  .search-box { flex-direction: column; }
+  .search-box button { width: 100%; }
+}
+
+
+/* -----------------------------------------------------------------------------
+   12. GENERIC TABLES (streamed answers, API tables, result tables)
+----------------------------------------------------------------------------- */
+.api-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-bottom: 24px;
+  min-width: 600px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(41, 0, 62, 0.12);
+}
+
+.api-table th,
+.api-table td {
+  border-bottom: 1px solid rgba(41, 0, 62, 0.1);
+  padding: 12px 16px;
+  text-align: left;
+  font-family: var(--ff-body);
+}
+.api-table th {
+  background-color: var(--telia-light-purple);
+  color: var(--telia-deep-purple);
+  font-size: 1.05em;
+  font-weight: 700;
+}
+.api-table tr:last-child td { border-bottom: none; }
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  margin: 1em 0;
+  background: var(--telia-white);
+  border: 1px solid rgba(41, 0, 62, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+  color: var(--telia-off-black);
+  font-family: var(--ff-body);
+}
+table th,
+table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(41, 0, 62, 0.1);
+}
+table th {
+  background: var(--telia-light-purple);
+  color: var(--telia-deep-purple);
+  font-weight: 700;
+}
+table tr:nth-child(even) {
+  background: rgba(244, 224, 255, 0.35);    /* subtle Light Purple tint */
+}
+table tr:hover {
+  background: rgba(0, 130, 124, 0.08);       /* Teal-tinted hover */
+}
+table tr:last-child td { border-bottom: none; }
+
+
+/* -----------------------------------------------------------------------------
+   13. CODE
+   Telia has no mono typeface. Per the brand (Typography PDF), body font is
+   Telia Sans Regular; we use tabular numerals to keep code values aligned.
+----------------------------------------------------------------------------- */
+pre {
+  background: var(--telia-light-gray);
+  padding: 1em;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1em 0;
+  font-family: var(--ff-body);
+  font-feature-settings: "tnum" 1;
+  color: var(--telia-off-black);
+  border: 1px solid rgba(41, 0, 62, 0.08);
+}
+code {
+  font-family: var(--ff-body);
+  font-feature-settings: "tnum" 1;
+  background: rgba(244, 224, 255, 0.18);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.95em;
+  color: var(--telia-light-purple);
+}
+pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+
+/* -----------------------------------------------------------------------------
+   14. CITATIONS
+----------------------------------------------------------------------------- */
+#result sup a,
+.citation-url {
+  color: var(--telia-core-purple);
+  text-decoration: none;
+  font-size: 0.8em;
+  vertical-align: super;
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  vertical-align: middle;
+}
+#result sup a:hover,
+.citation-url:hover {
+  text-decoration: underline;
+  color: var(--telia-deep-purple);
+}
+
+cite {
+  font-style: italic;
+  color: var(--telia-core-purple);
+}
+
+.citations {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(41, 0, 62, 0.15);
+}
+.citations h3  { margin-bottom: 10px; color: var(--telia-deep-purple); }
+.citations ol  { padding-left: 20px; }
+.citations li  {
+  margin-bottom: 8px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+.citations a {
+  color: var(--telia-core-purple);
+  text-decoration: none;
+  display: inline-block;
+  max-width: 100%;
+  word-break: break-all;
+}
+.citations a:hover {
+  text-decoration: underline;
+  color: var(--telia-deep-purple);
+}
+
+.local-citation {
+  display: inline-block;
+  font-size: 0.8em;
+  color: var(--telia-core-purple);
+  cursor: help;
+  margin: 0 2px;
+  opacity: 0.75;
+  transition: opacity .2s;
+}
+.local-citation:hover { opacity: 1; }
+
+
+/* -----------------------------------------------------------------------------
+   15. NESTED HEADER HELPERS
+----------------------------------------------------------------------------- */
+.header-level-2 {
+  margin-left: 20px;
+  font-size: 1.5em;
+  color: var(--telia-deep-purple);
+  font-family: var(--ff-body);
+  font-weight: 700;
+}
+.header-level-3 {
+  margin-left: 40px;
+  font-size: 1.3em;
+  color: var(--telia-deep-purple);
+  font-family: var(--ff-body);
+  font-weight: 700;
+}
+
+
+/* -----------------------------------------------------------------------------
+   16. LISTS
+----------------------------------------------------------------------------- */
+ul li, ol li { margin-bottom: 0.5em; }
+
+ul {
+  margin-left: 24px;
+  padding-left: 20px;
+  list-style-type: disc;
+  margin-bottom: 1em;
+}
+
+ul ul, ul.nested-list {
+  margin-left: 24px;
+  padding-left: 20px;
+  list-style-type: circle;
+  margin-bottom: 0.5em;
+  margin-top: 0.5em;
+}
+
+ul.nested-list.level-1 { list-style-type: circle; }
+ul.nested-list.level-2 { list-style-type: square; margin-left: 25px; }
+ul.nested-list.level-3 { list-style-type: disc; margin-left: 20px; font-size: 0.95em; }
+
+ul li p {
+  margin-top: 8px;
+  margin-bottom: 0.5em;
+  margin-left: 20px;
+  color: inherit;
+}
+
+ol {
+  list-style-type: decimal;
+  padding-left: 2.5em;
+  margin-left: 24px;
+  margin-bottom: 1em;
+}
+
+.inline-bullet {
+  margin-right: 1em;
+  font-weight: 500;
+  color: inherit;
+  display: inline-block;
+}
+
+
+/* -----------------------------------------------------------------------------
+   17. RELATED QUESTIONS
+----------------------------------------------------------------------------- */
+.related-questions {
+  margin-top: 20px;
+  border-top: 1px solid rgba(41, 0, 62, 0.15);
+  padding-top: 15px;
+}
+.related-questions ul {
+  margin-left: 20px;
+  list-style-type: disc;
+}
+.related-questions li { margin-bottom: 5px; }
+.related-questions a.related-question {
+  color: var(--telia-core-purple);
+  text-decoration: none;
+  font-weight: 500;
+}
+.related-questions a.related-question:hover {
+  text-decoration: underline;
+  color: var(--telia-deep-purple);
+}
+
+
+/* -----------------------------------------------------------------------------
+   18. SUMMARY SECTION
+   Was rgba(168,3,168,0.6) — an off-brand magenta. Replaced with tone-on-tone
+   Light Purple card so the "Generate a summary" controls sit on a neutral
+   brand surface.
+----------------------------------------------------------------------------- */
+/* Summary section now lives inside .slice-viz-cta-section */
+.slice-viz-cta-section #summary-content {
+  background: var(--telia-white);
+  color: var(--telia-deep-purple);
+}
+
+
+/* -----------------------------------------------------------------------------
+   19. IMAGE CONTAINER (query results)
+----------------------------------------------------------------------------- */
+#image-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap;
+  padding: 10px 0;
+}
+#image-container img {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin: 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  display: block;
+  max-width: 100%;
+  border: 1px solid var(--border-subtle);
+}
+
+
+/* -----------------------------------------------------------------------------
+   20. LOADING SPINNER / CIRCULAR COUNTDOWN
+----------------------------------------------------------------------------- */
+.loading-animation {
+  width: 30px;
+  height: 30px;
+  border: 4px solid rgba(244, 224, 255, 0.25);
+  border-top-color: var(--telia-core-purple);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: auto;
+}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.base-timer {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+}
+.base-timer__svg        { transform: scaleX(-1); }
+.base-timer__circle     { fill: none; stroke: none; }
+.base-timer__path-elapsed {
+  stroke-width: 7px;
+  stroke: rgba(244, 224, 255, 0.25);
+}
+.base-timer__path-remaining {
+  stroke-width: 7px;
+  stroke-linecap: round;
+  transform: rotate(90deg);
+  transform-origin: center;
+  transition: 1s linear all;
+  stroke: var(--telia-core-purple);
+}
+.base-timer__label {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  top: 0; left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ff-heading);
+  font-size: 2em;
+  font-weight: 300;
+  color: var(--telia-light-purple);
+}
+
+
+/* -----------------------------------------------------------------------------
+   21. SUMMARY BUTTONS
+   Core Purple primary buttons — the single place Core Purple is allowed as
+   a background (Colors PDF p.6).
+----------------------------------------------------------------------------- */
+#summary-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+#summary-buttons button {
+  padding: 12px 22px;
+  background-color: var(--telia-core-purple);
+  color: var(--telia-white);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: var(--ff-body);
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color .15s ease, transform .15s ease;
+}
+#summary-buttons button:hover {
+  background-color: var(--telia-deep-purple);
+  color: var(--telia-light-purple);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(41, 0, 62, 0.35);
+}
+#summary-buttons button:focus-visible {
+  outline: 3px solid var(--telia-deep-purple);
+  outline-offset: 3px;
+}
+
+
+/* -----------------------------------------------------------------------------
+   22. RESULT & SUMMARY-CONTENT PANELS
+   Was a light lilac gradient (#FAF7FF -> #F2EDFF). Now a solid Light Purple
+   surface with Deep Purple text, following tone-on-tone primary palette.
+----------------------------------------------------------------------------- */
+#result,
+#summary-content {
+  min-height: 100px;
+  padding: 20px 24px;
+  background: var(--telia-light-purple);
+  border: 1px solid rgba(41, 0, 62, 0.08);
+  border-radius: 12px;
+  margin-top: 15px;
+  font-family: var(--ff-body);
+  line-height: 1.5;
+  color: var(--telia-deep-purple);
+  overflow-x: auto;
+  font-size: 16px;
+}
+@media (min-width: 768px)  { #result, #summary-content { font-size: 17px; } .streaming-result { font-size: 17px; } }
+@media (min-width: 1024px) { #result, #summary-content { font-size: 18px; } .streaming-result { font-size: 18px; } }
+@media (min-width: 1440px) { #result, #summary-content { font-size: 19px; } .streaming-result { font-size: 19px; } }
+@media (min-width: 1920px) { #result, #summary-content { font-size: 20px; } .streaming-result { font-size: 20px; } }
+
+#error {
+  color: var(--telia-red);            /* Red used here as an error signal.
+                                         Not a sale sticker, but this is a
+                                         functional error state in-product,
+                                         which is an acceptable secondary
+                                         information use. */
+  margin: 10px 0;
+  font-weight: 500;
+  font-family: var(--ff-body);
+}
+
+
+/* -----------------------------------------------------------------------------
+   23. STREAMING CONTENT
+----------------------------------------------------------------------------- */
+.streaming-result {
+  min-height: 50px;
+  padding: 20px 24px;
+  background: var(--telia-light-purple);
+  border: 1px solid rgba(41, 0, 62, 0.08);
+  border-radius: 12px;
+  margin-top: 10px;
+  line-height: 1.5;
+  color: var(--telia-deep-purple);
+  font-family: var(--ff-body);
+  overflow-x: auto;
+  font-size: 16px;
+  animation: fadeIn .3s ease-in;
+}
+@keyframes fadeIn { from { opacity: 0.7; } to { opacity: 1; } }
+
+.streaming-result h1,
+.streaming-result h2,
+.streaming-result h3,
+.streaming-result h4,
+.streaming-result h5,
+.streaming-result h6,
+#result h1, #result h2, #result h3, #result h4, #result h5, #result h6,
+#summary-content h1, #summary-content h2, #summary-content h3,
+#summary-content h4, #summary-content h5, #summary-content h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: var(--telia-deep-purple);
+  font-family: var(--ff-body);
+  font-weight: 700;
+  text-transform: none;
+}
+/* First h1 inside streamed content uses the Heading weight sparingly */
+#result h1,
+#summary-content h1,
+.streaming-result h1 {
+  font-family: var(--ff-heading);
+  font-weight: 300;
+  font-size: 2em;
+  line-height: 1;
+}
+.streaming-result h2, #result h2, #summary-content h2 { font-size: 1.6em; }
+.streaming-result h3, #result h3, #summary-content h3 { font-size: 1.35em; }
+.streaming-result h4, #result h4, #summary-content h4 { font-size: 1.2em; }
+.streaming-result h5, #result h5, #summary-content h5 { font-size: 1.1em; }
+.streaming-result h6, #result h6, #summary-content h6 { font-size: 1.0em; }
+
+.streaming-result p {
+  margin-bottom: 1em;
+  text-align: left;                   /* left-aligned, never justified */
+}
+.streaming-result strong {
+  font-weight: 500;                   /* Medium for inline emphasis */
+  color: var(--telia-deep-purple);
+}
+.streaming-result em {
+  font-style: italic;
+  color: var(--telia-deep-purple);
+}
+.streaming-result code {
+  background-color: rgba(41, 0, 62, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--ff-body);
+  font-feature-settings: "tnum" 1;
+  font-size: 0.95em;
+  color: var(--telia-deep-purple);
+}
+.streaming-result br { line-height: 1.8; }
+
+/* Cursor effect for streaming */
+.streaming-result::after {
+  content: '▋';
+  color: var(--telia-core-purple);
+  animation: blink 1s infinite;
+  margin-left: 2px;
+}
+@keyframes blink { 0%,50% { opacity: 1; } 51%,100% { opacity: 0; } }
+
+.streaming-result .bullet-point,
+.streaming-result .numbered-point {
+  margin: 0.5em 0;
+  padding-left: 1em;
+  color: var(--telia-deep-purple);
+}
+.streaming-result .numbered-point { font-weight: 500; }
+
+
+/* -----------------------------------------------------------------------------
+   24. STREAMING TABLES
+----------------------------------------------------------------------------- */
+.streaming-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1em 0;
+  background: var(--telia-white);
+  border: 1px solid rgba(41, 0, 62, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.streaming-table th,
+.streaming-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(41, 0, 62, 0.1);
+  font-size: 0.9em;
+  font-family: var(--ff-body);
+  color: var(--telia-off-black);
+}
+.streaming-table th {
+  background: var(--telia-light-purple);
+  font-weight: 700;
+  color: var(--telia-deep-purple);
+}
+.streaming-table tr:nth-child(even) { background: rgba(244, 224, 255, 0.35); }
+.streaming-table tr:hover           { background: rgba(0, 130, 124, 0.08); }
+.streaming-table tr:last-child td   { border-bottom: none; }
+
+.streaming-content {
+  font-family: var(--ff-body);
+  background: var(--telia-light-purple);
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 3px solid var(--telia-core-purple);
+  margin: 1em 0;
+  white-space: pre-wrap;
+  font-size: 0.95em;
+  color: var(--telia-deep-purple);
+  font-style: italic;
+}
+
+
+/* -----------------------------------------------------------------------------
+   25. STANDALONE TABLE HEADERS / DATA ROWS
+----------------------------------------------------------------------------- */
+.table-header-row {
+  display: flex;
+  background: var(--telia-light-purple);
+  border: 1px solid rgba(41, 0, 62, 0.12);
+  border-radius: 8px;
+  margin: 1em 0;
+  overflow: hidden;
+}
+.table-header-cell {
+  flex: 1;
+  padding: 10px 14px;
+  font-weight: 700;
+  color: var(--telia-deep-purple);
+  border-right: 1px solid rgba(41, 0, 62, 0.1);
+  text-align: center;
+  background: var(--telia-light-purple);
+  font-family: var(--ff-body);
+}
+.table-header-cell:last-child { border-right: none; }
+.table-header-cell:hover { background: rgba(153, 10, 227, 0.08); }
+
+.table-data-row {
+  display: flex;
+  flex-direction: row;
+  background: var(--telia-white);
+  border: 1px solid rgba(41, 0, 62, 0.12);
+  border-radius: 8px;
+  margin: 1em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.table-data-cell {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px 15px;
+  border-right: 1px solid rgba(41, 0, 62, 0.1);
+  color: var(--telia-off-black);
+  line-height: 1.5;
+  font-family: var(--ff-body);
+}
+.table-data-cell:last-child  { border-right: none; }
+.table-data-cell:first-child {
+  background: var(--telia-light-purple);
+  color: var(--telia-deep-purple);
+  font-weight: 500;
+}
+
+
+/* -----------------------------------------------------------------------------
+   26. ENGINEER INFO BOXES
+   Was a blue `#f0f4ff -> #e8f0ff` gradient with magenta accent. Now a Teal-
+   accented Light Purple card — Teal is the brand's approved information
+   color (Colors PDF p.9: "The Teal can be paired with the purples to convey
+   information within charts"). Light Purple surface, not Beige: the
+   secondary palette isn't used on this site because northstar-program.com
+   is external communication (Colors PDF p.3).
+----------------------------------------------------------------------------- */
+.engineer-info {
+  background: var(--telia-light-purple);
+  border-left: 4px solid var(--telia-teal);
+  border-radius: 8px;
+  padding: 18px 22px;
+  margin: 18px 0;
+  box-shadow: 0 2px 10px rgba(41, 0, 62, 0.08);
+  font-size: 0.95em;
+  line-height: 1.5;
+  color: var(--telia-deep-purple);
+  font-family: var(--ff-body);
+}
+.engineer-info::before {
+  content: '🔧 ';
+  font-size: 1.1em;
+  margin-right: 4px;
+}
+@media (max-width: 600px) {
+  .engineer-info { padding: 14px 16px; margin: 12px 0; font-size: 0.9em; }
+}
+
+
+/* -----------------------------------------------------------------------------
+   27. EMAIL CTA
+----------------------------------------------------------------------------- */
+.overview .email-cta,
+.email-cta {
+  display: inline-block;
+  padding: 14px 28px;
+  background-color: var(--telia-core-purple);
+  color: var(--telia-white);
+  text-decoration: none;
+  border-radius: 999px;
+  font-family: var(--ff-body);
+  font-size: 1rem;
+  font-weight: 500;                   /* Medium */
+  transition: background-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.overview .email-cta:hover,
+.email-cta:hover {
+  background-color: var(--telia-deep-purple);
+  color: var(--telia-light-purple);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(41, 0, 62, 0.35);
+  text-decoration: none;
+}
+.email-cta:focus-visible {
+  outline: 3px solid var(--telia-deep-purple);
+  outline-offset: 3px;
+}
+
+
+/* -----------------------------------------------------------------------------
+   28. ENTRANCE ANIMATIONS
+----------------------------------------------------------------------------- */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-in                  { animation: slideUp .6s ease-out both; }
+.animate-in:nth-child(1)     { animation-delay: .1s; }
+.animate-in:nth-child(2)     { animation-delay: .2s; }
+.animate-in:nth-child(3)     { animation-delay: .3s; }
+
+
+/* -----------------------------------------------------------------------------
+   29. SMALL-SCREEN OVERRIDES (inherited from the original file, re-themed)
+----------------------------------------------------------------------------- */
+@media (max-width: 600px) {
+  .overview            { padding: 22px 18px; margin-bottom: 18px; }
+  #result, #summary-content { padding: 14px 16px; font-size: 0.95em; }
+  .streaming-result    { padding: 14px 16px; font-size: 0.95em; }
+
+  .clickable-questions-table th,
+  .clickable-questions-table td { padding: 10px 12px; font-size: 0.95em; }
+
+  .api-table th, .api-table td  { padding: 10px 12px; font-size: 0.9em; }
+  table th, table td            { padding: 10px 12px; font-size: 0.9em; }
+  .streaming-table th,
+  .streaming-table td           { padding: 8px 10px; font-size: 0.9em; }
+
+  /* Scroll hint that appears at the left edge of overflowing tables */
+  .api-table, table, .streaming-table { position: relative; }
+  #result table::after,
+  #summary-content table::after,
+  .streaming-result table::after,
+  .api-table::after,
+  .streaming-table::after {
+    content: '→';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(to left, transparent, rgba(244, 224, 255, 0.95) 30%);
+    padding: 10px 30px 10px 15px;
+    color: var(--telia-core-purple);
+    font-size: 1.4em;
+    font-weight: 500;
+    pointer-events: none;
+    opacity: 0.85;
+    animation: scrollHint 2s ease-in-out infinite;
+  }
+  @keyframes scrollHint {
+    0%, 100% { transform: translateY(-50%) translateX(0); }
+    50%      { transform: translateY(-50%) translateX(-5px); }
+  }
+}

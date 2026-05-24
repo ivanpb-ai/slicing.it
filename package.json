@@ -1,0 +1,27 @@
+{
+  "type": "module",
+  "name": "5g-sa-next-decade",
+  "version": "1.0.0",
+  "description": "A future-facing 5G Standalone vision presentation with interactive network slicing and architecture simulations.",
+  "browserslist": "defaults",
+  "scripts": {
+    "start": "parcel src/index.html",
+    "dev": "parcel src/index.html",
+    "build": "parcel build src/index.html --no-cache --public-url ./"
+  },
+  "keywords": [
+    "5G",
+    "5G SA",
+    "5G Standalone",
+    "network-slicing",
+    "presentation"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "parcel": "^2.16.3"
+  }
+}

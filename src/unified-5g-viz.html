@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NorthStar 5G - Network Visualizations</title>
+  <link rel="icon" type="image/png" href="assets/images/favicon.png">
+  <link rel="stylesheet" href="./css/styles.css">
+  <style>
+    @font-face {
+      font-family: "Telia Sans Heading";
+      src: url("assets/fonts/TeliaSansHeading-Heading.woff2") format("woff2");
+      font-weight: 300; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: "Telia Sans";
+      src: url("assets/fonts/TeliaSans-Regular.woff2") format("woff2");
+      font-weight: 400; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: "Telia Sans";
+      src: url("assets/fonts/TeliaSans-Bold.woff2") format("woff2");
+      font-weight: 700; font-style: normal; font-display: swap;
+    }
+    body { margin: 0; padding: 0; min-height: 100vh; }
+    .page-header {
+      text-align: center; padding: 24px 20px 8px;
+      background: rgba(41,0,62,0.92); border-radius: 12px;
+      max-width: 1200px; margin: 0 auto;
+    }
+    .page-header h1 {
+      color: #F4E0FF;
+      font-family: "Telia Sans Heading", "Telia Sans", system-ui, sans-serif;
+      font-weight: 300;
+      font-size: clamp(18px, 2.4vw, 28px);
+      white-space: nowrap;
+      margin: 0 0 6px;
+    }
+    .page-header p {
+      color: rgba(244,224,255,0.75);
+      font-family: "Telia Sans", system-ui, sans-serif;
+      font-size: 14px; margin: 0;
+    }
+    .viz-section {
+      margin: 20px auto;
+      max-width: 1200px;
+      padding: 16px 20px;
+      background: rgba(41,0,62,0.92);
+      border-radius: 12px;
+    }
+    .viz-section h2 {
+      text-align: center; color: #F4E0FF; margin-bottom: 8px; font-size: 18px;
+      font-family: "Telia Sans", system-ui, sans-serif; font-weight: 700;
+    }
+    .viz-section .viz-desc {
+      text-align: center; color: rgba(244,224,255,0.75);
+      font-family: "Telia Sans", system-ui, sans-serif;
+      font-size: 13px; margin-bottom: 16px;
+    }
+    unified-5g-viz { display: block; border-radius: 12px; overflow: hidden; }
+    .back-link { margin: 20px 0; padding: 20px 20px 20px 24px; }
+    .back-link a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #F4E0FF;
+      text-decoration: underline;
+      text-decoration-color: #990AE3;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 4px;
+      font-family: "Telia Sans", system-ui, sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      background: none;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      transition: color .15s ease, text-decoration-color .15s ease;
+    }
+    .back-link a:hover { color: #FFFFFF; text-decoration-color: #FFFFFF; background: none; transform: none; }
+  </style>
+</head>
+<body>
+  <div class="back-link">
+    <a href="index.html">&larr; Back to NorthStar main page</a>
+  </div>
+
+  <div class="page-header">
+    <h1>NorthStar 5G Network Visualization</h1>
+    <p>Unified 5G slicing &amp; spectrum management with integrated L4S congestion control</p>
+  </div>
+
+  <section class="viz-section">
+    <h2>5G Slicing, RRPs, 5QIs &amp; L4S Congestion Control</h2>
+    <p class="viz-desc">
+      Both layers of congestion defense in a single view: <strong>Spectrum borrowing</strong> redistributes capacity across RRPs,
+      while <strong>L4S</strong> inside the Private RRP ensures graceful per-flow degradation. Toggle uplink/downlink direction and start the L4S simulation below.
+    </p>
+    <unified-5g-viz></unified-5g-viz>
+  </section>
+
+  <div class="back-link">
+    <a href="index.html">&larr; Back to NorthStar main page</a>
+  </div>
+
+  <script src="./js/unified-5g-viz-webcomponent.js"></script>
+</body>
+</html>

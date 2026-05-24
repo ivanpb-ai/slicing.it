@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5G QoS Identifier (5QI) Reference Table</title>
+    <link rel="icon" type="image/png" href="assets/images/favicon.png">
+    <style>
+        /* =========================================================================
+           Telia brand — 5QI Reference Table
+           Applies Telia Company Brand Hub guidelines:
+             * Primary palette: Deep Purple #29003E, Core Purple #990AE3 (accent),
+               Light Purple #F4E0FF
+             * Tone-on-tone dark: Light Purple text on Deep Purple background
+             * Headings: Telia Sans Heading, sentence case, leading 100%
+             * Body: Telia Sans Regular, leading 120%
+           ========================================================================= */
+
+        @font-face {
+          font-family: "Telia Sans Heading";
+          src: url("assets/fonts/TeliaSansHeading-Heading.woff2") format("woff2");
+          font-weight: 300; font-style: normal; font-display: swap;
+        }
+        @font-face {
+          font-family: "Telia Sans";
+          src: url("assets/fonts/TeliaSans-Regular.woff2") format("woff2");
+          font-weight: 400; font-style: normal; font-display: swap;
+        }
+        @font-face {
+          font-family: "Telia Sans";
+          src: url("assets/fonts/TeliaSans-Medium.woff2") format("woff2");
+          font-weight: 500; font-style: normal; font-display: swap;
+        }
+        @font-face {
+          font-family: "Telia Sans";
+          src: url("assets/fonts/TeliaSans-Bold.woff2") format("woff2");
+          font-weight: 700; font-style: normal; font-display: swap;
+        }
+
+        :root {
+            --deep-purple:   #29003E;
+            --core-purple:   #990AE3;
+            --light-purple:  #F4E0FF;
+            --teal:          #00827C;
+            --off-black:     #121214;
+            --white:         #FFFFFF;
+            --text-muted:    rgba(244,224,255,0.7);
+            --border-subtle: rgba(244,224,255,0.12);
+            --amber:         #D4952B;
+
+            --ff-heading: "Telia Sans Heading", "Telia Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            --ff-body:    "Telia Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--ff-body);
+            font-weight: 400;
+            font-size: 17px;
+            line-height: 1.2;
+            background: var(--deep-purple);
+            color: var(--light-purple);
+            min-height: 100vh;
+            padding: 40px 20px;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        .container { max-width: 1600px; margin: 0 auto; }
+
+        /* Back links — standard Telia underline style */
+        .back-links {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--light-purple);
+            text-decoration: underline;
+            text-decoration-color: var(--core-purple);
+            text-decoration-thickness: 2px;
+            text-underline-offset: 4px;
+            font-family: var(--ff-body);
+            font-size: 15px;
+            font-weight: 500;
+            transition: color .15s ease, text-decoration-color .15s ease;
+        }
+        .back-link:hover {
+            color: var(--white);
+            text-decoration-color: var(--white);
+        }
+
+        header {
+            text-align: left;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-family: var(--ff-heading);
+            font-weight: 300;
+            font-size: clamp(2rem, 4.5vw, 3.5rem);
+            line-height: 1;
+            letter-spacing: -0.01em;
+            color: var(--light-purple);
+            margin-bottom: 12px;
+            text-transform: none;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-family: var(--ff-body);
+            font-size: 1.1rem;
+            font-weight: 400;
+            line-height: 1.45;
+        }
+
+        /* Intro section */
+        .intro-section {
+            background: rgba(244,224,255,0.06);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .intro-section h2 {
+            font-family: var(--ff-body);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--light-purple);
+        }
+
+        .intro-section p {
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .intro-section p strong {
+            color: var(--light-purple);
+        }
+
+        .legend-badges {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1.5px solid;
+        }
+
+        .badge-gbr {
+            background: rgba(153,10,227,0.15);
+            border-color: var(--core-purple);
+            color: var(--light-purple);
+        }
+
+        .badge-nongbr {
+            background: rgba(0,130,124,0.2);
+            border-color: var(--teal);
+            color: var(--light-purple);
+        }
+
+        .badge-delay {
+            background: rgba(212,149,43,0.2);
+            border-color: var(--amber);
+            color: var(--light-purple);
+        }
+
+        /* Table sections */
+        .table-wrapper {
+            background: rgba(244,224,255,0.06);
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+            margin-bottom: 40px;
+        }
+
+        .table-header {
+            background: rgba(153,10,227,0.12);
+            padding: 20px 24px;
+            border-bottom: 2px solid var(--core-purple);
+        }
+
+        .table-header h2 {
+            font-family: var(--ff-body);
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--light-purple);
+        }
+
+        .table-container { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        thead {
+            background: rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 700;
+            color: var(--light-purple);
+            border-bottom: 2px solid var(--border-subtle);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        th.col-5qi { width: 80px; text-align: center; }
+        th.col-type { width: 100px; }
+        th.col-priority { width: 90px; text-align: center; }
+        th.col-delay { width: 100px; text-align: center; }
+        th.col-error { width: 100px; text-align: center; }
+        th.col-services { width: auto; }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border-subtle);
+            transition: background .2s ease;
+        }
+
+        tbody tr:hover { background: rgba(244,224,255,0.04); }
+
+        td { padding: 16px 12px; vertical-align: top; }
+
+        /* 5QI number badges */
+        .qi-badge {
+            display: inline-block;
+            font-family: var(--ff-body);
+            font-weight: 700;
+            font-size: 1rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .qi-gbr {
+            background: var(--core-purple);
+            color: var(--white);
+        }
+
+        .qi-nongbr {
+            background: var(--teal);
+            color: var(--white);
+        }
+
+        .qi-delay {
+            background: var(--amber);
+            color: var(--deep-purple);
+        }
+
+        /* Type labels */
+        .type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+
+        .type-gbr {
+            background: rgba(153,10,227,0.2);
+            border: 1px solid var(--core-purple);
+            color: var(--light-purple);
+        }
+
+        .type-nongbr {
+            background: rgba(0,130,124,0.2);
+            border: 1px solid var(--teal);
+            color: var(--light-purple);
+        }
+
+        .type-delay {
+            background: rgba(212,149,43,0.2);
+            border: 1px solid var(--amber);
+            color: var(--light-purple);
+        }
+
+        /* Data values */
+        .priority-value {
+            font-family: var(--ff-body);
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: var(--light-purple);
+            text-align: center;
+            display: block;
+        }
+
+        .delay-value {
+            font-family: var(--ff-body);
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: var(--amber);
+            text-align: center;
+            display: block;
+        }
+
+        .error-value {
+            font-family: var(--ff-body);
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: var(--teal);
+            text-align: center;
+            display: block;
+            font-size: 0.75rem;
+        }
+
+        .services-list {
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .services-list strong { color: var(--light-purple); }
+
+        .note {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-top: 4px;
+        }
+
+        .section-divider {
+            background: linear-gradient(90deg, transparent, var(--core-purple), transparent);
+            height: 2px;
+            margin: 0;
+        }
+
+        .section-label {
+            background: var(--core-purple);
+            color: var(--white);
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .spec-ref {
+            color: var(--teal);
+            font-family: var(--ff-body);
+            font-weight: 500;
+            font-size: 0.75rem;
+        }
+
+        @media (max-width: 1024px) {
+            table { font-size: 0.75rem; }
+            th, td { padding: 10px 8px; }
+        }
+
+        @media (max-width: 700px) {
+            body { padding: 24px 16px; }
+            .back-links { gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="back-links">
+            <a href="index.html" class="back-link">&larr; Back to NorthStar main page</a>
+            <a href="5g-sa-architecture-diagram.html" class="back-link">&larr; Back to architecture diagram</a>
+        </nav>
+
+        <header>
+            <h1>5G QoS Identifier (5QI) reference table</h1>
+            <p class="subtitle">Comprehensive list of standardized 5QI values with QoS characteristics</p>
+        </header>
+
+        <div class="intro-section">
+            <h2>What is 5QI?</h2>
+            <p>The <strong>5G QoS Identifier (5QI)</strong> is a scalar value used in 5G networks to identify specific QoS (Quality of Service) forwarding behaviors. Each 5QI value maps to a set of QoS characteristics including resource type, priority level, packet delay budget, and packet error rate.</p>
+            <p>5QI values 1-127 are <strong>standardized by 3GPP</strong>, while values 128-254 are operator-specific. Value 255 is reserved.</p>
+
+            <div class="legend-badges">
+                <div class="legend-badge badge-gbr">
+                    <strong>GBR:</strong> Guaranteed Bit Rate (dedicated resources)
+                </div>
+                <div class="legend-badge badge-nongbr">
+                    <strong>Non-GBR:</strong> Best effort, shared resources
+                </div>
+                <div class="legend-badge badge-delay">
+                    <strong>Delay Critical GBR:</strong> Ultra-low latency guaranteed
+                </div>
+            </div>
+        </div>
+
+        <!-- GBR (Guaranteed Bit Rate) -->
+        <div class="table-wrapper">
+            <div class="table-header">
+                <h2>GBR - Guaranteed Bit Rate</h2>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-5qi">5QI</th>
+                            <th class="col-type">Resource Type</th>
+                            <th class="col-priority">Priority</th>
+                            <th class="col-delay">Packet Delay Budget</th>
+                            <th class="col-error">Packet Error Rate</th>
+                            <th class="col-services">Example Services</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="qi-badge qi-gbr">1</span></td>
+                            <td><span class="type-badge type-gbr">GBR</span></td>
+                            <td><span class="priority-value">20</span></td>
+                            <td><span class="delay-value">100 ms</span></td>
+                            <td><span class="error-value">10<sup>-2</sup></span></td>
+                            <td class="services-list"><strong>Conversational Voice</strong> - VoNR (Voice over New Radio), VoIP</td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-gbr">2</span></td>
+                            <td><span class="type-badge type-gbr">GBR</span></td>
+                            <td><span class="priority-value">40</span></td>
+                            <td><span class="delay-value">150 ms</span></td>
+                            <td><span class="error-value">10<sup>-3</sup></span></td>
+                            <td class="services-list"><strong>Conversational Video</strong> - Live streaming, video calls</td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-gbr">3</span></td>
+                            <td><span class="type-badge type-gbr">GBR</span></td>
+                            <td><span class="priority-value">30</span></td>
+                            <td><span class="delay-value">50 ms</span></td>
+                            <td><span class="error-value">10<sup>-3</sup></span></td>
+                            <td class="services-list"><strong>Real-time Gaming</strong> - Cloud gaming, interactive applications</td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-gbr">4</span></td>
+                            <td><span class="type-badge type-gbr">GBR</span></td>
+                            <td><span class="priority-value">50</span></td>
+                            <td><span class="delay-value">300 ms</span></td>
+                            <td><span class="error-value">10<sup>-6</sup></span></td>
+                            <td class="services-list"><strong>Non-conversational Video</strong> - Buffered streaming, live TV</td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-gbr">65</span></td>
+                            <td><span class="type-badge type-gbr">GBR</span></td>
+                            <td><span class="priority-value">7</span></td>
+                            <td><span class="delay-value">75 ms</span></td>
+                            <td><span class="error-value">10<sup>-2</sup></span></td>
+                            <td class="services-list"><strong>Mission Critical User Plane Push To Talk</strong> - Emergency services voice</td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-gbr">66</span></td>
+                            <td><span class="type-badge type-gbr">GBR</span></td>
+                            <td><span class="priority-value">20</span></td>
+                            <td><span class="delay-value">100 ms</span></td>
+                            <td><span class="error-value">10<sup>-2</sup></span></td>
+                            <td class="services-list"><strong>Non-Mission-Critical User Plane Push To Talk</strong> - Commercial push-to-talk</td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-gbr">67</span></td>
+                            <td><span class="type-badge type-gbr">GBR</span></td>
+                            <td><span class="priority-value">15</span></td>
+                            <td><span class="delay-value">100 ms</span></td>
+                            <td><span class="error-value">10<sup>-3</sup></span></td>
+                            <td class="services-list"><strong>Mission Critical Video User Plane</strong> - Emergency services video</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Non-GBR (Best Effort) -->
+        <div class="table-wrapper">
+            <div class="table-header">
+                <h2>Non-GBR - Best Effort</h2>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-5qi">5QI</th>
+                            <th class="col-type">Resource Type</th>
+                            <th class="col-priority">Priority</th>
+                            <th class="col-delay">Packet Delay Budget</th>
+                            <th class="col-error">Packet Error Rate</th>
+                            <th class="col-services">Example Services</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="qi-badge qi-nongbr">5</span></td>
+                            <td><span class="type-badge type-nongbr">Non-GBR</span></td>
+                            <td><span class="priority-value">10</span></td>
+                            <td><span class="delay-value">100 ms</span></td>
+                            <td><span class="error-value">10<sup>-6</sup></span></td>
+                            <td class="services-list"><strong>IMS Signaling</strong> - SIP signaling for voice/video setup</td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-nongbr">6</span></td>
+                            <td><span class="type-badge type-nongbr">Non-GBR</span></td>
+                            <td><span class="priority-value">60</span></td>
+                            <td><span class="delay-value">300 ms</span></td>
+                            <td><span class="error-value">10<sup>-6</sup></span></td>
+                            <td class="services-list"><strong>Video (Buffered Streaming)</strong> - TCP-based, Netflix, YouTube</td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-nongbr">7</span></td>
+                            <td><span class="type-badge type-nongbr">Non-GBR</span></td>
+                            <td><span class="priority-value">70</span></td>
+                            <td><span class="delay-value">100 ms</span></td>
+                            <td><span class="error-value">10<sup>-3</sup></span></td>
+                            <td class="services-list"><strong>Voice, Video (Live Streaming), Interactive Gaming</strong></td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-nongbr">8</span></td>
+                            <td><span class="type-badge type-nongbr">Non-GBR</span></td>
+                            <td><span class="priority-value">80</span></td>
+                            <td><span class="delay-value">300 ms</span></td>
+                            <td><span class="error-value">10<sup>-6</sup></span></td>
+                            <td class="services-list"><strong>Video (Buffered Streaming)</strong> - TCP-based, premium content</td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-nongbr">9</span></td>
+                            <td><span class="type-badge type-nongbr">Non-GBR</span></td>
+                            <td><span class="priority-value">90</span></td>
+                            <td><span class="delay-value">300 ms</span></td>
+                            <td><span class="error-value">10<sup>-6</sup></span></td>
+                            <td class="services-list"><strong>Default Bearer</strong> - Web browsing, email, instant messaging, FTP</td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-nongbr">69</span></td>
+                            <td><span class="type-badge type-nongbr">Non-GBR</span></td>
+                            <td><span class="priority-value">5</span></td>
+                            <td><span class="delay-value">60 ms</span></td>
+                            <td><span class="error-value">10<sup>-6</sup></span></td>
+                            <td class="services-list"><strong>Mission Critical Delay Sensitive Signaling</strong> - MC-PTT signaling</td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-nongbr">70</span></td>
+                            <td><span class="type-badge type-nongbr">Non-GBR</span></td>
+                            <td><span class="priority-value">55</span></td>
+                            <td><span class="delay-value">200 ms</span></td>
+                            <td><span class="error-value">10<sup>-6</sup></span></td>
+                            <td class="services-list"><strong>Mission Critical Data</strong> - Emergency services data</td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-nongbr">79</span></td>
+                            <td><span class="type-badge type-nongbr">Non-GBR</span></td>
+                            <td><span class="priority-value">65</span></td>
+                            <td><span class="delay-value">50 ms</span></td>
+                            <td><span class="error-value">10<sup>-2</sup></span></td>
+                            <td class="services-list"><strong>V2X Messages</strong> - Vehicle-to-everything communication</td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-nongbr">80</span></td>
+                            <td><span class="type-badge type-nongbr">Non-GBR</span></td>
+                            <td><span class="priority-value">68</span></td>
+                            <td><span class="delay-value">10 ms</span></td>
+                            <td><span class="error-value">10<sup>-6</sup></span></td>
+                            <td class="services-list"><strong>Low Latency eMBB Applications</strong> - AR/VR, tactile internet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Delay Critical GBR -->
+        <div class="table-wrapper">
+            <div class="table-header">
+                <h2>Delay Critical GBR - Ultra Low Latency</h2>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-5qi">5QI</th>
+                            <th class="col-type">Resource Type</th>
+                            <th class="col-priority">Priority</th>
+                            <th class="col-delay">Packet Delay Budget</th>
+                            <th class="col-error">Packet Error Rate</th>
+                            <th class="col-services">Example Services</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="qi-badge qi-delay">82</span></td>
+                            <td><span class="type-badge type-delay">Delay Critical GBR</span></td>
+                            <td><span class="priority-value">19</span></td>
+                            <td><span class="delay-value">10 ms</span></td>
+                            <td><span class="error-value">10<sup>-4</sup></span></td>
+                            <td class="services-list"><strong>Discrete Automation</strong> - Industrial process automation, robotics
+                                <div class="note">URLLC - Motion control, manufacturing</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-delay">83</span></td>
+                            <td><span class="type-badge type-delay">Delay Critical GBR</span></td>
+                            <td><span class="priority-value">22</span></td>
+                            <td><span class="delay-value">10 ms</span></td>
+                            <td><span class="error-value">10<sup>-4</sup></span></td>
+                            <td class="services-list"><strong>Discrete Automation</strong> - Remote control, real-time monitoring
+                                <div class="note">URLLC - Factory automation</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-delay">84</span></td>
+                            <td><span class="type-badge type-delay">Delay Critical GBR</span></td>
+                            <td><span class="priority-value">24</span></td>
+                            <td><span class="delay-value">30 ms</span></td>
+                            <td><span class="error-value">10<sup>-5</sup></span></td>
+                            <td class="services-list"><strong>Intelligent Transport Systems</strong> - Autonomous driving, V2X safety
+                                <div class="note">URLLC - Traffic control</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-delay">85</span></td>
+                            <td><span class="type-badge type-delay">Delay Critical GBR</span></td>
+                            <td><span class="priority-value">21</span></td>
+                            <td><span class="delay-value">5 ms</span></td>
+                            <td><span class="error-value">10<sup>-5</sup></span></td>
+                            <td class="services-list"><strong>Electricity Distribution - Medium Voltage</strong> - Smart grid control
+                                <div class="note">URLLC - Critical infrastructure</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><span class="qi-badge qi-delay">86</span></td>
+                            <td><span class="type-badge type-delay">Delay Critical GBR</span></td>
+                            <td><span class="priority-value">18</span></td>
+                            <td><span class="delay-value">5 ms</span></td>
+                            <td><span class="error-value">10<sup>-4</sup></span></td>
+                            <td class="services-list"><strong>Electricity Distribution - High Voltage</strong> - Grid protection
+                                <div class="note">URLLC - Power distribution control</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            <p>Based on 3GPP specifications <span class="spec-ref">TS 23.501</span> and <span class="spec-ref">TS 23.203</span></p>
+            <p style="margin-top: 8px;">5G Standalone Architecture — QoS Reference</p>
+        </footer>
+    </div>
+</body>
+</html>

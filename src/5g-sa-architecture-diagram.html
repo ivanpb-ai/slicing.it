@@ -1,0 +1,3102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5G SA Architecture: RRP, S-NSSAI, 5QI & DNN Relationships</title>
+    <link rel="icon" type="image/png" href="assets/images/favicon.png">
+    <style>
+        /* =====================================================================
+           Telia brand — 5G SA Architecture diagram
+           Colors, fonts and typography remapped to the Telia Brand Hub
+           primary palette while preserving the pedagogical color-coding that
+           distinguishes RRP-A / RRP-B and the various QoS flows.
+
+           Palette mapping (see Colors PDF "Color values"):
+             RRP-A / consumer / eMBB     -> Teal family            (#00827C)
+             RRP-A tint (green slot)     -> Teal tint              (#2FA8A3)
+             RRP-B / industrial / URLLC  -> Core Purple            (#990AE3)
+             Session / 5QI highlights    -> Core Purple mid tint   (#C23FE3)
+             Industrial-accent (orange)  -> Core Purple light tint (#D568F0)
+           Secondary (beige) palette is NOT used on this site — per the Colors
+           PDF rule that secondary colors are only for own channels, and
+           northstar-program.com is treated as external communication.
+
+           Typography (see Typography PDF):
+             Heading weight (300) for h1 only, one per viewport
+             Bold for h2, Regular for body, sentence case, left-aligned
+             Leading 100% for headlines, ~120% for body copy
+           ===================================================================== */
+
+        @font-face {
+          font-family: "Telia Sans Heading";
+          src: url("assets/fonts/TeliaSansHeading-Heading.woff2") format("woff2");
+          font-weight: 300; font-style: normal; font-display: swap;
+        }
+        @font-face {
+          font-family: "Telia Sans";
+          src: url("assets/fonts/TeliaSans-Regular.woff2") format("woff2");
+          font-weight: 400; font-style: normal; font-display: swap;
+        }
+        @font-face {
+          font-family: "Telia Sans";
+          src: url("assets/fonts/TeliaSans-Medium.woff2") format("woff2");
+          font-weight: 500; font-style: normal; font-display: swap;
+        }
+        @font-face {
+          font-family: "Telia Sans";
+          src: url("assets/fonts/TeliaSans-Bold.woff2") format("woff2");
+          font-weight: 700; font-style: normal; font-display: swap;
+        }
+        @font-face {
+          font-family: "Telia Sans";
+          src: url("assets/fonts/TeliaSans-RegularItalic.woff2") format("woff2");
+          font-weight: 400; font-style: italic; font-display: swap;
+        }
+        @font-face {
+          font-family: "Telia Sans";
+          src: url("assets/fonts/TeliaSans-MediumItalic.woff2") format("woff2");
+          font-weight: 500; font-style: italic; font-display: swap;
+        }
+        @font-face {
+          font-family: "Telia Sans";
+          src: url("assets/fonts/TeliaSans-BoldItalic.woff2") format("woff2");
+          font-weight: 700; font-style: italic; font-display: swap;
+        }
+
+        :root {
+            /* Surfaces — tone-on-tone Deep Purple background */
+            --bg-dark: #29003E;               /* Telia Deep Purple */
+            --bg-card: #3D1556;               /* Deep Purple tint — working surface */
+
+            /* Accent mapping — see comment above */
+            --accent-cyan:    #00827C;        /* Telia Teal */
+            --accent-green:   #2FA8A3;        /* Teal tint */
+            --accent-purple:  #990AE3;        /* Telia Core Purple */
+            --accent-magenta: #C23FE3;        /* Core Purple tint */
+            --accent-orange:  #D568F0;        /* Core Purple light tint — no
+                                                  Deep Beige here because the
+                                                  secondary palette is reserved
+                                                  for own-channel use only and
+                                                  this site is external-facing */
+            --accent-yellow:  #990AE3;        /* Core Purple (no yellow in Telia palette) */
+
+            /* Text — Light Purple on dark, per tone-on-tone primary palette */
+            --text-primary:   #F4E0FF;        /* Telia Light Purple */
+            --text-secondary: rgba(244, 224, 255, 0.7);
+            --border-subtle:  rgba(244, 224, 255, 0.12);
+
+            --ff-heading: "Telia Sans Heading", "Telia Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            --ff-body:    "Telia Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--ff-body);
+            font-weight: 400;
+            font-size: 17px;
+            line-height: 1.2;                 /* ~120% body leading */
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 40px 20px;
+            /* Removed cyan/magenta radial glows — off-brand.
+               Telia guidelines call for a "light, fresh expression" with
+               measured purple accents, not neon ambient gradients. */
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Back link to the NorthStar home */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-primary);
+            text-decoration: underline;
+            text-decoration-color: var(--accent-purple);
+            text-decoration-thickness: 2px;
+            text-underline-offset: 4px;
+            font-family: var(--ff-body);
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 24px;
+            transition: color .15s ease;
+        }
+        .back-link:hover { color: #fff; }
+
+        header {
+            text-align: left;                 /* left-aligned per Typography p.7 */
+            margin-bottom: 56px;
+            max-width: 900px;
+        }
+
+        /* h1: Heading weight, sentence case, leading 100% (set solid),
+           short word count, Light Purple text on Deep Purple background.
+           No gradient — brand guidelines don't use gradient text. */
+        h1 {
+            font-family: var(--ff-heading);
+            font-weight: 300;                 /* Heading weight */
+            font-size: clamp(1.5rem, 3.2vw, 3rem);
+            line-height: 1;                   /* 100% — set solid */
+            letter-spacing: -0.01em;
+            text-transform: none;             /* sentence case */
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            max-width: none;
+            white-space: nowrap;
+        }
+
+        .subtitle {
+            font-family: var(--ff-body);
+            color: var(--text-primary);
+            font-size: 1.125rem;
+            font-weight: 400;
+            line-height: 1.45;
+            max-width: none;
+        }
+
+        /* Page intro: what an RRP is, how it works, how it's used */
+        .page-intro {
+            margin-top: 24px;
+            margin-bottom: 48px;
+            max-width: none;
+        }
+
+        .intro-lead {
+            font-size: 0.95rem;
+            line-height: 1.55;
+            color: var(--text-primary);
+            max-width: 900px;
+            margin-bottom: 24px;
+        }
+
+        .intro-lead strong {
+            color: var(--text-primary);
+        }
+
+        .intro-points {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .intro-point {
+            padding: 16px 18px;
+            background: rgba(244, 224, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+        }
+
+        .intro-pill {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent-green);
+            background: rgba(47, 168, 163, 0.14);
+            border: 1px solid rgba(47, 168, 163, 0.35);
+            padding: 3px 9px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .intro-point p {
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        .intro-point p strong {
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 900px) {
+            .intro-points {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Interactive controls panel */
+        .controls-panel {
+            margin-bottom: 40px;
+            padding: 24px 26px;
+            background: linear-gradient(135deg, rgba(47,168,163,0.06), rgba(153,10,227,0.06));
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+        }
+
+        .controls-header {
+            margin-bottom: 20px;
+        }
+
+        .controls-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .controls-subtitle {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 16px;
+        }
+
+        .controls-rrp {
+            padding: 14px 16px;
+            background: rgba(244, 224, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .controls-rrp-a { border-left: 3px solid var(--accent-green); }
+        .controls-rrp-b { border-left: 3px solid var(--accent-purple); }
+
+        .controls-rrp-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .controls-rrp-sub {
+            font-weight: 400;
+            color: var(--text-secondary);
+            font-size: 0.72rem;
+        }
+
+        .slider-row {
+            display: grid;
+            grid-template-columns: 40px 1fr 48px;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .slider-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .slider-row label {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .slider-row input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(244, 224, 255, 0.12);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .slider-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--text-primary);
+            border: 2px solid var(--accent-magenta);
+            cursor: grab;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        .slider-row input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--text-primary);
+            border: 2px solid var(--accent-magenta);
+            cursor: grab;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        .controls-rrp-a input[type="range"]::-webkit-slider-thumb { border-color: var(--accent-green); }
+        .controls-rrp-a input[type="range"]::-moz-range-thumb { border-color: var(--accent-green); }
+        .controls-rrp-b input[type="range"]::-webkit-slider-thumb { border-color: var(--accent-purple); }
+        .controls-rrp-b input[type="range"]::-moz-range-thumb { border-color: var(--accent-purple); }
+
+        .slider-value {
+            font-family: var(--ff-body);
+            font-feature-settings: "tnum" 1;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: right;
+        }
+
+        .controls-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 14px;
+            border-top: 1px solid var(--border-subtle);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .controls-status {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .status-item {
+            font-family: var(--ff-body);
+            font-feature-settings: "tnum" 1;
+        }
+
+        .status-item span[data-bind] {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .status-limit {
+            color: var(--text-secondary) !important;
+            font-weight: 400 !important;
+        }
+
+        .status-warning {
+            color: #ff9090;
+            font-size: 0.72rem;
+            font-weight: 500;
+            padding: 4px 10px;
+            background: rgba(255, 144, 144, 0.1);
+            border: 1px solid rgba(255, 144, 144, 0.3);
+            border-radius: 4px;
+        }
+
+        .controls-reset {
+            background: rgba(244, 224, 255, 0.08);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            font-family: var(--ff-body);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .controls-reset:hover {
+            background: rgba(244, 224, 255, 0.14);
+        }
+
+        @media (max-width: 700px) {
+            .controls-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Main Architecture Diagram */
+        .architecture {
+            display: grid;
+            grid-template-columns: 100px 1fr 140px;
+            gap: 0;
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        /* Device Column */
+        .device-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 60px;
+        }
+
+        .device-icon {
+            width: 60px;
+            height: 100px;
+            /* Deep Purple metallic — replaces the old steel-blue gradient */
+            background: linear-gradient(180deg, #4a1969 0%, #29003E 100%);
+            border-radius: 8px;
+            position: relative;
+            border: 2px solid #5c2879;
+        }
+
+        .device-icon::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            bottom: 20px;
+            background: linear-gradient(180deg, var(--accent-cyan), var(--bg-dark));
+            border-radius: 4px;
+            opacity: 0.6;
+        }
+
+        .device-label {
+            margin-top: 12px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* RRP Section */
+        .rrp-section {
+            position: absolute;
+            left: 90px;
+            top: 0;
+            bottom: 0;
+            width: 50px;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .rrp-label {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            background: linear-gradient(180deg, var(--accent-cyan), var(--accent-purple));
+            padding: 20px 8px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            text-align: center;
+            border-radius: 0 8px 8px 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rrp-partition {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            font-size: 0.7rem;
+            font-weight: 500;
+            border-left: 3px solid;
+            margin-left: 10px;
+        }
+
+        .rrp-a { 
+            border-color: var(--accent-green); 
+            color: var(--accent-green);
+            background: linear-gradient(90deg, rgba(47,168,163,0.1), transparent);
+        }
+        .rrp-b { 
+            border-color: var(--accent-orange); 
+            color: var(--accent-orange);
+            background: linear-gradient(90deg, rgba(213,104,240,0.1), transparent);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            padding-left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* RRP Container - groups multiple slices */
+        .rrp-container {
+            display: flex;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .rrp-a-container {
+            background: linear-gradient(135deg, rgba(47,168,163,0.08), rgba(47,168,163,0.02));
+            border: 2px solid rgba(47,168,163,0.4);
+            box-shadow: 0 0 30px rgba(47,168,163,0.1);
+        }
+
+        .rrp-b-container {
+            background: linear-gradient(135deg, rgba(153,10,227,0.08), rgba(153,10,227,0.02));
+            border: 2px solid rgba(153,10,227,0.4);
+            box-shadow: 0 0 30px rgba(153,10,227,0.1);
+        }
+
+        .rrp-sidebar {
+            width: 70px;
+            min-width: 70px;
+            background: linear-gradient(180deg, var(--accent-green), rgba(47,168,163,0.6));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 8px;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            position: relative;
+        }
+
+        .rrp-b-sidebar {
+            background: linear-gradient(180deg, var(--accent-purple), rgba(153,10,227,0.6));
+        }
+
+        .rrp-text {
+            font-weight: 700;
+            font-size: 0.9rem;
+            /* Light Purple on both sidebar gradients (Teal tint for RRP-A and
+               Core Purple for RRP-B) — ensures AA contrast on both. */
+            color: var(--text-primary);
+            letter-spacing: 0.1em;
+        }
+
+        .rrp-subtext {
+            font-size: 0.6rem;
+            color: rgba(244, 224, 255, 0.8);
+            margin-top: 8px;
+        }
+
+        .rrp-content {
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* RRP policy chip — surfaces 3GPP policy params inside each container */
+        .rrp-policy-chip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 10px;
+            align-items: center;
+            padding: 10px 12px;
+            background: rgba(244, 224, 255, 0.04);
+            border: 1px dashed var(--border-subtle);
+            border-radius: 8px;
+            font-size: 0.7rem;
+            line-height: 1.4;
+        }
+
+        .rrp-policy-chip .chip-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.65rem;
+        }
+
+        .rrp-policy-chip .chip-param {
+            font-family: var(--ff-body);
+            font-feature-settings: "tnum" 1;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            padding: 2px 7px;
+            border-radius: 3px;
+            font-size: 0.68rem;
+        }
+
+        .rrp-policy-chip .chip-param.chip-min {
+            border-left: 2px solid var(--accent-green);
+        }
+        .rrp-policy-chip .chip-param.chip-max {
+            border-left: 2px solid var(--accent-magenta);
+        }
+        .rrp-policy-chip .chip-param.chip-ded {
+            border-left: 2px solid var(--text-secondary);
+            opacity: 0.75;
+        }
+
+        .rrp-policy-chip .chip-separator {
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+
+        .rrp-policy-chip .chip-snssais {
+            color: var(--text-secondary);
+            font-size: 0.68rem;
+        }
+
+        .rrp-policy-chip .chip-snssais code {
+            font-family: var(--ff-body);
+            font-feature-settings: "tnum" 1;
+            color: var(--text-primary);
+            font-size: 0.66rem;
+        }
+
+        /* Spectrum Visualization */
+        .spectrum-section {
+            margin-bottom: 30px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .spectrum-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .spectrum-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spectrum-title-icon {
+            font-size: 1.2rem;
+        }
+
+        .spectrum-band-label {
+            font-family: var(--ff-body); font-feature-settings: "tnum" 1;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            background: var(--bg-dark);
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .spectrum-bar-container {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .spectrum-bar {
+            height: 60px;
+            /* Deep Purple tonal stripes — replaces the old navy spectrum bar */
+            background: linear-gradient(90deg,
+                #29003E 0%,
+                #3D1556 20%,
+                #29003E 40%,
+                #3D1556 60%,
+                #29003E 80%,
+                #3D1556 100%);
+            border-radius: 8px;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .spectrum-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 10px,
+                rgba(255,255,255,0.03) 10px,
+                rgba(255,255,255,0.03) 11px
+            );
+            pointer-events: none;
+        }
+
+        .spectrum-chunk {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .spectrum-chunk:hover {
+            filter: brightness(1.2);
+        }
+
+        .spectrum-chunk-a {
+            width: 55%;
+            background: linear-gradient(180deg, 
+                rgba(47,168,163,0.4) 0%,
+                rgba(47,168,163,0.2) 50%,
+                rgba(47,168,163,0.4) 100%);
+            border-right: 2px solid var(--accent-green);
+            box-shadow: inset 0 0 20px rgba(47,168,163,0.3);
+        }
+
+        .spectrum-chunk-b {
+            width: 45%;
+            background: linear-gradient(180deg, 
+                rgba(153,10,227,0.4) 0%,
+                rgba(153,10,227,0.2) 50%,
+                rgba(153,10,227,0.4) 100%);
+            box-shadow: inset 0 0 20px rgba(153,10,227,0.3);
+        }
+
+        .spectrum-chunk-label {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .spectrum-chunk-sublabel {
+            font-size: 0.6rem;
+            font-weight: 400;
+            opacity: 0.8;
+        }
+
+        /* Single shared-pool bar — replaces the two-chunk misrepresentation.
+           An RRP is a PRB budget, not a frequency range, so the bar is one
+           undifferentiated pool and the RRPs appear only as proportional
+           labels elsewhere. */
+        .spectrum-bar-pool {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Tone-on-tone purple gradient suggesting "continuous pool" rather
+               than partitioned bands. The stripes from .spectrum-bar::before
+               (10-px tick pattern) still render on top to hint at PRBs. */
+            background: linear-gradient(90deg,
+                #3D1556 0%,
+                #4a1969 50%,
+                #3D1556 100%);
+        }
+
+        .spectrum-pool-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-align: center;
+            padding: 0 20px;
+            z-index: 2;
+        }
+
+        .pool-main {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            font-family: var(--ff-body);
+            font-feature-settings: "tnum" 1;
+        }
+
+        .pool-sub {
+            font-size: 0.68rem;
+            font-weight: 400;
+            color: rgba(244, 224, 255, 0.75);
+            max-width: 560px;
+            line-height: 1.3;
+        }
+
+        .spectrum-clarification {
+            margin-top: 14px;
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            padding: 10px 14px;
+            border-left: 3px solid var(--accent-green);
+            background: rgba(47,168,163,0.06);
+            border-radius: 4px;
+        }
+
+        .spectrum-clarification strong {
+            color: var(--text-primary);
+        }
+
+        .spectrum-scale {
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--ff-body); font-feature-settings: "tnum" 1;
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            padding: 0 4px;
+        }
+
+        .spectrum-prb-info {
+            display: flex;
+            gap: 24px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .prb-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .prb-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .prb-color-a {
+            background: var(--accent-green);
+        }
+
+        .prb-color-b {
+            background: var(--accent-purple);
+        }
+
+        .prb-details {
+            font-size: 0.75rem;
+        }
+
+        .prb-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .prb-value {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .prb-value code {
+            font-family: var(--ff-body);
+            font-feature-settings: "tnum" 1;
+            background: var(--bg-dark);
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 0.72rem;
+            color: var(--text-primary);
+        }
+
+        /* Soft-slicing caption under spectrum */
+        .soft-slicing-caption {
+            margin-top: 18px;
+            padding: 12px 16px;
+            background: rgba(244, 224, 255, 0.04);
+            border-left: 3px solid var(--accent-magenta);
+            border-radius: 4px;
+            font-size: 0.78rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        .soft-slicing-caption strong {
+            color: var(--text-primary);
+        }
+
+        .soft-slicing-caption code {
+            font-family: var(--ff-body);
+            font-feature-settings: "tnum" 1;
+            background: var(--bg-dark);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 0.72rem;
+            color: var(--text-primary);
+        }
+
+        /* Slicing model explainer — two orthogonal axes */
+        .slicing-explainer {
+            margin-top: 20px;
+            padding: 18px 20px;
+            background: rgba(244, 224, 255, 0.04);
+            border-left: 3px solid var(--accent-magenta);
+            border-radius: 4px;
+        }
+
+        .slicing-explainer-header {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .slicing-explainer-subhead {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+            font-style: italic;
+        }
+
+        .slicing-axes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 12px;
+        }
+
+        .slicing-axis {
+            font-size: 0.76rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        .slicing-axis-title {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .slicing-axis-title .axis-tag {
+            font-size: 0.6rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: none;
+            letter-spacing: 0;
+            font-style: italic;
+        }
+
+        .slicing-axis p {
+            margin-bottom: 6px;
+        }
+
+        .slicing-axis strong {
+            color: var(--text-primary);
+        }
+
+        .slicing-axis code {
+            font-family: var(--ff-body);
+            font-feature-settings: "tnum" 1;
+            background: var(--bg-dark);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            color: var(--text-primary);
+        }
+
+        .slicing-axis .pill {
+            display: inline-block;
+            padding: 1px 7px;
+            border-radius: 10px;
+            font-size: 0.66rem;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+        .pill-this {
+            background: rgba(47,168,163,0.18);
+            color: var(--accent-green);
+            border: 1px solid rgba(47,168,163,0.4);
+        }
+
+        .slicing-conclusion {
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .slicing-conclusion strong {
+            color: var(--text-primary);
+        }
+
+        /* Scenario comparison — soft-slicing dynamics */
+        /* Scenario card — standalone wrapper matching other section cards */
+        .scenario-card {
+            margin-top: 40px;
+            margin-bottom: 30px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .scenario-comparison {
+            /* (no top border / padding — it now sits alone inside .scenario-card) */
+        }
+
+        .scenario-comparison-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .scenario {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .scenario-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .scenario-sublabel {
+            font-size: 0.68rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-left: 6px;
+        }
+
+        .mini-bar {
+            height: 38px;
+            border-radius: 6px;
+            display: flex;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .mini-chunk {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .mini-chunk-a-min {
+            background: linear-gradient(180deg, rgba(47,168,163,0.55), rgba(47,168,163,0.35));
+            border-right: 1px solid rgba(47,168,163,0.8);
+        }
+        .mini-chunk-b-min {
+            background: linear-gradient(180deg, rgba(153,10,227,0.55), rgba(153,10,227,0.35));
+            border-right: 1px solid rgba(153,10,227,0.8);
+        }
+        .mini-chunk-a-borrow {
+            background:
+                repeating-linear-gradient(45deg,
+                    rgba(47,168,163,0.45) 0px,
+                    rgba(47,168,163,0.45) 6px,
+                    rgba(47,168,163,0.2) 6px,
+                    rgba(47,168,163,0.2) 12px);
+            border-right: 1px dashed rgba(47,168,163,0.9);
+        }
+        .mini-chunk-elastic {
+            background:
+                repeating-linear-gradient(45deg,
+                    rgba(244,224,255,0.08) 0px,
+                    rgba(244,224,255,0.08) 6px,
+                    transparent 6px,
+                    transparent 12px);
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-style: italic;
+        }
+
+        .scenario-note {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            line-height: 1.45;
+        }
+
+        .scenario-note strong {
+            color: var(--text-primary);
+        }
+
+        .borrow-arrow {
+            position: absolute;
+            top: -18px;
+            font-size: 0.65rem;
+            color: var(--accent-green);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        /* Wave animation for spectrum */
+        .spectrum-wave {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent 0px,
+                rgba(255,255,255,0.05) 1px,
+                transparent 2px,
+                transparent 8px
+            );
+            animation: spectrumWave 3s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes spectrumWave {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(8px); }
+        }
+
+        /* Indicator showing multiple slices in RRP */
+        .rrp-indicator {
+            position: absolute;
+            top: -10px;
+            left: 70px;
+            background: var(--accent-yellow);
+            color: var(--text-primary);
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 10px;
+            z-index: 10;
+        }
+
+        /* Policy envelope visualization — bounds vs scheduler freedom */
+        .policy-envelope {
+            margin-top: 28px;
+            padding-top: 22px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .envelope-title {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .envelope-subhead {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-bottom: 16px;
+        }
+
+        .envelope-plot {
+            width: 100%;
+            display: block;
+        }
+
+        .envelope-plot + .envelope-plot {
+            margin-top: 16px;
+        }
+
+        .envelope-axis-label { fill: var(--text-secondary); font-size: 10px; font-family: var(--ff-body); font-feature-settings: "tnum" 1; }
+        .envelope-band-label { fill: var(--text-primary); font-size: 9px; font-family: var(--ff-body); font-weight: 600; }
+        .envelope-gate-label { fill: #ff9090; font-size: 9px; font-family: var(--ff-body); font-style: italic; }
+        .envelope-event-label { fill: var(--text-primary); font-size: 10px; font-family: var(--ff-body); font-weight: 600; }
+        .envelope-rrp-label { fill: var(--text-primary); font-size: 11px; font-family: var(--ff-body); font-weight: 600; }
+
+        .envelope-caption {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-top: 12px;
+        }
+
+        .envelope-caption strong {
+            color: var(--text-primary);
+        }
+
+        /* Envelope play/pause controls */
+        .envelope-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 14px;
+            padding: 10px 12px;
+            background: rgba(244, 224, 255, 0.03);
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .envelope-play-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            background: rgba(194, 63, 227, 0.15);
+            border: 1px solid rgba(194, 63, 227, 0.4);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: var(--ff-body);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .envelope-play-btn:hover {
+            background: rgba(194, 63, 227, 0.25);
+        }
+
+        .envelope-play-btn .play-icon {
+            font-size: 0.85rem;
+        }
+
+        .envelope-time-readout {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.72rem;
+        }
+
+        .readout-label {
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+
+        .readout-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Connection lines from spectrum to RRP containers */
+        .spectrum-to-rrp {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: -10px;
+            padding: 0 40px;
+        }
+
+        .connection-line {
+            width: 2px;
+            height: 20px;
+            position: relative;
+        }
+
+        .connection-line-a {
+            background: var(--accent-green);
+            margin-left: 15%;
+        }
+
+        .connection-line-b {
+            background: var(--accent-purple);
+            margin-right: 15%;
+        }
+
+        .connection-line::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: -4px;
+            border: 5px solid transparent;
+            border-top-color: inherit;
+        }
+
+        .connection-line-a::after {
+            border-top-color: var(--accent-green);
+        }
+
+        .connection-line-b::after {
+            border-top-color: var(--accent-purple);
+        }
+
+        /* Slice Container */
+        .slice {
+            margin-bottom: 0;
+            border-radius: 12px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slice::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .slice-1 {
+            background: linear-gradient(135deg, rgba(0,130,124,0.15), rgba(0,130,124,0.05));
+            border: 1px solid rgba(0,130,124,0.3);
+        }
+        .slice-1::before {
+            background: linear-gradient(90deg, var(--accent-cyan), transparent);
+        }
+
+        .slice-2 {
+            background: linear-gradient(135deg, rgba(213,104,240,0.15), rgba(213,104,240,0.05));
+            border: 1px solid rgba(213,104,240,0.3);
+        }
+        .slice-2::before {
+            background: linear-gradient(90deg, var(--accent-orange), transparent);
+        }
+
+        .slice-3 {
+            background: linear-gradient(135deg, rgba(194,63,227,0.15), rgba(194,63,227,0.05));
+            border: 1px solid rgba(194,63,227,0.3);
+        }
+        .slice-3::before {
+            background: linear-gradient(90deg, var(--accent-magenta), transparent);
+        }
+        .slice-3 .slice-badge {
+            background: var(--accent-magenta);
+            color: white;
+        }
+
+        .slice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .slice-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slice-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .slice-1 .slice-badge {
+            background: var(--accent-cyan);
+            color: var(--text-primary);
+        }
+
+        .slice-2 .slice-badge {
+            background: var(--accent-orange);
+            color: var(--text-primary);
+        }
+
+        .slice-name {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .slice-snssai {
+            font-family: var(--ff-body); font-feature-settings: "tnum" 1;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: var(--bg-dark);
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        /* Sessions */
+        .sessions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .session {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 0;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .session-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .session-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .session-id {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
+        .session-dnn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dnn-arrow {
+            width: 30px;
+            height: 2px;
+            position: relative;
+        }
+
+        .dnn-arrow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 8px;
+            height: 2px;
+            background: var(--accent-orange);
+        }
+
+        .dnn-arrow::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: var(--accent-orange);
+        }
+
+        .dnn-badge {
+            font-family: var(--ff-body); font-feature-settings: "tnum" 1;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            background: rgba(213,104,240,0.2);
+            border: 1px solid var(--accent-orange);
+            border-radius: 4px;
+            color: var(--accent-orange);
+        }
+
+        .dnn-label {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            margin-right: 6px;
+        }
+
+        /* QoS Flows Container */
+        .qos-flows-container {
+            padding: 12px 14px;
+        }
+
+        .qos-flows-label {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .qos-flows-label::before {
+            content: '';
+            width: 12px;
+            height: 1px;
+            background: var(--text-secondary);
+        }
+
+        .qos-flows {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding-left: 8px;
+            border-left: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .qos-flow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            border: 1px solid;
+            position: relative;
+        }
+
+        .qos-flow .five-qi {
+            font-family: var(--ff-body); font-feature-settings: "tnum" 1;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7rem;
+        }
+
+        .qos-flow .flow-desc {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .qos-flow .flow-name {
+            font-weight: 500;
+        }
+
+        .qos-flow .flow-char {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+
+        /* QoS Flow Types with distinct colors */
+        .flow-voice {
+            background: rgba(194,63,227,0.15);
+            border-color: rgba(194,63,227,0.4);
+        }
+        .flow-voice .five-qi {
+            background: var(--accent-magenta);
+            color: white;
+        }
+
+        .flow-signaling {
+            background: rgba(153,10,227,0.15);
+            border-color: rgba(153,10,227,0.4);
+        }
+        .flow-signaling .five-qi {
+            background: var(--accent-yellow);
+            color: var(--text-primary);
+        }
+
+        .flow-web {
+            background: rgba(47,168,163,0.15);
+            border-color: rgba(47,168,163,0.4);
+        }
+        .flow-web .five-qi {
+            background: var(--accent-green);
+            color: var(--text-primary);
+        }
+
+        .flow-iot {
+            background: rgba(153,10,227,0.15);
+            border-color: rgba(153,10,227,0.4);
+        }
+        .flow-iot .five-qi {
+            background: var(--accent-purple);
+            color: white;
+        }
+
+        .flow-video {
+            background: rgba(0,130,124,0.15);
+            border-color: rgba(0,130,124,0.4);
+        }
+        .flow-video .five-qi {
+            background: var(--accent-cyan);
+            color: var(--text-primary);
+        }
+
+        /* DNN Column */
+        .dnn-target {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dnn-arrow {
+            width: 40px;
+            height: 2px;
+            position: relative;
+        }
+
+        .dnn-arrow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 8px;
+            height: 2px;
+            background: var(--text-secondary);
+        }
+
+        .dnn-arrow::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: var(--text-secondary);
+        }
+
+        .dnn-badge {
+            font-family: var(--ff-body); font-feature-settings: "tnum" 1;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-subtle);
+            border-radius: 4px;
+        }
+
+        /* Data Network Column */
+        .dn-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding-top: 20px;
+        }
+
+        .dn-box {
+            background: var(--bg-card);
+            border: 1px dashed var(--text-secondary);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .dn-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 10px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        .dn-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .dn-desc {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* Legend Section */
+        .legend-section {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .legend-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .legend-card h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-card h3 .icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .legend-card p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .legend-card code {
+            font-family: var(--ff-body); font-feature-settings: "tnum" 1;
+            background: var(--bg-dark);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+        }
+
+        .rrp-icon { background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); }
+        .snssai-icon { background: var(--accent-orange); color: var(--text-primary); }
+        .fiveqi-icon { background: var(--accent-magenta); }
+        .dnn-icon { background: var(--accent-green); color: var(--text-primary); }
+
+        /* Call-to-action Box */
+        .cta-box {
+            margin-top: 40px;
+            background: linear-gradient(135deg, rgba(153,10,227,0.15), rgba(194,63,227,0.15));
+            border-radius: 16px;
+            padding: 30px;
+            border: 2px solid var(--accent-purple);
+            text-align: center;
+            box-shadow: 0 0 30px rgba(153,10,227,0.2);
+        }
+
+        .cta-box h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .cta-box p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-magenta));
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(153,10,227,0.4);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(153,10,227,0.6);
+        }
+
+        .cta-button::after {
+            content: '→';
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .cta-button:hover::after {
+            transform: translateX(4px);
+        }
+
+        /* Relationship Diagram */
+        .relationship-section {
+            margin-top: 50px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .relationship-section h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .hierarchy-intro {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 780px;
+            margin: 0 auto 28px auto;
+            line-height: 1.5;
+        }
+
+        .hierarchy-intro code {
+            font-family: var(--ff-body);
+            font-feature-settings: "tnum" 1;
+            background: var(--bg-dark);
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 0.78rem;
+            color: var(--text-primary);
+        }
+
+        .hierarchy-intro strong {
+            color: var(--text-primary);
+        }
+
+        /* Many-to-many mapping diagram.
+           Layout: a fixed 300px-tall canvas with an absolutely-positioned SVG
+           occupying the middle 200px column. Node rows sit at fixed y-centers
+           (RRP-A: 90px, RRP-B: 210px; S-NSSAI-1: 70px, -2: 150px, -3: 230px)
+           so the SVG line endpoints land exactly on the node edges. */
+        .mapping-diagram {
+            position: relative;
+            max-width: 820px;
+            margin: 0 auto 18px auto;
+            height: 300px;
+            padding-top: 40px;   /* room for column titles */
+            box-sizing: content-box;
+        }
+
+        .mapping-column {
+            position: absolute;
+            top: 40px;
+            width: 260px;
+            height: 300px;
+        }
+
+        .mapping-rrp-column {
+            left: 0;
+        }
+
+        .mapping-snssai-column {
+            right: 0;
+        }
+
+        .mapping-column-title {
+            position: absolute;
+            top: -32px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .mapping-rrp-column .mapping-column-title { left: 0; }
+        .mapping-snssai-column .mapping-column-title { right: 0; text-align: right; }
+
+        .mapping-col-sub {
+            display: block;
+            font-weight: 400;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: none;
+            letter-spacing: 0;
+            margin-top: 2px;
+        }
+
+        .mapping-node {
+            position: absolute;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            width: 240px;
+            box-sizing: border-box;
+            background: var(--bg-dark);
+            border: 2px solid var(--border-subtle);
+            transform: translateY(-50%);   /* center on its top-coordinate */
+        }
+
+        /* RRP nodes: right-aligned to their column, lines exit from right edge */
+        .mapping-rrp-column .mapping-node { right: 0; }
+        /* S-NSSAI nodes: left-aligned, lines enter from left edge */
+        .mapping-snssai-column .mapping-node { left: 0; }
+
+        /* Vertical anchors — must match the SVG y-coordinates */
+        #map-rrp-a { top: 90px; }
+        #map-rrp-b { top: 210px; }
+        .mapping-snssai-1 { top: 70px; }
+        .mapping-snssai-2 { top: 150px; }
+        .mapping-snssai-3 { top: 230px; }
+
+        .mapping-node-abbrev {
+            font-family: var(--ff-body);
+            font-feature-settings: "tnum" 1;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+        }
+
+        .mapping-node-detail {
+            font-size: 0.68rem;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+
+        .mapping-rrp-a { border-color: var(--accent-green); }
+        .mapping-rrp-b { border-color: var(--accent-purple); }
+        .mapping-snssai-1 { border-color: var(--accent-cyan); }
+        .mapping-snssai-2 { border-color: var(--accent-magenta); }
+        .mapping-snssai-3 { border-color: var(--accent-purple); }
+
+        /* SVG occupies the gap between the two columns only */
+        .mapping-svg {
+            position: absolute;
+            top: 40px;
+            left: 260px;
+            right: 260px;
+            height: 300px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .mapping-line {
+            fill: none;
+            stroke-width: 1.5;
+            vector-effect: non-scaling-stroke;
+        }
+        .mapping-line-primary {
+            stroke: var(--accent-green);
+            opacity: 0.75;
+        }
+        .mapping-line-primary-b {
+            stroke: var(--accent-purple);
+            opacity: 0.75;
+        }
+        .mapping-line-borrow {
+            stroke: var(--accent-magenta);
+            stroke-dasharray: 5 4;
+            opacity: 0.6;
+        }
+
+        .mapping-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 18px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            padding-top: 8px;
+        }
+
+        .mapping-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mapping-legend-swatch {
+            width: 28px;
+            height: 2px;
+            display: inline-block;
+        }
+        .mapping-legend-solid-a { background: var(--accent-green); }
+        .mapping-legend-solid-b { background: var(--accent-purple); }
+        .mapping-legend-dashed {
+            background: repeating-linear-gradient(
+                to right,
+                var(--accent-magenta) 0px,
+                var(--accent-magenta) 5px,
+                transparent 5px,
+                transparent 9px);
+        }
+
+        .downstream-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            margin: 24px 0 16px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .hierarchy {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .hierarchy-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hierarchy-item {
+            text-align: center;
+            padding: 14px 20px;
+            border-radius: 10px;
+            min-width: 120px;
+        }
+
+        .hierarchy-item.rrp-item {
+            background: linear-gradient(135deg, rgba(47,168,163,0.2), rgba(153,10,227,0.2));
+            border: 2px solid var(--accent-green);
+        }
+
+        .hierarchy-item.snssai-item {
+            background: rgba(0,130,124,0.2);
+            border: 2px solid var(--accent-cyan);
+        }
+
+        .hierarchy-item.snssai-item-alt {
+            background: rgba(194,63,227,0.2);
+            border: 2px solid var(--accent-magenta);
+        }
+
+        .hierarchy-item.session-item {
+            background: rgba(153,10,227,0.2);
+            border: 2px solid var(--accent-purple);
+        }
+
+        .hierarchy-item.qos-item {
+            background: rgba(153,10,227,0.2);
+            border: 2px solid var(--accent-yellow);
+        }
+
+        .hierarchy-item.dnn-item {
+            background: rgba(213,104,240,0.2);
+            border: 2px solid var(--accent-orange);
+        }
+
+        .hierarchy-item .abbrev {
+            font-family: var(--ff-body); font-feature-settings: "tnum" 1;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .hierarchy-item .full-name {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+
+        .hierarchy-arrow {
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .cardinality {
+            font-size: 0.6rem;
+            color: var(--accent-yellow);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .contains-bracket {
+            border: 2px dashed var(--accent-green);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        .contains-label {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            padding: 0 8px;
+            font-size: 0.6rem;
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 1024px) {
+            .legend-section {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .architecture {
+                grid-template-columns: 80px 1fr 100px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .legend-section {
+                grid-template-columns: 1fr;
+            }
+            .hierarchy {
+                flex-direction: column;
+            }
+            .hierarchy-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to NorthStar main page</a>
+        <header>
+            <h1>Radio Resource Partitions in 5G SA</h1>
+            <p class="subtitle">How the RAN divides capacity between slices, tenants, and services on a shared carrier</p>
+        </header>
+
+        <!-- Page intro: what an RRP is, how it works, how it's used -->
+        <div class="page-intro">
+            <p class="intro-lead">This page focuses on the <strong>Radio Resource Partition</strong> (<strong>RRP</strong>) — the RAN-side object that decides how a cell's capacity is shared between network slices, tenants, and traffic types. RRPs are the mechanism that lets a single 5G carrier carry wildly different services at once without any of them being starved.</p>
+
+            <div class="intro-points">
+                <div class="intro-point">
+                    <span class="intro-pill">What it is</span>
+                    <p>An RRP is a <strong>policy object</strong> that reserves a proportion of the cell's PRB capacity (e.g. 40–70%). It is not a frequency range; it is a budget the MAC scheduler must honour when handing out PRBs from the shared pool.</p>
+                </div>
+                <div class="intro-point">
+                    <span class="intro-pill">How it works</span>
+                    <p>Each RRP has a <strong>minimum share</strong> (guaranteed floor, reclaimed the moment it has traffic) and a <strong>maximum share</strong> (burst ceiling). The scheduler runs its normal metrics inside those bounds and is pushed back whenever it tries to cross.</p>
+                </div>
+                <div class="intro-point">
+                    <span class="intro-pill">How it's used</span>
+                    <p>An RRP hosts one or more <strong>S-NSSAIs</strong> (slice identifiers), each with its own PDU sessions, QoS flows, and data networks. The diagrams below show one concrete example — a consumer RRP and an industrial RRP sharing a 100 MHz carrier.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive controls: sliders drive all min/max values across the page -->
+        <div class="controls-panel">
+            <div class="controls-header">
+                <div class="controls-title">🎛️ Try it yourself — adjust the policy, watch everything update</div>
+                <div class="controls-subtitle">All diagrams below — the legend, the policy chips, the scenario bars, and the animated envelope — are driven by these four sliders. Drag to explore.</div>
+            </div>
+
+            <div class="controls-grid">
+                <div class="controls-rrp controls-rrp-a">
+                    <div class="controls-rrp-label">RRP-A <span class="controls-rrp-sub">(Consumer)</span></div>
+                    <div class="slider-row">
+                        <label for="slider-a-min">Min</label>
+                        <input type="range" id="slider-a-min" min="0" max="100" step="5" value="40" />
+                        <span class="slider-value" data-bind="a-min-value">40%</span>
+                    </div>
+                    <div class="slider-row">
+                        <label for="slider-a-max">Max</label>
+                        <input type="range" id="slider-a-max" min="0" max="100" step="5" value="70" />
+                        <span class="slider-value" data-bind="a-max-value">70%</span>
+                    </div>
+                </div>
+
+                <div class="controls-rrp controls-rrp-b">
+                    <div class="controls-rrp-label">RRP-B <span class="controls-rrp-sub">(Industrial)</span></div>
+                    <div class="slider-row">
+                        <label for="slider-b-min">Min</label>
+                        <input type="range" id="slider-b-min" min="0" max="100" step="5" value="30" />
+                        <span class="slider-value" data-bind="b-min-value">30%</span>
+                    </div>
+                    <div class="slider-row">
+                        <label for="slider-b-max">Max</label>
+                        <input type="range" id="slider-b-max" min="0" max="100" step="5" value="60" />
+                        <span class="slider-value" data-bind="b-max-value">60%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-footer">
+                <div class="controls-status">
+                    <span class="status-item">Sum of minimums: <span data-bind="min-sum">70</span>% <span class="status-limit">/ 100%</span></span>
+                    <span class="status-warning" data-bind="warning" style="display:none;"></span>
+                </div>
+                <button type="button" id="reset-sliders" class="controls-reset">Reset to defaults</button>
+            </div>
+        </div>
+
+        <!-- Elastic borrowing in action — follows directly after "Try it yourself" controls -->
+        <div class="scenario-card">
+            <div class="scenario-comparison">
+                <div class="scenario-comparison-title">
+                    <span>🔄</span> Elastic borrowing in action — the soft + dynamic combination at work
+                </div>
+                <div class="scenario-grid">
+                    <div class="scenario">
+                        <div class="scenario-label">Scenario A<span class="scenario-sublabel">Both RRPs busy — each held at its Min</span></div>
+                        <div class="mini-bar" data-bar="scenarioA">
+                            <div class="mini-chunk mini-chunk-a-min" data-chunk="a-min"><span>RRP-A (<span data-bind="a-min">40</span>%)</span></div>
+                            <div class="mini-chunk mini-chunk-b-min" data-chunk="b-min"><span>RRP-B (<span data-bind="b-min">30</span>%)</span></div>
+                            <div class="mini-chunk mini-chunk-elastic" data-chunk="pool"><span>elastic pool (<span data-bind="pool">30</span>%)</span></div>
+                        </div>
+                        <div class="scenario-note">Both slices have active traffic, so the scheduler enforces the <strong>Min floors</strong>. The elastic pool is contested and split by scheduler weights — neither slice can exceed its Min by much.</div>
+                    </div>
+                    <div class="scenario">
+                        <div class="scenario-label">Scenario B<span class="scenario-sublabel">RRP-B idle — RRP-A bursts up to its Max</span></div>
+                        <div class="mini-bar" data-bar="scenarioB">
+                            <div class="mini-chunk mini-chunk-a-min" data-chunk="a-min"><span>RRP-A Min (<span data-bind="a-min">40</span>%)</span></div>
+                            <div class="mini-chunk mini-chunk-a-borrow" data-chunk="a-burst">
+                                <span class="borrow-arrow">↙ borrowed from elastic pool</span>
+                                +<span data-bind="a-burst">30</span>% burst
+                            </div>
+                            <div class="mini-chunk mini-chunk-elastic" data-chunk="b-released"><span>RRP-B idle (<span data-bind="b-released">30</span>% released)</span></div>
+                        </div>
+                        <div class="scenario-note">RRP-B has no buffered traffic, so its Min is returned to the pool. RRP-A grows from <span data-bind="a-min">40</span>% → <span data-bind="a-max">70</span>% (its <strong>Max ceiling</strong>), absorbing both the elastic pool and RRP-B's unused floor. The moment URLLC traffic arrives at RRP-B, the scheduler pulls RRP-A back to <span data-bind="a-min">40</span>%.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Policy envelope: scheduler operates inside min/max bounds -->
+            <div class="policy-envelope">
+                <div class="envelope-title"><span>📐</span> The scheduler operates inside the policy envelope</div>
+                <div class="envelope-subhead">Min and max are bounds, not set-points. The scheduler moves freely inside them and is pushed back when it tries to cross. The two scenarios above are single frames from this continuous-time view.</div>
+
+                <div class="envelope-controls">
+                    <button type="button" id="envelope-play-toggle" class="envelope-play-btn" aria-label="Pause animation">
+                        <span class="play-icon" aria-hidden="true">⏸</span>
+                        <span class="play-label">Pause</span>
+                    </button>
+                    <div class="envelope-time-readout">
+                        <span class="readout-label">Scheduler state:</span>
+                        <span class="readout-value" id="envelope-state-label">both RRPs busy</span>
+                    </div>
+                </div>
+
+                <!-- RRP-A plot (JS-driven) -->
+                <svg class="envelope-plot" id="envelope-a" viewBox="0 0 800 220" preserveAspectRatio="xMidYMid meet">
+                    <!-- Axes -->
+                    <line x1="50" y1="10" x2="50" y2="180" stroke="rgba(244,224,255,0.3)" stroke-width="1"/>
+                    <line x1="50" y1="180" x2="780" y2="180" stroke="rgba(244,224,255,0.3)" stroke-width="1"/>
+
+                    <!-- Y-axis ticks (top and bottom static, min/max dynamic) -->
+                    <text class="envelope-axis-label" x="45" y="184" text-anchor="end">0%</text>
+                    <text class="envelope-axis-label" x="45" y="14" text-anchor="end">100%</text>
+                    <text class="envelope-axis-label" x="45" text-anchor="end" id="a-tick-min">40%</text>
+                    <text class="envelope-axis-label" x="45" text-anchor="end" id="a-tick-max">70%</text>
+
+                    <!-- Bands (positioned by JS) -->
+                    <rect id="a-band-above-max" x="50" width="730" fill="rgba(255,100,100,0.08)" />
+                    <text class="envelope-gate-label" x="60" y="26">max gate — scheduler blocks further allocation</text>
+
+                    <rect id="a-band-free" x="50" width="730" fill="rgba(47,168,163,0.10)" />
+                    <text class="envelope-band-label" x="60" fill="#2FA8A3" id="a-band-free-label">free-allocation region — scheduler uses normal metrics</text>
+
+                    <rect id="a-band-below-min" x="50" width="730" fill="rgba(244,224,255,0.03)" />
+
+                    <!-- Dashed boundaries -->
+                    <line id="a-line-max" x1="50" x2="780" stroke="#C23FE3" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <line id="a-line-min" x1="50" x2="780" stroke="#2FA8A3" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+                    <!-- Utilization line (path updated every animation frame) -->
+                    <path id="a-util-path" fill="none" stroke="#2FA8A3" stroke-width="2.2"/>
+
+                    <!-- Animated time cursor showing current frame -->
+                    <line id="a-time-cursor" y1="10" y2="180" stroke="#F4E0FF" stroke-width="1" opacity="0.35"/>
+                    <circle id="a-util-dot" r="4" fill="#2FA8A3" stroke="#29003E" stroke-width="2"/>
+
+                    <!-- URLLC event marker (fixed position at t=0.70) -->
+                    <line id="a-event-marker" y1="10" y2="180" stroke="#D568F0" stroke-width="1" stroke-dasharray="2 3" opacity="0.7"/>
+                    <text class="envelope-event-label" fill="#D568F0" text-anchor="end" id="a-event-label">↑ URLLC traffic arrives</text>
+
+                    <!-- Clamp annotation (only visible when line hits max) -->
+                    <text class="envelope-gate-label" text-anchor="middle" fill="#F4E0FF" id="a-clamp-label" opacity="0">scheduler clamped at <tspan data-bind="a-max">70</tspan>%</text>
+
+                    <!-- Soft-limit summary (bottom right) -->
+                    <text class="envelope-rrp-label" x="780" y="196" text-anchor="end" fill="#2FA8A3">RRP-A utilization (soft limit <tspan data-bind="a-min">40</tspan>–<tspan data-bind="a-max">70</tspan>%)</text>
+                    <text class="envelope-axis-label" x="415" y="212" text-anchor="middle">time →  (share measured over a sliding ~100 ms window)</text>
+                </svg>
+
+                <!-- RRP-B plot (JS-driven) -->
+                <svg class="envelope-plot" id="envelope-b" viewBox="0 0 800 220" preserveAspectRatio="xMidYMid meet">
+                    <line x1="50" y1="10" x2="50" y2="180" stroke="rgba(244,224,255,0.3)" stroke-width="1"/>
+                    <line x1="50" y1="180" x2="780" y2="180" stroke="rgba(244,224,255,0.3)" stroke-width="1"/>
+
+                    <text class="envelope-axis-label" x="45" y="184" text-anchor="end">0%</text>
+                    <text class="envelope-axis-label" x="45" y="14" text-anchor="end">100%</text>
+                    <text class="envelope-axis-label" x="45" text-anchor="end" id="b-tick-min">30%</text>
+                    <text class="envelope-axis-label" x="45" text-anchor="end" id="b-tick-max">60%</text>
+
+                    <rect id="b-band-above-max" x="50" width="730" fill="rgba(255,100,100,0.08)" />
+                    <text class="envelope-gate-label" x="60" y="26">max gate — scheduler blocks further allocation</text>
+
+                    <rect id="b-band-free" x="50" width="730" fill="rgba(153,10,227,0.12)" />
+                    <text class="envelope-band-label" x="60" fill="#C23FE3" id="b-band-free-label">free-allocation region</text>
+
+                    <rect id="b-band-below-min" x="50" width="730" fill="rgba(244,224,255,0.03)" />
+                    <text class="envelope-band-label" x="60" fill="rgba(244,224,255,0.5)" id="b-band-below-label">below min — only a gate when the RRP has traffic</text>
+
+                    <line id="b-line-max" x1="50" x2="780" stroke="#ff8080" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <line id="b-line-min" x1="50" x2="780" stroke="#990AE3" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+                    <path id="b-util-path" fill="none" stroke="#C23FE3" stroke-width="2.2"/>
+
+                    <line id="b-time-cursor" y1="10" y2="180" stroke="#F4E0FF" stroke-width="1" opacity="0.35"/>
+                    <circle id="b-util-dot" r="4" fill="#C23FE3" stroke="#29003E" stroke-width="2"/>
+
+                    <line id="b-event-marker" y1="10" y2="180" stroke="#D568F0" stroke-width="1" stroke-dasharray="2 3" opacity="0.7"/>
+
+                    <!-- Contextual labels -->
+                    <text class="envelope-event-label" text-anchor="middle" fill="rgba(244,224,255,0.7)" font-style="italic" id="b-idle-label" opacity="0">idle — nothing to protect, floor released to pool</text>
+                    <text class="envelope-event-label" text-anchor="middle" fill="#C23FE3" id="b-restored-label" opacity="0">min gate reactivates — floor restored</text>
+
+                    <text class="envelope-rrp-label" x="780" y="196" text-anchor="end" fill="#C23FE3">RRP-B utilization (soft limit <tspan data-bind="b-min">30</tspan>–<tspan data-bind="b-max">60</tspan>%)</text>
+                </svg>
+
+                <p class="envelope-caption">Three regimes in one picture: <strong>above max</strong> — the scheduler is blocked regardless of what its metrics prefer; <strong>between min and max</strong> — the scheduler runs normal proportional-fair / QoS-weighted metrics without policy interference; <strong>below min with traffic</strong> — the scheduler prioritizes this RRP's UEs to restore the floor. An idle RRP's floor is not reserved — it's released to the pool, which is what enables RRP-A's burst.</p>
+            </div>
+        </div>
+
+        <!-- Main Architecture Diagram -->
+        <div class="architecture">
+            <!-- Device -->
+            <div class="device-column">
+                <div class="device-icon"></div>
+                <span class="device-label">UE (Device)</span>
+            </div>
+
+            <!-- Main Content with RRPs containing Slices -->
+            <div class="main-content">
+                <!-- RRP-A Container -->
+                <div class="rrp-container rrp-a-container">
+                    <div class="rrp-sidebar">
+                        <span class="rrp-text">RRP-A</span>
+                        <span class="rrp-subtext"><span data-bind="a-min">40</span>–<span data-bind="a-max">70</span>% of PRBs</span>
+                    </div>
+                    <div class="rrp-content">
+                        <div class="rrp-policy-chip">
+                            <span class="chip-label">RRP-A policy</span>
+                            <span class="chip-param chip-min">Min <span data-bind="a-min">40</span>%</span>
+                            <span class="chip-param chip-max">Max <span data-bind="a-max">70</span>%</span>
+                            <span class="chip-separator">│</span>
+                            <span class="chip-snssais">Hosts: <code>SST=1, SD=1</code> &nbsp;+&nbsp; <code>SST=1, SD=2</code></span>
+                            <span class="chip-separator">│</span>
+                            <span class="chip-snssais">Burst source: elastic pool + idle RRP-B</span>
+                        </div>
+                        <!-- Slice 1: Mass Market (inside RRP-A) -->
+                        <div class="slice slice-1">
+                            <div class="slice-header">
+                                <div class="slice-title">
+                                    <span class="slice-badge">SLICE 1</span>
+                                    <span class="slice-name">Mass Market (eMBB)</span>
+                                </div>
+                                <span class="slice-snssai">S-NSSAI: SST=1, SD=1</span>
+                            </div>
+                            <div class="sessions">
+                                <div class="session">
+                                    <div class="session-header">
+                                        <div class="session-info">
+                                            <span class="session-id">PDU Session 1</span>
+                                        </div>
+                                        <div class="session-dnn">
+                                            <span class="dnn-label">DNN:</span>
+                                            <div class="dnn-arrow"></div>
+                                            <span class="dnn-badge">internet</span>
+                                        </div>
+                                    </div>
+                                    <div class="qos-flows-container">
+                                        <div class="qos-flows-label">QoS Flows (within this session)</div>
+                                        <div class="qos-flows">
+                                            <div class="qos-flow flow-web">
+                                                <span class="five-qi">5QI=9</span>
+                                                <div class="flow-desc">
+                                                    <span class="flow-name">Web, Email, Chat</span>
+                                                    <span class="flow-char">Best Effort</span>
+                                                </div>
+                                            </div>
+                                            <div class="qos-flow flow-video">
+                                                <span class="five-qi">5QI=8</span>
+                                                <div class="flow-desc">
+                                                    <span class="flow-name">Video Streaming</span>
+                                                    <span class="flow-char">Buffered Streaming</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slice 2: IMS Services (also inside RRP-A) -->
+                        <div class="slice slice-3">
+                            <div class="slice-header">
+                                <div class="slice-title">
+                                    <span class="slice-badge">SLICE 2</span>
+                                    <span class="slice-name">IMS Services (eMBB)</span>
+                                </div>
+                                <span class="slice-snssai">S-NSSAI: SST=1, SD=2</span>
+                            </div>
+                            <div class="sessions">
+                                <div class="session">
+                                    <div class="session-header">
+                                        <div class="session-info">
+                                            <span class="session-id">PDU Session 2</span>
+                                        </div>
+                                        <div class="session-dnn">
+                                            <span class="dnn-label">DNN:</span>
+                                            <div class="dnn-arrow"></div>
+                                            <span class="dnn-badge">ims</span>
+                                        </div>
+                                    </div>
+                                    <div class="qos-flows-container">
+                                        <div class="qos-flows-label">QoS Flows (within this session)</div>
+                                        <div class="qos-flows">
+                                            <div class="qos-flow flow-voice">
+                                                <span class="five-qi">5QI=1</span>
+                                                <div class="flow-desc">
+                                                    <span class="flow-name">VoNR (Conversational Voice)</span>
+                                                    <span class="flow-char">GBR, 100ms latency</span>
+                                                </div>
+                                            </div>
+                                            <div class="qos-flow flow-signaling">
+                                                <span class="five-qi">5QI=5</span>
+                                                <div class="flow-desc">
+                                                    <span class="flow-name">IMS Signaling</span>
+                                                    <span class="flow-char">Non-GBR, Priority</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RRP-B Container -->
+                <div class="rrp-container rrp-b-container">
+                    <div class="rrp-sidebar rrp-b-sidebar">
+                        <span class="rrp-text">RRP-B</span>
+                        <span class="rrp-subtext"><span data-bind="b-min">30</span>–<span data-bind="b-max">60</span>% of PRBs</span>
+                    </div>
+                    <div class="rrp-content">
+                        <div class="rrp-policy-chip">
+                            <span class="chip-label">RRP-B policy</span>
+                            <span class="chip-param chip-min">Min <span data-bind="b-min">30</span>%</span>
+                            <span class="chip-param chip-max">Max <span data-bind="b-max">60</span>%</span>
+                            <span class="chip-separator">│</span>
+                            <span class="chip-snssais">Hosts: <code>SST=2, SD=16</code></span>
+                            <span class="chip-separator">│</span>
+                            <span class="chip-snssais">Releases idle capacity to pool</span>
+                        </div>
+                        <!-- Slice 3: Vertical Industry (inside RRP-B) -->
+                        <div class="slice slice-2">
+                            <div class="slice-header">
+                                <div class="slice-title">
+                                    <span class="slice-badge">SLICE 3</span>
+                                    <span class="slice-name">Vertical Industry (URLLC)</span>
+                                </div>
+                                <span class="slice-snssai">S-NSSAI: SST=2, SD=16</span>
+                            </div>
+                            <div class="sessions">
+                                <div class="session">
+                                    <div class="session-header">
+                                        <div class="session-info">
+                                            <span class="session-id">PDU Session 3</span>
+                                        </div>
+                                        <div class="session-dnn">
+                                            <span class="dnn-label">DNN:</span>
+                                            <div class="dnn-arrow"></div>
+                                            <span class="dnn-badge">factory.local</span>
+                                        </div>
+                                    </div>
+                                    <div class="qos-flows-container">
+                                        <div class="qos-flows-label">QoS Flows (within this session)</div>
+                                        <div class="qos-flows">
+                                            <div class="qos-flow flow-iot">
+                                                <span class="five-qi">5QI=82</span>
+                                                <div class="flow-desc">
+                                                    <span class="flow-name">Process Automation</span>
+                                                    <span class="flow-char">GBR, 10ms latency</span>
+                                                </div>
+                                            </div>
+                                            <div class="qos-flow flow-iot">
+                                                <span class="five-qi">5QI=83</span>
+                                                <div class="flow-desc">
+                                                    <span class="flow-name">Remote Control</span>
+                                                    <span class="flow-char">GBR, 10ms latency</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="session">
+                                    <div class="session-header">
+                                        <div class="session-info">
+                                            <span class="session-id">PDU Session 4</span>
+                                        </div>
+                                        <div class="session-dnn">
+                                            <span class="dnn-label">DNN:</span>
+                                            <div class="dnn-arrow"></div>
+                                            <span class="dnn-badge">monitoring</span>
+                                        </div>
+                                    </div>
+                                    <div class="qos-flows-container">
+                                        <div class="qos-flows-label">QoS Flows (within this session)</div>
+                                        <div class="qos-flows">
+                                            <div class="qos-flow flow-web">
+                                                <span class="five-qi">5QI=9</span>
+                                                <div class="flow-desc">
+                                                    <span class="flow-name">Monitoring Data</span>
+                                                    <span class="flow-char">Best Effort</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Networks -->
+            <div class="dn-column">
+                <div class="dn-box">
+                    <div class="dn-icon">🌐</div>
+                    <div class="dn-name">DN: Internet</div>
+                    <div class="dn-desc">Public Internet</div>
+                </div>
+                <div class="dn-box">
+                    <div class="dn-icon">📞</div>
+                    <div class="dn-name">DN: IMS</div>
+                    <div class="dn-desc">Voice Services</div>
+                </div>
+                <div class="dn-box">
+                    <div class="dn-icon">🏭</div>
+                    <div class="dn-name">DN: Enterprise</div>
+                    <div class="dn-desc">Private Network</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spectrum Allocation Visualization -->
+        <div class="spectrum-section">
+            <div class="spectrum-header">
+                <div class="spectrum-title">
+                    <span class="spectrum-title-icon">📡</span>
+                    Carrier capacity — a shared PRB pool
+                </div>
+                <span class="spectrum-band-label">Example: n78 Band (3.5 GHz TDD)</span>
+            </div>
+
+            <div class="spectrum-bar-container">
+                <div class="spectrum-bar spectrum-bar-pool">
+                    <div class="spectrum-wave"></div>
+                    <div class="spectrum-pool-label">
+                        <span class="pool-main">100 MHz · 273 PRBs</span>
+                        <span class="pool-sub">single shared pool — the scheduler draws from it freely, subject to each RRP's min/max proportions</span>
+                    </div>
+                </div>
+                <div class="spectrum-scale">
+                    <span>3500 MHz</span>
+                    <span>3550 MHz</span>
+                    <span>3600 MHz</span>
+                </div>
+            </div>
+
+            <p class="spectrum-clarification">An RRP is <strong>not</strong> a fixed slice of frequency. It is a <strong>proportion of the cell's PRB capacity</strong> that the scheduler must honour when allocating resources. In any given slot, RRP-A's UEs and RRP-B's UEs can be interleaved anywhere across the band — what matters is their aggregate share over the scheduler's measurement window.</p>
+
+            <div class="spectrum-prb-info">
+                <div class="prb-item">
+                    <div class="prb-color prb-color-a"></div>
+                    <div class="prb-details">
+                        <div class="prb-name">RRP-A (Consumer)</div>
+                        <div class="prb-value"><code>minimum share = <span data-bind="a-min">40</span>%</code> (floor) &nbsp;•&nbsp; <code>maximum share = <span data-bind="a-max">70</span>%</code> (ceiling)<br>Serves Mass Market + IMS slices. May borrow from the elastic pool when RRP-B is idle.</div>
+                    </div>
+                </div>
+                <div class="prb-item">
+                    <div class="prb-color prb-color-b"></div>
+                    <div class="prb-details">
+                        <div class="prb-name">RRP-B (Industrial)</div>
+                        <div class="prb-value"><code>minimum share = <span data-bind="b-min">30</span>%</code> (floor) &nbsp;•&nbsp; <code>maximum share = <span data-bind="b-max">60</span>%</code> (ceiling)<br>Serves URLLC slice. Unused capacity is released back to the elastic pool.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slicing-explainer">
+                <div class="slicing-explainer-header">Soft slicing with dynamic scheduling</div>
+                <div class="slicing-explainer-subhead">The name combines two independent properties of this setup</div>
+
+                <div class="slicing-axes">
+                    <div class="slicing-axis">
+                        <div class="slicing-axis-title">Isolation axis <span class="axis-tag">what the policy allows</span></div>
+                        <p><span class="pill pill-this">soft</span><strong>Soft slicing</strong> — each RRP has a minimum share (its floor) and a maximum share (its ceiling). Idle capacity can be borrowed by neighbours; the floor is reclaimed the moment traffic returns.</p>
+                    </div>
+                    <div class="slicing-axis">
+                        <div class="slicing-axis-title">Time axis <span class="axis-tag">when the partitioning changes</span></div>
+                        <p><span class="pill pill-this">dynamic</span><strong>Dynamic scheduling</strong> — the MAC scheduler re-decides the split every slot (sub-millisecond) based on buffer status, channel quality, and QoS targets.</p>
+                    </div>
+                </div>
+
+                <p class="slicing-conclusion">The two properties work together: the <em>soft</em> policy is what makes RRP-A's idle capacity borrowable in the first place, and the <em>dynamic</em> scheduler is what actually performs the per-slot reallocation. Without <em>soft</em> there would be nothing to borrow; without <em>dynamic</em> the borrowing could not track traffic in real time.</p>
+            </div>
+        </div>
+
+        <!-- Legend Cards -->
+        <div class="legend-section">
+            <div class="legend-card">
+                <h3><span class="icon rrp-icon">📡</span> RRP</h3>
+                <p><strong>Radio Resource Partition</strong> — A <strong style="color: var(--accent-cyan);">proportion of the cell's PRB capacity</strong> reserved as a policy floor and ceiling (e.g. 40–70%). RRPs do not carve up the spectrum into fixed frequency ranges; they constrain the scheduler's allocation from a shared PRB pool. <strong style="color: var(--accent-yellow);">One RRP can serve multiple S-NSSAIs</strong>, enabling efficient sharing while guaranteeing isolation.</p>
+            </div>
+            <div class="legend-card">
+                <h3><span class="icon snssai-icon">🔖</span> S-NSSAI</h3>
+                <p><strong>Single Network Slice Selection Assistance Info</strong> — Identifies a network slice via <code>SST</code> (Slice/Service Type) + optional <code>SD</code> (Slice Differentiator). Each slice provides isolated E2E resources.</p>
+            </div>
+            <div class="legend-card">
+                <h3><span class="icon fiveqi-icon">⚡</span> 5QI</h3>
+                <p><strong>5G QoS Identifier</strong> — Defines QoS characteristics: latency, packet loss, priority. Each QoS Flow within a PDU Session has a 5QI. Values 1-127 are standardized.</p>
+            </div>
+            <div class="legend-card">
+                <h3><span class="icon dnn-icon">🎯</span> DNN</h3>
+                <p><strong>Data Network Name</strong> — Identifies the destination data network (like APN in LTE). Examples: <code>internet</code>, <code>ims</code>, <code>enterprise.vpn</code>. Bound to PDU Sessions.</p>
+            </div>
+        </div>
+
+        <!-- Call-to-action for 5QI Table -->
+        <div class="cta-box">
+            <h3>📊 Need 5QI Reference Details?</h3>
+            <p>Explore the complete list of standardized 5G QoS Identifiers with detailed characteristics, latency budgets, and use cases</p>
+            <a href="5qi-table.html" class="cta-button">
+                List of 5QIs
+            </a>
+        </div>
+
+        <!-- Hierarchy Relationship -->
+        <div class="relationship-section">
+            <h2>Relationship model — RRP ↔ S-NSSAI is many-to-many</h2>
+            <p class="hierarchy-intro">An S-NSSAI identifies a slice end-to-end; an RRP is a RAN-local resource pool. The mapping between them is a <strong>set</strong>, not a tree — one S-NSSAI can be served by several RRPs, and one RRP can host several S-NSSAIs.</p>
+
+            <div class="mapping-diagram">
+                <div class="mapping-column mapping-rrp-column">
+                    <div class="mapping-column-title">RRPs <span class="mapping-col-sub">(RAN resource pools)</span></div>
+                    <div class="mapping-node mapping-rrp-a" id="map-rrp-a">
+                        <div class="mapping-node-abbrev">RRP-A</div>
+                        <div class="mapping-node-detail">Min 40% / Max 70%</div>
+                    </div>
+                    <div class="mapping-node mapping-rrp-b" id="map-rrp-b">
+                        <div class="mapping-node-abbrev">RRP-B</div>
+                        <div class="mapping-node-detail">Min 30% / Max 60%</div>
+                    </div>
+                </div>
+
+                <svg class="mapping-svg" viewBox="0 0 200 300" preserveAspectRatio="none" aria-hidden="true">
+                    <!-- Coordinate system: x=0 is the right edge of the RRP column,
+                         x=200 is the left edge of the S-NSSAI column. y=0 is the top
+                         of the diagram, y=300 is the bottom. Node vertical centers
+                         are fixed via CSS below. -->
+                    <!-- RRP-A (y=90) → S-NSSAI-1 (y=70) : primary -->
+                    <line x1="0" y1="90" x2="200" y2="70" class="mapping-line mapping-line-primary" />
+                    <!-- RRP-A (y=90) → S-NSSAI-2 (y=150) : primary -->
+                    <line x1="0" y1="90" x2="200" y2="150" class="mapping-line mapping-line-primary" />
+                    <!-- RRP-B (y=210) → S-NSSAI-3 (y=230) : primary -->
+                    <line x1="0" y1="210" x2="200" y2="230" class="mapping-line mapping-line-primary-b" />
+                    <!-- RRP-A (y=90) → S-NSSAI-3 (y=230) : optional borrow path -->
+                    <line x1="0" y1="90" x2="200" y2="230" class="mapping-line mapping-line-borrow" />
+                </svg>
+
+                <div class="mapping-column mapping-snssai-column">
+                    <div class="mapping-column-title">S-NSSAIs <span class="mapping-col-sub">(end-to-end slice IDs)</span></div>
+                    <div class="mapping-node mapping-snssai-1">
+                        <div class="mapping-node-abbrev">SST=1, SD=1</div>
+                        <div class="mapping-node-detail">Mass Market (eMBB)</div>
+                    </div>
+                    <div class="mapping-node mapping-snssai-2">
+                        <div class="mapping-node-abbrev">SST=1, SD=2</div>
+                        <div class="mapping-node-detail">IMS / VoNR (eMBB)</div>
+                    </div>
+                    <div class="mapping-node mapping-snssai-3">
+                        <div class="mapping-node-abbrev">SST=2, SD=16</div>
+                        <div class="mapping-node-detail">Vertical Industry (URLLC)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mapping-legend">
+                <span class="mapping-legend-item"><span class="mapping-legend-swatch mapping-legend-solid-a"></span>RRP-A primary mapping</span>
+                <span class="mapping-legend-item"><span class="mapping-legend-swatch mapping-legend-solid-b"></span>RRP-B primary mapping</span>
+                <span class="mapping-legend-item"><span class="mapping-legend-swatch mapping-legend-dashed"></span>Optional borrow path (slice authorised to use another RRP when its home RRP is saturated)</span>
+            </div>
+
+            <h3 class="downstream-title">Downstream chain (inside a single S-NSSAI)</h3>
+            <div class="hierarchy">
+                <div class="hierarchy-group">
+                    <div class="hierarchy-item snssai-item">
+                        <div class="abbrev">S-NSSAI</div>
+                        <div class="full-name">Network Slice</div>
+                    </div>
+                </div>
+
+                <span class="hierarchy-arrow">→</span>
+
+                <div class="hierarchy-group">
+                    <div class="hierarchy-item session-item">
+                        <div class="abbrev">PDU Session</div>
+                        <div class="full-name">User Plane Tunnel</div>
+                        <div class="cardinality">1:N per Slice</div>
+                    </div>
+                </div>
+
+                <span class="hierarchy-arrow">→</span>
+
+                <div class="hierarchy-group">
+                    <div class="hierarchy-item qos-item">
+                        <div class="abbrev">QoS Flow</div>
+                        <div class="full-name">5QI</div>
+                        <div class="cardinality">1:N per Session</div>
+                    </div>
+                </div>
+
+                <span class="hierarchy-arrow">→</span>
+
+                <div class="hierarchy-group">
+                    <div class="hierarchy-item dnn-item">
+                        <div class="abbrev">DNN</div>
+                        <div class="full-name">Data Network</div>
+                        <div class="cardinality">1:1 per Session</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            5G Standalone Architecture — Pedagogical Diagram
+        </footer>
+    </div>
+
+    <script>
+    /* =====================================================================
+       Interactive engine for the RRP page.
+       - 4 sliders (a-min, a-max, b-min, b-max) drive a shared state object
+       - render(state) walks every element with a data-bind attr and updates
+         text, plus special-cases: mini-bar widths, policy-chip values,
+         envelope band/line positions and the animation
+       - animation loop traces the RRP-A and RRP-B utilization lines
+         through three phases: (A) both busy, (B) RRP-B idle, (C) URLLC
+         arrives and the RRP-B floor is restored
+       ===================================================================== */
+
+    // ---- Plot geometry constants (match SVG viewBox 800x220) ----
+    const PLOT = {
+        left: 50, right: 780, top: 10, bottom: 180,
+        width: 730, heightPct: 170   // pixels per 100%
+    };
+    // Convert a percentage (0-100) to a y-coord in the plot area
+    const y = pct => PLOT.bottom - (pct / 100) * PLOT.heightPct;
+    // Convert a parametric time t in [0,1] to an x-coord
+    const x = t => PLOT.left + t * PLOT.width;
+
+    // ---- Utilization model ----
+    // Phase A: t in [0, 0.15]  - both at their mins
+    // Phase B: t in [0.15, 0.70] - RRP-B drains to 0, RRP-A climbs to its max
+    // Phase C: t in [0.70, 1.0]  - URLLC arrives, RRP-A falls back, RRP-B restored
+    const EVENT_T = 0.70;
+
+    // Smoothstep easing for natural transitions
+    const smooth = (t) => t * t * (3 - 2 * t);
+
+    function utilA(t, s) {
+        if (t < 0.15) {
+            // Small jitter around aMin
+            return s.aMin + 1.5 * Math.sin(t * 40);
+        }
+        if (t < EVENT_T) {
+            // Ramp from aMin to aMax between 0.15 and EVENT_T
+            const u = smooth((t - 0.15) / (EVENT_T - 0.15));
+            return s.aMin + (s.aMax - s.aMin) * u;
+        }
+        // Phase C: decay from current value back to aMin over 0.15s
+        const decayProgress = Math.min(1, (t - EVENT_T) / 0.15);
+        const startVal = s.aMax;
+        return startVal + (s.aMin - startVal) * smooth(decayProgress);
+    }
+
+    function utilB(t, s) {
+        if (t < 0.15) {
+            return s.bMin + 1.5 * Math.sin(t * 40 + 1);
+        }
+        if (t < EVENT_T) {
+            // Decay from bMin toward ~5% (simulated idle floor — not literal 0)
+            const u = smooth((t - 0.15) / (EVENT_T - 0.15));
+            return s.bMin * (1 - u) + 5 * u;
+        }
+        // Phase C: snap back to bMin quickly
+        const restoreProgress = Math.min(1, (t - EVENT_T) / 0.05);
+        return 5 + (s.bMin - 5) * smooth(restoreProgress);
+    }
+
+    // Generate a full path string by sampling the utilization function
+    function buildPath(utilFn, state, nSamples = 80) {
+        let d = '';
+        for (let i = 0; i <= nSamples; i++) {
+            const t = i / nSamples;
+            const px = x(t);
+            const py = y(utilFn(t, state));
+            d += (i === 0 ? 'M ' : ' L ') + px.toFixed(1) + ',' + py.toFixed(1);
+        }
+        return d;
+    }
+
+    // ---- State ----
+    const state = { aMin: 40, aMax: 70, bMin: 30, bMax: 60 };
+    const DEFAULTS = { aMin: 40, aMax: 70, bMin: 30, bMax: 60 };
+
+    // Animation state
+    let animTime = 0;          // 0..1 looping
+    let lastFrameTs = null;
+    let animRunning = true;
+    const ANIM_PERIOD_MS = 8000;   // one full cycle
+
+    // ---- DOM helpers ----
+    function updateDataBindText(key, value) {
+        // Update every element (including SVG <tspan>) with data-bind=key
+        document.querySelectorAll(`[data-bind="${key}"]`).forEach(el => {
+            el.textContent = value;
+        });
+    }
+
+    function setAttr(id, attr, value) {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute(attr, value);
+    }
+
+    // ---- Constraint enforcement ----
+    // Rules:
+    //   aMin <= aMax, bMin <= bMax
+    //   aMin + bMin <= 100 (both floors must be simultaneously satisfiable)
+    //   aMax, bMax <= 100 (can't exceed total capacity)
+    function clamp(st) {
+        const clamped = { ...st };
+        clamped.aMin = Math.max(0, Math.min(100, clamped.aMin));
+        clamped.aMax = Math.max(clamped.aMin, Math.min(100, clamped.aMax));
+        clamped.bMin = Math.max(0, Math.min(100, clamped.bMin));
+        clamped.bMax = Math.max(clamped.bMin, Math.min(100, clamped.bMax));
+        return clamped;
+    }
+
+    function validate(st) {
+        if (st.aMin + st.bMin > 100) {
+            return `Warning: Min shares sum to ${st.aMin + st.bMin}% — a cell only has 100% to give. One RRP's floor cannot be guaranteed.`;
+        }
+        return null;
+    }
+
+    // ---- Main render function ----
+    function render() {
+        const s = state;
+
+        // Slider value labels
+        updateDataBindText('a-min-value', s.aMin + '%');
+        updateDataBindText('a-max-value', s.aMax + '%');
+        updateDataBindText('b-min-value', s.bMin + '%');
+        updateDataBindText('b-max-value', s.bMax + '%');
+
+        // Derived values
+        const pool = Math.max(0, 100 - s.aMin - s.bMin);
+        const aBurst = Math.max(0, s.aMax - s.aMin);
+        const bReleased = s.bMin;                     // RRP-B idle releases its floor
+        const aRemaining = Math.max(0, 100 - s.aMax); // capacity left over when A bursts
+
+        // Update every plain data-bind text element
+        updateDataBindText('a-min', s.aMin);
+        updateDataBindText('a-max', s.aMax);
+        updateDataBindText('b-min', s.bMin);
+        updateDataBindText('b-max', s.bMax);
+        updateDataBindText('a-burst', aBurst);
+        updateDataBindText('b-released', bReleased);
+        updateDataBindText('pool', pool);
+        updateDataBindText('min-sum', s.aMin + s.bMin);
+
+        // Scenario A mini-bar widths
+        const barA = document.querySelector('[data-bar="scenarioA"]');
+        if (barA) {
+            barA.querySelector('[data-chunk="a-min"]').style.width = s.aMin + '%';
+            barA.querySelector('[data-chunk="b-min"]').style.width = s.bMin + '%';
+            barA.querySelector('[data-chunk="pool"]').style.width = pool + '%';
+        }
+        // Scenario B mini-bar widths
+        const barB = document.querySelector('[data-bar="scenarioB"]');
+        if (barB) {
+            barB.querySelector('[data-chunk="a-min"]').style.width = s.aMin + '%';
+            barB.querySelector('[data-chunk="a-burst"]').style.width = aBurst + '%';
+            barB.querySelector('[data-chunk="b-released"]').style.width = (bReleased + aRemaining) + '%';
+        }
+
+        // Warning message
+        const warning = validate(s);
+        const warnEl = document.querySelector('[data-bind="warning"]');
+        if (warnEl) {
+            if (warning) {
+                warnEl.textContent = warning;
+                warnEl.style.display = '';
+            } else {
+                warnEl.style.display = 'none';
+            }
+        }
+
+        // Envelope plot — RRP-A bands and dashed lines
+        const yAmax = y(s.aMax);
+        const yAmin = y(s.aMin);
+        setAttr('a-band-above-max', 'y', PLOT.top);
+        setAttr('a-band-above-max', 'height', Math.max(0, yAmax - PLOT.top));
+        setAttr('a-band-free', 'y', yAmax);
+        setAttr('a-band-free', 'height', Math.max(0, yAmin - yAmax));
+        setAttr('a-band-below-min', 'y', yAmin);
+        setAttr('a-band-below-min', 'height', Math.max(0, PLOT.bottom - yAmin));
+        setAttr('a-line-max', 'y1', yAmax);
+        setAttr('a-line-max', 'y2', yAmax);
+        setAttr('a-line-min', 'y1', yAmin);
+        setAttr('a-line-min', 'y2', yAmin);
+        // Position ticks next to their lines
+        setAttr('a-tick-min', 'y', yAmin + 4);
+        setAttr('a-tick-max', 'y', yAmax + 4);
+        document.getElementById('a-tick-min').textContent = s.aMin + '%';
+        document.getElementById('a-tick-max').textContent = s.aMax + '%';
+        // Band label: centre vertically in free region
+        setAttr('a-band-free-label', 'y', (yAmax + yAmin) / 2 + 4);
+        // Clamp annotation: position just above the max line
+        setAttr('a-clamp-label', 'x', (PLOT.left + PLOT.right) / 2);
+        setAttr('a-clamp-label', 'y', yAmax - 6);
+        // Event marker x-position
+        setAttr('a-event-marker', 'x1', x(EVENT_T));
+        setAttr('a-event-marker', 'x2', x(EVENT_T));
+        setAttr('a-event-label', 'x', x(EVENT_T) - 5);
+        setAttr('a-event-label', 'y', PLOT.bottom - 10);
+
+        // Envelope plot — RRP-B
+        const yBmax = y(s.bMax);
+        const yBmin = y(s.bMin);
+        setAttr('b-band-above-max', 'y', PLOT.top);
+        setAttr('b-band-above-max', 'height', Math.max(0, yBmax - PLOT.top));
+        setAttr('b-band-free', 'y', yBmax);
+        setAttr('b-band-free', 'height', Math.max(0, yBmin - yBmax));
+        setAttr('b-band-below-min', 'y', yBmin);
+        setAttr('b-band-below-min', 'height', Math.max(0, PLOT.bottom - yBmin));
+        setAttr('b-line-max', 'y1', yBmax);
+        setAttr('b-line-max', 'y2', yBmax);
+        setAttr('b-line-min', 'y1', yBmin);
+        setAttr('b-line-min', 'y2', yBmin);
+        setAttr('b-tick-min', 'y', yBmin + 4);
+        setAttr('b-tick-max', 'y', yBmax + 4);
+        document.getElementById('b-tick-min').textContent = s.bMin + '%';
+        document.getElementById('b-tick-max').textContent = s.bMax + '%';
+        setAttr('b-band-free-label', 'y', (yBmax + yBmin) / 2 + 4);
+        setAttr('b-band-below-label', 'y', (yBmin + PLOT.bottom) / 2 + 4);
+        // Idle and restored labels
+        setAttr('b-idle-label', 'x', x(0.45));
+        setAttr('b-idle-label', 'y', y(5) - 6);
+        setAttr('b-restored-label', 'x', x(0.82));
+        setAttr('b-restored-label', 'y', yBmin - 10);
+        // Event marker
+        setAttr('b-event-marker', 'x1', x(EVENT_T));
+        setAttr('b-event-marker', 'x2', x(EVENT_T));
+
+        // Utilization lines
+        setAttr('a-util-path', 'd', buildPath(utilA, s));
+        setAttr('b-util-path', 'd', buildPath(utilB, s));
+    }
+
+    // ---- Animation: moves the time cursor + dot + contextual labels ----
+    function tick(ts) {
+        if (lastFrameTs == null) lastFrameTs = ts;
+        const dt = ts - lastFrameTs;
+        lastFrameTs = ts;
+
+        if (animRunning) {
+            animTime = (animTime + dt / ANIM_PERIOD_MS) % 1;
+        }
+
+        const s = state;
+        const t = animTime;
+        const aVal = utilA(t, s);
+        const bVal = utilB(t, s);
+
+        const cursorX = x(t);
+        setAttr('a-time-cursor', 'x1', cursorX);
+        setAttr('a-time-cursor', 'x2', cursorX);
+        setAttr('a-util-dot', 'cx', cursorX);
+        setAttr('a-util-dot', 'cy', y(aVal));
+
+        setAttr('b-time-cursor', 'x1', cursorX);
+        setAttr('b-time-cursor', 'x2', cursorX);
+        setAttr('b-util-dot', 'cx', cursorX);
+        setAttr('b-util-dot', 'cy', y(bVal));
+
+        // Show/hide contextual labels based on what phase we're in
+        // a-clamp-label appears when RRP-A is near its max (t in [0.5, 0.7])
+        const clampOpacity = (t > 0.45 && t < EVENT_T) ? 1 : 0;
+        setAttr('a-clamp-label', 'opacity', clampOpacity);
+
+        // b-idle-label appears during phase B
+        const idleOpacity = (t > 0.25 && t < EVENT_T - 0.02) ? 0.9 : 0;
+        setAttr('b-idle-label', 'opacity', idleOpacity);
+
+        // b-restored-label appears after URLLC arrives
+        const restoredOpacity = (t > EVENT_T + 0.05) ? 1 : 0;
+        setAttr('b-restored-label', 'opacity', restoredOpacity);
+
+        // Scheduler state readout
+        const stateLabel = document.getElementById('envelope-state-label');
+        if (stateLabel) {
+            let label;
+            if (t < 0.15) label = 'both RRPs busy at their Min floors';
+            else if (t < EVENT_T) label = 'RRP-B idle, RRP-A bursting toward its Max';
+            else label = 'URLLC arrived — floor restored to RRP-B';
+            stateLabel.textContent = label;
+        }
+
+        requestAnimationFrame(tick);
+    }
+
+    // ---- Hook up sliders ----
+    function bindSlider(id, stateKey) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', () => {
+            const v = parseInt(el.value, 10);
+            const next = { ...state, [stateKey]: v };
+            Object.assign(state, clamp(next));
+            // Reflect any clamping back onto the sliders
+            syncSlidersFromState();
+            render();
+        });
+    }
+
+    function syncSlidersFromState() {
+        document.getElementById('slider-a-min').value = state.aMin;
+        document.getElementById('slider-a-max').value = state.aMax;
+        document.getElementById('slider-b-min').value = state.bMin;
+        document.getElementById('slider-b-max').value = state.bMax;
+    }
+
+    function init() {
+        bindSlider('slider-a-min', 'aMin');
+        bindSlider('slider-a-max', 'aMax');
+        bindSlider('slider-b-min', 'bMin');
+        bindSlider('slider-b-max', 'bMax');
+
+        const resetBtn = document.getElementById('reset-sliders');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                Object.assign(state, DEFAULTS);
+                syncSlidersFromState();
+                render();
+            });
+        }
+
+        const playBtn = document.getElementById('envelope-play-toggle');
+        if (playBtn) {
+            playBtn.addEventListener('click', () => {
+                animRunning = !animRunning;
+                const icon = playBtn.querySelector('.play-icon');
+                const label = playBtn.querySelector('.play-label');
+                if (animRunning) {
+                    icon.textContent = '⏸';
+                    label.textContent = 'Pause';
+                    playBtn.setAttribute('aria-label', 'Pause animation');
+                } else {
+                    icon.textContent = '▶';
+                    label.textContent = 'Play';
+                    playBtn.setAttribute('aria-label', 'Play animation');
+                }
+            });
+        }
+
+        render();
+        requestAnimationFrame(tick);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    </script>
+</body>
+</html>

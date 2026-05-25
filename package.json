@@ -5,9 +5,9 @@
   "description": "A future-facing 5G Standalone vision presentation with interactive network slicing and architecture simulations.",
   "browserslist": "defaults",
   "scripts": {
-    "start": "parcel src/index.html",
-    "dev": "parcel src/index.html",
-    "build": "parcel build src/index.html --no-cache --public-url ./"
+    "start": "parcel src/index.html src/copy-editor.html",
+    "dev": "parcel src/index.html src/copy-editor.html",
+    "build": "parcel build src/index.html src/copy-editor.html --no-cache --public-url ./"
   },
   "keywords": [
     "5G",

@@ -20,8 +20,6 @@ export const COPY = {
     "Sky as Network",
     "Verticals 2035",
     "The $1.3T Shift",
-    "Roadmap",
-    "Toward 6G",
     "Vision"
   ],
   hero: {
@@ -61,11 +59,11 @@ export const COPY = {
         label: "Connected devices on 5G SA"
       },
       {
-        v: 12,
+        v: 10,
         pre: "",
         suf: "×",
         dec: 0,
-        label: "Enterprise ARPU uplift on slices"
+        label: "Premium-slice ARPU uplift (potential)"
       },
       {
         v: 99.999,
@@ -74,7 +72,8 @@ export const COPY = {
         dec: 3,
         label: "Sovereign-grade reliability"
       }
-    ]
+    ],
+    note: "Headline figures are indicative — blended from public industry forecasts (analyst, GSMA and vendor estimates) and 3GPP targets, not a single audited source."
   },
   inflection: {
     kicker: "The Inflection Point",
@@ -516,6 +515,14 @@ export const COPY = {
         desc: "Full convergence: one core, many access types — aeronautical & maritime.",
         c: P.green
       }
+    ],
+    note: [
+      {
+        t: "Regenerative payloads",
+        c: P.green,
+        b: true
+      },
+      " process the radio signal on board the satellite — demodulating and re-modulating it rather than just amplifying and forwarding it (a transparent 'bent-pipe' relay) — effectively putting the gNodeB in orbit, enabling inter-satellite routing and lower latency."
     ]
   },
   verticals: {
@@ -622,7 +629,7 @@ export const COPY = {
         c: P.gold
       }
     ],
-    body: "Connectivity revenue flattens as it commoditises. The new value pool — slices, exposed APIs, and sensing — grows faster every year of the decade.",
+    body: "The traditional way of pricing data is evolving — from selling gigabytes to exposing network capabilities and APIs. Customers increasingly pay for outcomes: real-time intelligence and guaranteed capabilities like ultra-reliable low latency. So connectivity revenue flattens as it commoditises, while the new value pool — slices, exposed APIs and sensing — grows faster every year of the decade.",
     caption: "Illustrative trajectory. Connectivity ARPU flattens as commoditisation accelerates; new value moves to slices, exposed APIs and sensing services.",
     legend: [
       {
@@ -702,11 +709,12 @@ export const COPY = {
         c: P.gold
       },
       {
-        v: "$80B+",
-        l: "Sensing-as-a-Service by 2035",
+        v: "$10–80B",
+        l: "Sensing-as-a-Service by 2035 (emerging)",
         c: P.green
       }
-    ]
+    ],
+    note: "Illustrative figures — directional analyst/industry forecasts (enterprise-5G, network-API and sensing estimates), not audited."
   },
   roadmap: {
     kicker: "NorthStar Roadmap · 2025–2029",

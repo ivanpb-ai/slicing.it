@@ -776,21 +776,21 @@ export default function NorthStarFutureVision() {
             <div style={{ marginTop: 50, position: "relative" }}>
               <div style={{
                 position: "absolute", left: "5%", right: "5%", top: 42, height: 3,
-                background: `linear-gradient(90deg, ${P.faint}, ${P.purple} 40%, ${P.cyan} 55%, ${P.gold} 80%, ${P.green})`,
+                background: `linear-gradient(90deg, ${P.faint}, ${P.purple} 32%, ${P.cyan} 48%, ${P.gold} 62%, ${P.green})`,
                 borderRadius: 2, boxShadow: `0 0 14px ${P.cyan}55`,
               }} />
               <div style={{
-                position: "absolute", left: "calc(100% / 7 * 5.5)", top: 30, width: 28, height: 28, borderRadius: "50%",
+                position: "absolute", left: "calc(100% * 18.5 / 30)", top: 30, width: 28, height: 28, borderRadius: "50%",
                 background: P.gold, boxShadow: `0 0 22px ${P.gold}, 0 0 50px ${P.gold}88`, animation: "pulse 1.8s ease-in-out infinite",
                 transform: "translateX(-50%)", opacity: active === 1 ? 1 : 0, transition: "opacity 0.6s ease 0.4s",
               }} />
               <div style={{
-                position: "absolute", left: "calc(100% / 7 * 5.5)", top: 0, transform: "translateX(-50%)",
+                position: "absolute", left: "calc(100% * 18.5 / 30)", top: 0, transform: "translateX(-50%)",
                 fontFamily: FF_MONO, fontSize: 11, color: P.gold, letterSpacing: 2,
                 opacity: active === 1 ? 1 : 0, transition: "opacity 0.6s ease 0.5s", textTransform: "uppercase",
               }}>{COPY.inflection.youAreHere}</div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0, marginTop: 90 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 3fr 3fr 5fr 7fr 8fr", gap: 0, marginTop: 90 }}>
                 {COPY.inflection.eras.map((p, i) => (
                   <Reveal key={p.era} active={active === 1} delay={0.2 + i * 0.08}>
                     <div style={{ textAlign: "center" }}>

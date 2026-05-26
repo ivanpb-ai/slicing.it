@@ -27,7 +27,7 @@ const FF_MONO = "'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace";
 // Section ids (structural — order matches COPY.navLabels)
 const SECTIONS = [
   "hero", "inflection", "waves", "core", "slicing", "ainative", "ambient",
-  "positioning", "ntn", "verticals", "economy", "roadmap", "sixg", "vision",
+  "positioning", "ntn", "verticals", "business", "economy", "vision",
 ];
 
 // ═════════════════════════════════════════════════════════════════════════
@@ -520,7 +520,7 @@ function makeArea(years, vals, max, active) {
 // ─────────────────────────────────────────────────────────────────────────
 // ROADMAP TIMELINE
 // ─────────────────────────────────────────────────────────────────────────
-function RoadmapView({ active }) {
+export function RoadmapView({ active }) {
   const data = COPY.roadmap.data;
   const cats = COPY.roadmap.cats;
   const YEAR_COLOR = COPY.roadmap.yearColors;
@@ -600,7 +600,7 @@ function RoadmapView({ active }) {
 // ─────────────────────────────────────────────────────────────────────────
 // 6G TIMELINE
 // ─────────────────────────────────────────────────────────────────────────
-function SixGRoadmap({ active }) {
+export function SixGRoadmap({ active }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, width: "100%", maxWidth: 980, margin: "0 auto" }}>
       {COPY.sixg.items.map((it, i) => (
@@ -628,21 +628,21 @@ function SixGRoadmap({ active }) {
 // ═════════════════════════════════════════════════════════════════════════
 // Small presentational helpers for section headers (read text from COPY)
 // ═════════════════════════════════════════════════════════════════════════
-function Kicker({ children, color, align = "center", mb = 14 }) {
+export function Kicker({ children, color, align = "center", mb = 14 }) {
   return (
     <div style={{ fontFamily: FF_MONO, fontSize: 12, color, letterSpacing: 4, marginBottom: mb, textTransform: "uppercase", textAlign: align }}>
       {children}
     </div>
   );
 }
-function Heading({ parts, size = "clamp(26px, 5vw, 52px)", mb = 12, lineHeight = 1.1 }) {
+export function Heading({ parts, size = "clamp(26px, 5vw, 52px)", mb = 12, lineHeight = 1.1 }) {
   return (
     <h2 style={{ fontFamily: FF_HEAD, fontWeight: 300, fontSize: size, textAlign: "center", margin: `0 0 ${mb}px`, letterSpacing: -1, lineHeight }}>
       <Rich parts={parts} />
     </h2>
   );
 }
-function Lede({ children, size = 14, mb = 28, max = 780 }) {
+export function Lede({ children, size = 14, mb = 28, max = 780 }) {
   return (
     <div style={{ textAlign: "center", color: P.dim, fontSize: size, marginBottom: mb, maxWidth: max, marginLeft: "auto", marginRight: "auto", lineHeight: 1.6 }}>
       {children}
@@ -1009,16 +1009,40 @@ export default function NorthStarFutureVision() {
           </div>
         </div>
 
-        {/* ════════════ 10. ECONOMY ════════════ */}
+        {/* ════════════ 10. BUSINESS MODELS ════════════ */}
         <div style={S}>
           <div style={{ maxWidth: 1100, width: "100%" }}>
-            <Reveal active={active === 10}><Kicker color={P.gold}>{COPY.economy.kicker}</Kicker></Reveal>
-            <Reveal active={active === 10} delay={0.08}><Heading parts={COPY.economy.headline} size="clamp(26px, 5vw, 50px)" mb={12} /></Reveal>
-            <Reveal active={active === 10} delay={0.16}><Lede size={13} mb={24} max={760}>{COPY.economy.body}</Lede></Reveal>
-            <Reveal active={active === 10} delay={0.24}><EconomyChart active={active === 10} /></Reveal>
+            <Reveal active={active === 10}><Kicker color={P.cyan}>{COPY.business.kicker}</Kicker></Reveal>
+            <Reveal active={active === 10} delay={0.08}><Heading parts={COPY.business.headline} size="clamp(26px, 5vw, 50px)" mb={12} /></Reveal>
+            <Reveal active={active === 10} delay={0.16}><Lede size={13} mb={30} max={820}>{COPY.business.body}</Lede></Reveal>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, alignItems: "stretch" }}>
+              {COPY.business.points.map((p, i) => (
+                <Reveal key={i} active={active === 10} delay={0.26 + i * 0.1}>
+                  <div style={{
+                    height: "100%", boxSizing: "border-box",
+                    background: `linear-gradient(180deg, ${p.c}1f, rgba(255,255,255,0.03))`,
+                    border: `1px solid ${p.c}59`, borderRadius: 16, padding: "22px 20px", boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
+                  }}>
+                    <div style={{ fontFamily: FF_MONO, fontSize: 11, color: p.c, letterSpacing: 1, marginBottom: 10 }}>{`0${i + 1}`}</div>
+                    <div style={{ fontFamily: FF_HEAD, fontWeight: 300, fontSize: 24, color: P.white, marginBottom: 8, letterSpacing: -0.5 }}>{p.title}</div>
+                    <div style={{ fontSize: 13, color: P.dim, lineHeight: 1.6 }}>{p.desc}</div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ════════════ 11. ECONOMY ════════════ */}
+        <div style={S}>
+          <div style={{ maxWidth: 1100, width: "100%" }}>
+            <Reveal active={active === 11}><Kicker color={P.gold}>{COPY.economy.kicker}</Kicker></Reveal>
+            <Reveal active={active === 11} delay={0.08}><Heading parts={COPY.economy.headline} size="clamp(26px, 5vw, 50px)" mb={12} /></Reveal>
+            <Reveal active={active === 11} delay={0.16}><Lede size={13} mb={24} max={760}>{COPY.economy.body}</Lede></Reveal>
+            <Reveal active={active === 11} delay={0.24}><EconomyChart active={active === 11} /></Reveal>
             <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
               {COPY.economy.stats.map((s, i) => (
-                <Reveal key={i} active={active === 10} delay={0.4 + i * 0.08}>
+                <Reveal key={i} active={active === 11} delay={0.4 + i * 0.08}>
                   <div style={{ border: `1px solid ${s.c}33`, borderRadius: 14, padding: "16px 14px", background: `linear-gradient(180deg, ${s.c}0e, transparent)`, textAlign: "center" }}>
                     <div style={{ fontFamily: FF_HEAD, fontWeight: 300, fontSize: 26, color: s.c, letterSpacing: -0.5 }}>{s.v}</div>
                     <div style={{ fontSize: 11, color: P.dim, marginTop: 4, lineHeight: 1.4 }}>{s.l}</div>
@@ -1029,52 +1053,23 @@ export default function NorthStarFutureVision() {
           </div>
         </div>
 
-        {/* ════════════ 11. ROADMAP ════════════ */}
-        <div style={S}>
-          <div style={{ maxWidth: 1080, width: "100%" }}>
-            <Reveal active={active === 11}><Kicker color={P.cyan}>{COPY.roadmap.kicker}</Kicker></Reveal>
-            <Reveal active={active === 11} delay={0.08}><Heading parts={COPY.roadmap.headline} size="clamp(26px, 5vw, 50px)" mb={22} /></Reveal>
-            <RoadmapView active={active === 11} />
-          </div>
-        </div>
-
-        {/* ════════════ 12. TOWARD 6G ════════════ */}
-        <div style={S}>
-          <div style={{ maxWidth: 1100, width: "100%" }}>
-            <Reveal active={active === 12}><Kicker color={P.gold}>{COPY.sixg.kicker}</Kicker></Reveal>
-            <Reveal active={active === 12} delay={0.08}><Heading parts={COPY.sixg.headline} size="clamp(26px, 5vw, 50px)" mb={12} /></Reveal>
-            <Reveal active={active === 12} delay={0.16}><Lede size={13} mb={28} max={800}>{COPY.sixg.body}</Lede></Reveal>
-            <SixGRoadmap active={active === 12} />
-
-            <Reveal active={active === 12} delay={0.85}>
-              <div style={{
-                marginTop: 24, padding: "16px 24px", background: `linear-gradient(135deg, ${P.gold}10, ${P.purple}10)`,
-                border: `1px solid ${P.gold}33`, borderRadius: 12, fontSize: 12, color: "rgba(244,224,255,0.78)", lineHeight: 1.65, textAlign: "center",
-              }}>
-                <strong style={{ color: P.gold, fontFamily: FF_MONO, fontSize: 11, letterSpacing: 1 }}>{COPY.sixg.note.label}</strong>
-                {COPY.sixg.note.text}
-              </div>
-            </Reveal>
-          </div>
-        </div>
-
-        {/* ════════════ 13. VISION / CTA ════════════ */}
+        {/* ════════════ 12. VISION / CTA ════════════ */}
         <div style={S}>
           <div style={{ maxWidth: 1000, textAlign: "center" }}>
-            <Reveal active={active === 13}>
+            <Reveal active={active === 12}>
               <div style={{ fontFamily: FF_MONO, fontSize: 12, color: P.cyan, letterSpacing: 6, textTransform: "uppercase", marginBottom: 28 }}>{COPY.vision.kicker}</div>
             </Reveal>
-            <Reveal active={active === 13} delay={0.1}>
+            <Reveal active={active === 12} delay={0.1}>
               <div style={{ fontFamily: FF_HEAD, fontWeight: 300, fontSize: "clamp(36px, 6.5vw, 76px)", lineHeight: 1.05, letterSpacing: -2 }}>
                 <Rich parts={COPY.vision.headline} />
               </div>
             </Reveal>
-            <Reveal active={active === 13} delay={0.3}>
+            <Reveal active={active === 12} delay={0.3}>
               <p style={{ fontSize: 17, color: P.dim, marginTop: 32, lineHeight: 1.7, maxWidth: 720, margin: "32px auto 0" }}>
                 {COPY.vision.body}
               </p>
             </Reveal>
-            <Reveal active={active === 13} delay={0.5}>
+            <Reveal active={active === 12} delay={0.5}>
               <div style={{ marginTop: 44, display: "flex", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
                 {COPY.vision.ctas.map((c, i) => (
                   <a key={i} href={c.href} style={c.primary ? ctaPrimary : ctaGhost}>{c.label}</a>

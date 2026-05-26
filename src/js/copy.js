@@ -19,9 +19,8 @@ export const COPY = {
     "Positioning",
     "Sky as Network",
     "Verticals 2035",
+    "Business Models",
     "The $1.3T Shift",
-    "Roadmap",
-    "Toward 6G",
     "Vision"
   ],
   hero: {
@@ -609,6 +608,23 @@ export const COPY = {
         body: "One 5G subscription works on tankers, planes and Arctic stations via integrated NTN. No more dead zones.",
         tech: "NR-NTN · Direct-to-Device · Slicing"
       }
+    ]
+  },
+  business: {
+    kicker: "New Business Models",
+    headline: [
+      "From ",
+      { t: "pipes", c: P.muted },
+      " to ",
+      { t: "platforms", c: P.cyan },
+      " to ",
+      { t: "experiences", c: P.magenta }
+    ],
+    body: "From gigabytes to value-based business models. The traditional way of pricing data is evolving. As we move toward an 'intelligence fabric', telecom operators must shift from selling gigabytes to exposing network capabilities and APIs — customers increasingly pay for performance outcomes, real-time intelligence and guaranteed capabilities.",
+    points: [
+      { title: "Pipes", desc: "Selling gigabytes and raw connectivity — capacity priced as a commodity.", c: P.muted },
+      { title: "Platforms", desc: "Exposing network capabilities and APIs — Quality-on-Demand, location and slicing on tap.", c: P.cyan },
+      { title: "Experiences", desc: "Customers pay for outcomes — real-time intelligence and guaranteed capabilities like ultra-reliable low latency.", c: P.magenta }
     ]
   },
   economy: {

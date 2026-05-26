@@ -905,6 +905,19 @@
       const lastRrp = rrpConfig[rrpConfig.length - 1];
       const svgHeight = lastRrp ? lastRrp.baseY + lastRrp.height + 50 : 860;
 
+      // Teaser embed: frame only the Private RRP (which carries the L4S flows).
+      // Premium/Basic sit below it and are left out of the cropped view so the
+      // animated congestion control reads at a usable size.
+      let teaserViewBox = `0 0 1030 ${svgHeight}`;
+      if (this._minimal) {
+        const tgt = rrpConfig.find(r => r.isL4sTarget) || rrpConfig[0];
+        if (tgt) {
+          const padTop = 18, padBottom = 6;
+          const y = Math.max(0, tgt.baseY - padTop);
+          teaserViewBox = `0 ${y} 1030 ${(tgt.baseY - y) + tgt.height + padBottom}`;
+        }
+      }
+
       this.shadowRoot.innerHTML = `
         <style>${this.getStyles()}</style>
         ${this._minimal ? '<style>:host{pointer-events:none;display:block}.container{padding:0!important;background:transparent!important}.container>*:not(.svg-canvas){display:none!important}.svg-canvas{width:100%!important;height:100vh!important;background:transparent!important}</style>' : ''}
@@ -920,7 +933,7 @@
           ${s.showSpectrumPanel ? '<div id="spectrum-panel-container">' + this.renderSpectrumPanelContent() + '</div>' : ''}
           ${s.show5qiPanel ? this._render5QIPanel() : ''}
 
-          <svg viewBox="0 0 1030 ${svgHeight}" class="svg-canvas">
+          <svg viewBox="${teaserViewBox}" class="svg-canvas">
             <defs>
               <marker id="arrow-down" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
                 <polygon points="0 0, 8 3, 0 6" fill="#fbbf24"/>

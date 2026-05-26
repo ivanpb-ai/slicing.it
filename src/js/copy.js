@@ -181,14 +181,14 @@ export const COPY = {
     body: "5G SA positioning fuses RAN measurements, RTK, AI inference and ISAC to deliver indoor + outdoor accuracy that GNSS-only systems can't touch.",
     ladder: [
       { era: "5G SA · 2026–2027", acc: "~1–2 m",  detail: "Indoor — dot positioning · RTK over 5G SA", color: P.cyan },
-      { era: "5G SA · 2026–2027", acc: "~5–10 m", detail: "Outdoor — Timing Advance + Angle-of-Arrival · GPS-level alternative / fallback", color: P.cyan },
+      { era: "5G SA · 2026–2027", acc: "<50 m",   detail: "Outdoor — Timing Advance + Angle-of-Arrival · GPS-level alternative / fallback", color: P.cyan },
       { era: "2028–2030",         acc: "<50 cm",  detail: "AI fusion · ISAC · macro",  color: P.magenta },
       { era: "2030+",             acc: "<10 cm",  detail: "Cross-tech · 6G upper mid",  color: P.green },
     ],
     examplesTitle: "Use cases — across every era",
     examples: [
       { icon: "⛏️", what: "Underground tracking of workers and machines far below the surface." },
-      { icon: "🩺", what: "Locate medical assets in hospitals to the room — without GPS." },
+      { icon: "🦽", what: "Locate medical assets in hospitals to the room — without GPS." },
       { icon: "🚛", what: "Lane-level vehicle positioning for autonomous corridors." },
     ],
   },

@@ -59,11 +59,11 @@ export const COPY = {
         label: "Connected devices on 5G SA"
       },
       {
-        v: 12,
+        v: 10,
         pre: "",
         suf: "×",
         dec: 0,
-        label: "Enterprise ARPU uplift on slices"
+        label: "Premium-slice ARPU uplift (potential)"
       },
       {
         v: 99.999,
@@ -72,7 +72,8 @@ export const COPY = {
         dec: 3,
         label: "Sovereign-grade reliability"
       }
-    ]
+    ],
+    note: "Headline figures are indicative — blended from public industry forecasts (analyst, GSMA and vendor estimates) and 3GPP targets, not a single audited source."
   },
   inflection: {
     kicker: "The Inflection Point",
@@ -708,11 +709,12 @@ export const COPY = {
         c: P.gold
       },
       {
-        v: "$80B+",
-        l: "Sensing-as-a-Service by 2035",
+        v: "$10–80B",
+        l: "Sensing-as-a-Service by 2035 (emerging)",
         c: P.green
       }
-    ]
+    ],
+    note: "Illustrative figures — directional analyst/industry forecasts (enterprise-5G, network-API and sensing estimates), not audited."
   },
   roadmap: {
     kicker: "NorthStar Roadmap · 2025–2029",

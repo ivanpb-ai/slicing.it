@@ -866,7 +866,14 @@ export default function NorthStarFutureVision() {
             <Reveal active={active === 5} delay={0.16}><Lede mb={24}>{COPY.ainative.body}</Lede></Reveal>
 
             <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 24, alignItems: "center" }}>
-              <Reveal active={active === 5} delay={0.24}><ClosedLoopSVG active={active === 5} /></Reveal>
+              <Reveal active={active === 5} delay={0.24}>
+                <div>
+                  <ClosedLoopSVG active={active === 5} />
+                  <p style={{ margin: "12px 6px 0", fontSize: 11.5, color: P.dim, lineHeight: 1.55 }}>
+                    <Rich parts={COPY.ainative.note} />
+                  </p>
+                </div>
+              </Reveal>
               <Reveal active={active === 5} delay={0.34}>
                 <div>
                   {COPY.ainative.points.map((it, i) => (

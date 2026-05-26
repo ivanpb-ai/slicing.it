@@ -547,15 +547,15 @@ export const COPY = {
       },
       {
         icon: "🚗",
-        year: "2030",
+        year: "2033",
         title: "Autonomous corridors at scale",
         color: P.gold,
-        body: "V2X sub-ms safety messages, edge handover between road segments, cooperative driving — Sweden's first nationwide corridor by 2030.",
+        body: "V2X sub-ms safety messages, edge handover between road segments, cooperative driving — Sweden's first nationwide corridor by 2033.",
         tech: "V2X · TSN · MEC · 5QI 86"
       },
       {
         icon: "🏭",
-        year: "2029",
+        year: "2031",
         title: "Lights-out factories",
         color: P.green,
         body: "TSN over 5G LAN replaces wired Ethernet; robots, AGVs and PLCs share a single deterministic wireless fabric.",
@@ -587,7 +587,7 @@ export const COPY = {
       },
       {
         icon: "🎮",
-        year: "2028",
+        year: "2032",
         title: "Edge-rendered XR everywhere",
         color: P.gold,
         body: "AR glasses with no on-device GPU; rendering runs 8 ms away at the city edge.",

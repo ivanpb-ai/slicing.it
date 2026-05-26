@@ -760,7 +760,7 @@ export default function NorthStarFutureVision() {
               </div>
             </Reveal>
             <Reveal active={active === 0} delay={0.95}>
-              <div style={{ marginTop: 28, fontSize: 10.5, color: P.faint, maxWidth: 680, marginLeft: "auto", marginRight: "auto", lineHeight: 1.5 }}>
+              <div style={{ marginTop: 28, fontSize: 12, color: P.dim, maxWidth: 680, marginLeft: "auto", marginRight: "auto", lineHeight: 1.5 }}>
                 {COPY.hero.note}
               </div>
             </Reveal>
@@ -1032,7 +1032,7 @@ export default function NorthStarFutureVision() {
               ))}
             </div>
             <Reveal active={active === 10} delay={0.72}>
-              <div style={{ marginTop: 16, fontSize: 10.5, color: P.faint, textAlign: "center", lineHeight: 1.5, maxWidth: 820, marginLeft: "auto", marginRight: "auto" }}>
+              <div style={{ marginTop: 16, fontSize: 12, color: P.dim, textAlign: "center", lineHeight: 1.5, maxWidth: 820, marginLeft: "auto", marginRight: "auto" }}>
                 {COPY.economy.note}
               </div>
             </Reveal>

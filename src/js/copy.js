@@ -240,15 +240,38 @@ export const COPY = {
     kicker: "The NorthStar Innovation Network",
     headline: [
       "A live ",
-      { t: "5G Standalone", c: P.cyan },
+      {
+        t: "5G Standalone",
+        c: P.cyan
+      },
       " network to prove what's next"
     ],
     body: "NorthStar is a dual 5G SA core running in parallel with Telia's public network — in a secure Telia site, managed by Ericsson on the latest available 3GPP release software. It's where Telia, Ericsson and partner organizations trial new functionalities, slice configurations, APIs and edge services before they reach the world-wide market years later.",
     pillars: [
-      { icon: "🧠", title: "Always the latest 5G SA core functions", desc: "Always updated state-of-the-art independent 5G Standalone dual core SA/NSA/LTE on the latest 3GPP release available — alongside the live network but dedicated for advanced R&D.", c: P.cyan },
-      { icon: "📡", title: "Radio where it's needed", desc: "Dedicated or shared public radio at customer premises (using Radio Resource Partitions, RRPs), connected over Telia's extensive national IP transport network.", c: P.magenta },
-      { icon: "🧩", title: "Slices for real use cases", desc: "Quality-tuned use case connectivity configurations using network slices, RRPs, and 5QI quality parameters tied to DNNs defined for traffic such as vehicle video uplink, remote drone control and factory automation — adapted on demand through orchestration.", c: P.gold },
-      { icon: "⚡", title: "Open and intelligent", desc: "A multi-tiered network of distributed regional and local edge nodes providing compute capabilities. CAMARA APIs for developers to control quality and extract location data and many other functions. Extra nodes: Ericsson Security Manager and Network Locator.", c: P.green }
+      {
+        icon: "🧠",
+        title: "Always the latest 5G SA core functions",
+        desc: "Always updated state-of-the-art independent 5G Standalone dual core SA/NSA/LTE on the latest 3GPP release available — alongside the live network but dedicated for advanced R&D.",
+        c: P.cyan
+      },
+      {
+        icon: "📡",
+        title: "Radio where it's needed",
+        desc: "Dedicated or shared public radio at customer premises (using Radio Resource Partitions, RRPs), connected over Telia's extensive national IP transport network.",
+        c: P.magenta
+      },
+      {
+        icon: "🧩",
+        title: "Slices for real use cases",
+        desc: "Quality-tuned use case connectivity configurations using network slices, RRPs, and 5QI quality parameters tied to DNNs defined for traffic such as vehicle video uplink, remote drone control and factory automation — adapted on demand through orchestration.",
+        c: P.gold
+      },
+      {
+        icon: "⚡",
+        title: "Open and intelligent",
+        desc: "A multi-tiered network of distributed regional and local edge nodes providing compute capabilities. CAMARA APIs for developers to control quality and extract location data as well as many other functions. Extra nodes: Ericsson Security Manager and Network Locator.",
+        c: P.green
+      }
     ]
   },
   core: {

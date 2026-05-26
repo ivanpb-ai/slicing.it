@@ -984,6 +984,12 @@ export default function NorthStarFutureVision() {
                 </div>
               </Reveal>
             </div>
+
+            <Reveal active={active === 8} delay={0.5}>
+              <p style={{ margin: "20px auto 0", maxWidth: 860, fontSize: 11.5, color: P.dim, lineHeight: 1.55, textAlign: "center" }}>
+                <Rich parts={COPY.ntn.note} />
+              </p>
+            </Reveal>
           </div>
         </div>
 

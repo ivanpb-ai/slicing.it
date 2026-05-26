@@ -13,6 +13,7 @@ export const COPY = {
     "Inflection",
     "Three Waves",
     "Innovation Network",
+    "Latency Demo",
     "Inside the Core",
     "Live Slicing",
     "AI-Native",
@@ -272,6 +273,18 @@ export const COPY = {
         desc: "A multi-tiered network of distributed regional and local edge nodes providing compute capabilities. CAMARA APIs for developers to control quality and extract location data as well as many other functions. Extra nodes: Ericsson Security Manager and Network Locator.",
         c: P.green
       }
+    ]
+  },
+  demo: {
+    kicker: "Live use-case demo · AstaZero",
+    headline: [
+      "Low latency for ",
+      { t: "automotive safety", c: P.cyan }
+    ],
+    body: "At Sweden's AstaZero proving ground, on the NorthStar network: a remotely-driven car turns across traffic while a truck hides a fast-approaching car. A 5G-connected roadside sensor detects the impending collision and signals the car to brake — the same experiment, run over two network qualities.",
+    clips: [
+      { tag: "Best-effort · 5QI 9", outcome: "Latency too high — the emergency brake signal reaches the car too late, and it is struck.", c: P.red },
+      { tag: "Low-latency V2X · 5QI 79", outcome: "Lower latency — the signal arrives in time; the car brakes to a complete halt, safely.", c: P.green }
     ]
   },
   core: {

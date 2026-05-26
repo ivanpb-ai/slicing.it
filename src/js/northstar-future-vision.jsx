@@ -642,7 +642,7 @@ export function Heading({ parts, size = "clamp(26px, 5vw, 52px)", mb = 12, lineH
     </h2>
   );
 }
-export function Lede({ children, size = 14, mb = 28, max = 780 }) {
+export function Lede({ children, size = 15, mb = 28, max = 780 }) {
   return (
     <div style={{ textAlign: "center", color: P.dim, fontSize: size, marginBottom: mb, maxWidth: max, marginLeft: "auto", marginRight: "auto", lineHeight: 1.6 }}>
       {children}
@@ -834,7 +834,7 @@ export default function NorthStarFutureVision() {
           <div style={{ maxWidth: 1140, width: "100%" }}>
             <Reveal active={active === 3}><Kicker color={P.cyan}>{COPY.innovation.kicker}</Kicker></Reveal>
             <Reveal active={active === 3} delay={0.08}><Heading parts={COPY.innovation.headline} size="clamp(26px, 5vw, 50px)" mb={12} /></Reveal>
-            <Reveal active={active === 3} delay={0.16}><Lede size={13} mb={28} max={840}>{COPY.innovation.body}</Lede></Reveal>
+            <Reveal active={active === 3} delay={0.16}><Lede size={14} mb={28} max={840}>{COPY.innovation.body}</Lede></Reveal>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, alignItems: "stretch" }}>
               {COPY.innovation.pillars.map((p, i) => (
                 <Reveal key={i} active={active === 3} delay={0.24 + i * 0.08}>
@@ -863,7 +863,7 @@ export default function NorthStarFutureVision() {
           <div style={{ maxWidth: 1280, width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
             <Reveal active={active === 4}><Kicker color={P.gold} mb={8}>{COPY.core.kicker}</Kicker></Reveal>
             <Reveal active={active === 4} delay={0.08}><Heading parts={COPY.core.headline} size="clamp(24px, 4vw, 42px)" mb={14} /></Reveal>
-            <Reveal active={active === 4} delay={0.16}><Lede size={13} mb={16} max={760}>{COPY.core.body}</Lede></Reveal>
+            <Reveal active={active === 4} delay={0.16}><Lede size={14} mb={16} max={760}>{COPY.core.body}</Lede></Reveal>
             <Reveal active={active === 4} delay={0.24} style={{ flex: 1, minHeight: 0 }}>
               <div style={{
                 width: "100%", height: "100%", minHeight: 480, borderRadius: 18, overflow: "hidden",
@@ -880,7 +880,7 @@ export default function NorthStarFutureVision() {
           <div style={{ maxWidth: 1280, width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
             <Reveal active={active === 5}><Kicker color={P.cyan} mb={8}>{COPY.slicing.kicker}</Kicker></Reveal>
             <Reveal active={active === 5} delay={0.08}><Heading parts={COPY.slicing.headline} size="clamp(24px, 4vw, 42px)" mb={14} /></Reveal>
-            <Reveal active={active === 5} delay={0.16}><Lede size={13} mb={16} max={820}>{COPY.slicing.body}</Lede></Reveal>
+            <Reveal active={active === 5} delay={0.16}><Lede size={14} mb={16} max={820}>{COPY.slicing.body}</Lede></Reveal>
             <Reveal active={active === 5} delay={0.24} style={{ flex: 1, minHeight: 0 }}>
               <div style={{
                 width: "100%", height: "100%", minHeight: 480, borderRadius: 18, overflow: "hidden",
@@ -1032,7 +1032,7 @@ export default function NorthStarFutureVision() {
           <div style={{ maxWidth: 1140, width: "100%" }}>
             <Reveal active={active === 10}><Kicker color={P.magenta}>{COPY.verticals.kicker}</Kicker></Reveal>
             <Reveal active={active === 10} delay={0.08}><Heading parts={COPY.verticals.headline} size="clamp(26px, 5vw, 50px)" mb={10} /></Reveal>
-            <Reveal active={active === 10} delay={0.16}><Lede size={13} mb={28} max={720}>{COPY.verticals.body}</Lede></Reveal>
+            <Reveal active={active === 10} delay={0.16}><Lede size={14} mb={28} max={720}>{COPY.verticals.body}</Lede></Reveal>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gridAutoRows: "1fr", gap: 14 }}>
               {COPY.verticals.cards.map((c, i) => (
@@ -1048,7 +1048,7 @@ export default function NorthStarFutureVision() {
           <div style={{ maxWidth: 1100, width: "100%" }}>
             <Reveal active={active === 11}><Kicker color={P.gold}>{COPY.economy.kicker}</Kicker></Reveal>
             <Reveal active={active === 11} delay={0.08}><Heading parts={COPY.economy.headline} size="clamp(26px, 5vw, 50px)" mb={12} /></Reveal>
-            <Reveal active={active === 11} delay={0.16}><Lede size={13} mb={24} max={760}>{COPY.economy.body}</Lede></Reveal>
+            <Reveal active={active === 11} delay={0.16}><Lede size={14} mb={24} max={760}>{COPY.economy.body}</Lede></Reveal>
             <Reveal active={active === 11} delay={0.24}><EconomyChart active={active === 11} /></Reveal>
             <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
               {COPY.economy.stats.map((s, i) => (

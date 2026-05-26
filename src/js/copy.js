@@ -89,7 +89,7 @@ export const COPY = {
         tag: "Wave 2 · 2027–2030", title: "Cognitive", icon: "🧠", color: P.magenta,
         summary: "Network as intelligence. AI inside the RAN, the core, the orchestration loop — predicting, healing, optimising in real time.",
         bullets: [
-          "NWDAF-driven closed-loop assurance — proactive SLA management",
+          "Analytics-driven closed-loop assurance — proactive SLA management",
           "AI-native RAN: beam management, scheduling, energy adaptation",
           "Intent-based slice creation — describe outcomes, network configures itself",
           "Digital twin of the network for what-if planning and continuous tuning",
@@ -142,6 +142,10 @@ export const COPY = {
       { color: P.magenta, title: "Intent-Based Slicing", desc: "Describe outcomes (\"sub-10ms for 200 robots\") — the orchestrator designs and deploys the slice." },
       { color: P.gold,    title: "Energy as a Metric",   desc: "AI tunes radio power, beam selection and sleep cycles for >40% lower energy per Gbit." },
       { color: P.green,   title: "Digital Twin Ops",     desc: "Run what-if scenarios against a live, continuously-trained twin before touching production." },
+    ],
+    note: [
+      { t: "NWDAF", c: P.magenta, b: true },
+      " is the 3GPP-defined Network Data Analytics Function for 5G Core, responsible for collecting network data and producing analytics that other network functions can use for AI-based analytics, automation and optimization.",
     ],
   },
 

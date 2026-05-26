@@ -1,0 +1,9 @@
+# Gate the copy editor behind HTTP Basic Auth (see netlify/edge-functions/editor-auth.js).
+# Build command and publish directory remain as configured in the Netlify dashboard.
+[[edge_functions]]
+  path = "/copy-editor.html"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/copy-editor"
+  function = "editor-auth"

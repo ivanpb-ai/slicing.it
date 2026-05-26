@@ -180,11 +180,15 @@ export const COPY = {
     headline: ["From ", { t: "cell-ID guesses", c: P.muted }, " to ", { t: "centimetres", c: P.green }],
     body: "5G SA positioning fuses RAN measurements, RTK, AI inference and ISAC to deliver indoor + outdoor accuracy that GNSS-only systems can't touch.",
     ladder: [
-      { era: "4G",           acc: "~50 m",  detail: "Cell-ID only",                color: P.muted },
-      { era: "5G SA · 2025", acc: "~1–2 m", detail: "Indoor dot · RTK over 5G SA", color: P.cyan },
-      { era: "2027–28",      acc: "<50 cm", detail: "AI fusion · ISAC · macro",    color: P.magenta },
-      { era: "2030+",        acc: "<10 cm", detail: "Cross-tech · 6G upper mid",   color: P.green },
+      { era: "4G",                acc: "~50 m",  detail: "Cell-ID only",             color: P.muted },
+      { era: "5G SA · 2026–2027", color: P.cyan, split: [
+        { tag: "Indoor",  text: "~1–2 m · dot positioning (RTK over 5G SA)" },
+        { tag: "Outdoor", text: "Timing Advance + Angle-of-Arrival = GPS-level alternative / fallback" },
+      ] },
+      { era: "2028–2030",         acc: "<50 cm", detail: "AI fusion · ISAC · macro",  color: P.magenta },
+      { era: "2030+",             acc: "<10 cm", detail: "Cross-tech · 6G upper mid",  color: P.green },
     ],
+    examplesTitle: "Use cases — across every era",
     examples: [
       { icon: "⛏️", what: "Underground mining navigation 750 m below the surface." },
       { icon: "🚑", what: "Locate medical assets in hospitals to the room — without GPS." },

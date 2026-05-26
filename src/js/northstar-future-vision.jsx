@@ -931,11 +931,24 @@ export default function NorthStarFutureVision() {
                 <Reveal key={p.era} active={active === 7} delay={0.22 + i * 0.1}>
                   <div style={{
                     background: `linear-gradient(180deg, ${p.color}10, transparent)`,
-                    border: `1px solid ${p.color}33`, borderRadius: 16, padding: "18px 16px", textAlign: "center", height: 200, position: "relative",
+                    border: `1px solid ${p.color}33`, borderRadius: 16, padding: "18px 16px", textAlign: p.split ? "left" : "center", height: 200, position: "relative",
                   }}>
-                    <div style={{ fontFamily: FF_MONO, fontSize: 11, color: p.color, letterSpacing: 1, marginBottom: 14 }}>{p.era}</div>
-                    <div style={{ fontFamily: FF_HEAD, fontWeight: 300, fontSize: 36, color: P.white, marginBottom: 8, letterSpacing: -1 }}>{p.acc}</div>
-                    <div style={{ fontSize: 11, color: P.dim, lineHeight: 1.5 }}>{p.detail}</div>
+                    <div style={{ fontFamily: FF_MONO, fontSize: 11, color: p.color, letterSpacing: 1, marginBottom: 14, textAlign: "center" }}>{p.era}</div>
+                    {p.split ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        {p.split.map((s, j) => (
+                          <div key={j}>
+                            <div style={{ fontFamily: FF_MONO, fontSize: 10, color: p.color, letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>{s.tag}</div>
+                            <div style={{ fontSize: 11, color: P.dim, lineHeight: 1.45 }}>{s.text}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ fontFamily: FF_HEAD, fontWeight: 300, fontSize: 36, color: P.white, marginBottom: 8, letterSpacing: -1 }}>{p.acc}</div>
+                        <div style={{ fontSize: 11, color: P.dim, lineHeight: 1.5 }}>{p.detail}</div>
+                      </>
+                    )}
                     <div style={{
                       position: "absolute", left: "50%", bottom: 12, transform: "translateX(-50%)",
                       width: i < 3 ? `${50 - i * 12}%` : "8%", height: 6, borderRadius: 3,
@@ -947,13 +960,16 @@ export default function NorthStarFutureVision() {
             </div>
 
             <Reveal active={active === 7} delay={0.65}>
-              <div style={{ marginTop: 28, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, fontSize: 12, color: P.dim }}>
-                {COPY.positioning.examples.map((it, i) => (
-                  <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${P.faint}`, borderRadius: 12, padding: "14px 16px", display: "flex", gap: 10, alignItems: "center" }}>
-                    <span style={{ fontSize: 22 }}>{it.icon}</span>
-                    <span style={{ lineHeight: 1.5 }}>{it.what}</span>
-                  </div>
-                ))}
+              <div style={{ marginTop: 30, borderTop: `1px solid ${P.faint}`, paddingTop: 18 }}>
+                <div style={{ fontFamily: FF_MONO, fontSize: 11, color: P.dim, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>{COPY.positioning.examplesTitle}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, fontSize: 12, color: P.dim }}>
+                  {COPY.positioning.examples.map((it, i) => (
+                    <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${P.faint}`, borderRadius: 12, padding: "14px 16px", display: "flex", gap: 10, alignItems: "center" }}>
+                      <span style={{ fontSize: 22 }}>{it.icon}</span>
+                      <span style={{ lineHeight: 1.5 }}>{it.what}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </Reveal>
           </div>

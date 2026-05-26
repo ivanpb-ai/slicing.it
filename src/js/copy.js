@@ -71,7 +71,7 @@ export const COPY = {
   waves: {
     kicker: "How the decade unfolds",
     headline: [
-      "Three waves: ", { t: "Programmable", c: P.cyan }, " · ",
+      "Three waves:", { br: true }, { t: "Programmable", c: P.cyan }, " · ",
       { t: "Cognitive", c: P.magenta }, " · ", { t: "Ambient", c: P.gold },
     ],
     bands: [

@@ -183,38 +183,51 @@ function renderObjectFields(obj, container, basePath) {
 function richField(obj, key, label, path) {
   const arr = obj[key];
   const box = h("div", { class: "rich-box" });
-  arr.forEach((seg, i) => {
-    if (typeof seg === "string") {
-      const long = seg.length > 44;
-      const inp = long ? h("textarea", {}) : h("input", { type: "text" });
-      if (long) inp.rows = 2;
-      inp.value = seg;
-      inp.classList.add("seg-plain");
-      inp.addEventListener("input", () => { arr[i] = inp.value; });
-      box.appendChild(inp);
-      return;
-    }
-    if (seg && typeof seg === "object") {
-      if ("br" in seg && !("t" in seg)) { box.appendChild(h("div", { class: "seg-br", text: "↵ line break" })); return; }
-      const segRow = h("div", { class: "seg" });
-      if ("t" in seg) {
-        const inp = h("input", { type: "text" });
-        inp.value = seg.t;
-        inp.classList.add("seg-text");
-        inp.addEventListener("input", () => { seg.t = inp.value; });
-        segRow.appendChild(inp);
-      }
-      const extras = h("div", { class: "seg-extras" });
-      for (const k of Object.keys(seg)) {
-        if (k === "t") continue;
-        if (k === "grad" && Array.isArray(seg.grad)) { extras.appendChild(gradEditor(seg, path)); continue; }
-        renderValue(seg, k, extras, pretty(k), `${path}.${k}`);
-      }
-      if (extras.children.length) segRow.appendChild(extras);
-      box.appendChild(segRow);
-    }
-  });
+  arr.forEach((_, i) => box.appendChild(richRow(arr, i, path)));
+  box.appendChild(h("div", { class: "rich-foot" },
+    h("button", { class: "mini", type: "button", text: "+ Text", onclick: () => { arr.push(""); rerender(); } }),
+  ));
   return h("div", { class: "field rich" }, labelEl(label, path, "rich text"), box);
+}
+
+function richRow(arr, i, path) {
+  const seg = arr[i];
+  const content = h("div", { class: "rich-content" });
+  if (typeof seg === "string") {
+    const long = seg.length > 44;
+    const inp = long ? h("textarea", {}) : h("input", { type: "text" });
+    if (long) inp.rows = 2;
+    inp.value = seg;
+    inp.classList.add("seg-plain");
+    inp.addEventListener("input", () => { arr[i] = inp.value; });
+    content.appendChild(inp);
+  } else if (seg && typeof seg === "object" && "br" in seg && !("t" in seg)) {
+    content.appendChild(h("div", { class: "seg-br", text: "↵ line break" }));
+  } else if (seg && typeof seg === "object") {
+    const segRow = h("div", { class: "seg" });
+    if ("t" in seg) {
+      const inp = h("input", { type: "text" });
+      inp.value = seg.t;
+      inp.classList.add("seg-text");
+      inp.addEventListener("input", () => { seg.t = inp.value; });
+      segRow.appendChild(inp);
+    }
+    const extras = h("div", { class: "seg-extras" });
+    for (const k of Object.keys(seg)) {
+      if (k === "t") continue;
+      if (k === "grad" && Array.isArray(seg.grad)) { extras.appendChild(gradEditor(seg, path)); continue; }
+      renderValue(seg, k, extras, pretty(k), `${path}.${k}`);
+    }
+    if (extras.children.length) segRow.appendChild(extras);
+    content.appendChild(segRow);
+  }
+  const controls = h("div", { class: "rich-ctrls" },
+    iconBtn("↑", "Move up", () => { if (i > 0) { [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]]; rerender(); } }, i === 0),
+    iconBtn("↓", "Move down", () => { if (i < arr.length - 1) { [arr[i + 1], arr[i]] = [arr[i], arr[i + 1]]; rerender(); } }, i === arr.length - 1),
+    iconBtn("↵", "Insert line break after", () => { arr.splice(i + 1, 0, { br: true }); rerender(); }),
+    iconBtn("✕", "Delete", () => { arr.splice(i, 1); rerender(); }),
+  );
+  return h("div", { class: "rich-row" }, content, controls);
 }
 
 function gradEditor(seg, path) {

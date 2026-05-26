@@ -15,6 +15,11 @@
         html.teaser-mode,.teaser-mode body{overflow:hidden}
         .teaser-mode body{visibility:hidden}
         .teaser-mode.ready body{visibility:visible}
+        /* Teaser: pin the RRP-A/RRP-B plots to the viewport, centered and height-fit, so both show fully with no top band and no bottom clip. */
+        .teaser-mode .policy-envelope{position:fixed;inset:0;margin:0;padding:2.5vh 2vw;border:0;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2.5vh;background:transparent}
+        .teaser-mode .envelope-plot{width:auto;height:44vh;max-width:100%;margin:0}
+        .teaser-mode .envelope-plot+.envelope-plot{margin-top:0}
+        .teaser-mode .envelope-caption{display:none}
     </style>
     <link rel="icon" type="image/png" href="assets/images/favicon.png">
     <style>

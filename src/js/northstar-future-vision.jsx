@@ -759,7 +759,12 @@ export default function NorthStarFutureVision() {
                 ))}
               </div>
             </Reveal>
-            <div style={{ marginTop: 60, animation: "pulse 2s infinite", color: P.muted, fontSize: 12, letterSpacing: 2 }}>
+            <Reveal active={active === 0} delay={0.95}>
+              <div style={{ marginTop: 28, fontSize: 10.5, color: P.faint, maxWidth: 680, marginLeft: "auto", marginRight: "auto", lineHeight: 1.5 }}>
+                {COPY.hero.note}
+              </div>
+            </Reveal>
+            <div style={{ marginTop: 36, animation: "pulse 2s infinite", color: P.muted, fontSize: 12, letterSpacing: 2 }}>
               {COPY.ui.scrollHint}
             </div>
           </div>
@@ -1026,6 +1031,11 @@ export default function NorthStarFutureVision() {
                 </Reveal>
               ))}
             </div>
+            <Reveal active={active === 10} delay={0.72}>
+              <div style={{ marginTop: 16, fontSize: 10.5, color: P.faint, textAlign: "center", lineHeight: 1.5, maxWidth: 820, marginLeft: "auto", marginRight: "auto" }}>
+                {COPY.economy.note}
+              </div>
+            </Reveal>
           </div>
         </div>
 

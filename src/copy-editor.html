@@ -43,14 +43,55 @@
     summary {
       cursor: pointer; padding: 12px 16px; font-weight: 600; font-size: 15px;
       list-style: none; user-select: none; background: rgba(255,255,255,0.03);
+      display: flex; align-items: baseline; gap: 8px;
     }
     summary::-webkit-details-marker { display: none; }
-    summary::before { content: "▸ "; color: var(--cyan); }
-    details[open] > summary::before { content: "▾ "; }
+    summary::before { content: "▸"; color: var(--cyan); }
+    details[open] > summary::before { content: "▾"; }
+    .sec-title { flex: 1; }
+    .sec-key { font-family: ui-monospace, monospace; font-size: 11px; color: var(--dim); opacity: 0.7; }
     .group-body { padding: 8px 16px 16px; }
+    .subgroup { border-left: 2px solid var(--line); padding-left: 12px; margin: 14px 0; }
+    .subhead { font-size: 12px; font-weight: 600; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
     .field { display: block; margin: 12px 0; }
-    .field.hidden { display: none; }
-    .lab { display: block; font-size: 11px; color: var(--dim); margin-bottom: 4px; font-family: ui-monospace, monospace; word-break: break-all; }
+    .field.hidden, .item-card.hidden { display: none; }
+    .lab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+    .lab.inline { margin-bottom: 0; }
+    .lab-name { font-size: 12.5px; color: var(--light); font-weight: 500; }
+    .lab-badge { font-size: 10px; color: var(--cyan); border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; }
+    .lab-path { font-size: 10.5px; color: var(--dim); font-family: ui-monospace, monospace; opacity: 0.55; word-break: break-all; }
+    /* Repeating-block collections */
+    .collection { margin: 14px 0; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: rgba(0,0,0,0.10); }
+    .coll-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .coll-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+    .coll-title .count { font-size: 11px; color: var(--dim); background: rgba(0,0,0,0.3); border-radius: 999px; padding: 1px 8px; font-family: ui-monospace, monospace; }
+    .coll-head .add { margin-left: auto; }
+    button.mini { padding: 5px 11px; font-size: 12.5px; border-radius: 7px; }
+    button.mini.add { background: rgba(153,10,227,0.25); border-color: var(--purple); }
+    button.mini.add:hover { background: var(--purple); }
+    .coll-list { display: flex; flex-direction: column; gap: 8px; }
+    .item-card { border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,0.02); overflow: hidden; }
+    .card-head { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: rgba(255,255,255,0.03); }
+    .card-title { flex: 1; font-size: 12.5px; color: var(--light); font-weight: 600; }
+    .card-body { padding: 4px 12px 10px; }
+    .controls { display: flex; gap: 4px; flex: none; }
+    .icon-btn { padding: 3px 8px; font-size: 13px; line-height: 1; border-radius: 6px; }
+    .icon-btn:disabled { opacity: 0.3; cursor: default; }
+    .scalar-row { display: flex; align-items: center; gap: 6px; }
+    .scalar-row .grow { flex: 1; font: inherit; padding: 7px 9px; border-radius: 7px; border: 1px solid var(--line); background: rgba(0,0,0,0.28); color: var(--light); }
+    .scalar-row .grow:focus { outline: none; border-color: var(--cyan); }
+    .collection[data-coupled] .coll-title::after { content: "fixed length"; font-size: 10px; color: var(--dim); font-weight: 400; border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; }
+    /* Rich-text fragments */
+    .rich-box { display: flex; flex-direction: column; gap: 6px; border: 1px dashed var(--line); border-radius: 9px; padding: 10px; }
+    .seg { display: flex; flex-direction: column; gap: 6px; padding: 7px 9px; border-radius: 7px; background: rgba(0,212,255,0.05); }
+    .seg-plain, .seg-text { width: 100%; font: inherit; padding: 7px 9px; border-radius: 7px; border: 1px solid var(--line); background: rgba(0,0,0,0.28); color: var(--light); }
+    .seg-plain:focus, .seg-text:focus { outline: none; border-color: var(--cyan); }
+    .seg-extras { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+    .seg-extras .field { margin: 2px 0; }
+    .seg-br { font-size: 11px; color: var(--dim); font-style: italic; padding: 2px 4px; }
+    .grad-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .field.bool { display: flex; align-items: center; gap: 8px; }
+    .field.bool input { width: 16px; height: 16px; }
     .field input[type=text], .field textarea {
       width: 100%; font: inherit; padding: 8px 10px; border-radius: 8px;
       border: 1px solid var(--line); background: rgba(0,0,0,0.28); color: var(--light); resize: vertical;

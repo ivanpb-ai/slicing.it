@@ -12,6 +12,7 @@ export const COPY = {
     "",
     "Inflection",
     "Three Waves",
+    "Innovation Network",
     "Inside the Core",
     "Live Slicing",
     "AI-Native",
@@ -234,6 +235,22 @@ export const COPY = {
         ]
       }
     ]
+  },
+  innovation: {
+    kicker: "The NorthStar Innovation Network",
+    headline: [
+      "A live ",
+      { t: "5G Standalone", c: P.cyan },
+      " network to prove what's next"
+    ],
+    body: "NorthStar is an independent dual 5G SA core running in parallel with Telia's public network — in a secure Telia site, managed by Ericsson on the latest 3GPP. It's where Telia, Ericsson and partner enterprises trial new slices, APIs and edge services before they reach the market.",
+    pillars: [
+      { icon: "🧠", title: "Dual SA core, in parallel", desc: "Independent 5G Standalone dual core in a secure Telia production site, managed by Ericsson — SA/NSA/LTE on the latest 3GPP — alongside the live network for advanced R&D.", c: P.cyan },
+      { icon: "📡", title: "Radio where it's needed", desc: "Dedicated or shared public radio at customer premises (Radio Resource Partitions), connected over Telia's Enterprise Mobile Networks transport.", c: P.magenta },
+      { icon: "🧩", title: "Slices for real use cases", desc: "Quality-tuned slices (5QIs) for vehicle video uplink, remote drone control and factory automation — adapted on demand through orchestration.", c: P.gold },
+      { icon: "⚡", title: "Open, intelligent edge", desc: "CAMARA APIs for developers, edge cloud compute & AI and local breakout — with Ericsson Security Manager and Network Locator.", c: P.green }
+    ],
+    community: "NorthStar Community — Scania · Boliden · Saab · Magna · Region Stockholm · Luleå & Karlstad universities · RISE / AstaZero, with Telia & Ericsson — sharing knowledge across verticals (monthly online, twice a year in person)."
   },
   core: {
     kicker: "Architecture · Preview",

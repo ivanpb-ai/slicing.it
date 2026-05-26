@@ -249,8 +249,7 @@ export const COPY = {
       { icon: "📡", title: "Radio where it's needed", desc: "Dedicated or shared public radio at customer premises (using Radio Resource Partitions, RRPs), connected over Telia's extensive national IP transport network.", c: P.magenta },
       { icon: "🧩", title: "Slices for real use cases", desc: "Quality-tuned use case connectivity configurations using network slices, RRPs, and 5QI quality parameters tied to DNNs defined for traffic such as vehicle video uplink, remote drone control and factory automation — adapted on demand through orchestration.", c: P.gold },
       { icon: "⚡", title: "Open and intelligent", desc: "A multi-tiered network of distributed regional and local edge nodes providing compute capabilities. CAMARA APIs for developers to control quality and extract location data and many other functions. Extra nodes: Ericsson Security Manager and Network Locator.", c: P.green }
-    ],
-    community: "NorthStar Community — Scania · Boliden · Saab · Magna · Region Stockholm · Luleå & Karlstad universities · RISE / AstaZero, with Telia & Ericsson — sharing knowledge across verticals (monthly online, twice a year in person)."
+    ]
   },
   core: {
     kicker: "Architecture · Preview",

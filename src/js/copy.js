@@ -101,7 +101,7 @@ export const COPY = {
         bullets: [
           "Integrated Sensing & Communication (ISAC) as a paid service",
           "Direct-to-device satellite — seamless terrestrial/NTN handover",
-          "Ambient IoT — trillions of battery-less devices via backscatter",
+          "Ambient IoT — billions of battery-less devices via backscatter",
           "Post-quantum security & sovereign-grade slicing as default",
         ],
       },

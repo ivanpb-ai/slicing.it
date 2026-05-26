@@ -780,12 +780,12 @@ export default function NorthStarFutureVision() {
                 borderRadius: 2, boxShadow: `0 0 14px ${P.cyan}55`,
               }} />
               <div style={{
-                position: "absolute", left: "calc(5% + (90% * 0.42))", top: 30, width: 28, height: 28, borderRadius: "50%",
+                position: "absolute", left: "calc(100% / 7 * 5.5)", top: 30, width: 28, height: 28, borderRadius: "50%",
                 background: P.gold, boxShadow: `0 0 22px ${P.gold}, 0 0 50px ${P.gold}88`, animation: "pulse 1.8s ease-in-out infinite",
                 transform: "translateX(-50%)", opacity: active === 1 ? 1 : 0, transition: "opacity 0.6s ease 0.4s",
               }} />
               <div style={{
-                position: "absolute", left: "calc(5% + (90% * 0.42))", top: 0, transform: "translateX(-50%)",
+                position: "absolute", left: "calc(100% / 7 * 5.5)", top: 0, transform: "translateX(-50%)",
                 fontFamily: FF_MONO, fontSize: 11, color: P.gold, letterSpacing: 2,
                 opacity: active === 1 ? 1 : 0, transition: "opacity 0.6s ease 0.5s", textTransform: "uppercase",
               }}>{COPY.inflection.youAreHere}</div>

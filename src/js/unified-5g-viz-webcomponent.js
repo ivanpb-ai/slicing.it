@@ -182,6 +182,11 @@
       this.render();
       this._startMacroAnimation();
       this._startFlowAnimation();
+      // Teaser embed: auto-run the looping L4S congestion simulation so the
+      // preview shows the animated congestion-control flows, not the idle view.
+      if (this._minimal && this._isL4SAvailable() && !this.state.l4sSimRunning) {
+        this._toggleL4SSim();
+      }
     }
 
     disconnectedCallback() {
@@ -902,7 +907,7 @@
 
       this.shadowRoot.innerHTML = `
         <style>${this.getStyles()}</style>
-        ${this._minimal ? '<style>:host{pointer-events:none;display:block}.container{padding:0!important;background:transparent!important}.container>*:not(.svg-canvas){display:none!important}.svg-canvas{width:100%!important;height:auto!important}</style>' : ''}
+        ${this._minimal ? '<style>:host{pointer-events:none;display:block}.container{padding:0!important;background:transparent!important}.container>*:not(.svg-canvas){display:none!important}.svg-canvas{width:100%!important;height:100vh!important;background:transparent!important}</style>' : ''}
         <div class="container">
           <div class="header">
             <h1 class="title">Telia NorthStar: Unified 5G Network Visualization</h1>

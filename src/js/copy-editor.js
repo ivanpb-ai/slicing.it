@@ -20,6 +20,7 @@ const DECK = [
   ["hero", "Hero"],
   ["inflection", "The Inflection Point"],
   ["waves", "Three Waves"],
+  ["innovation", "NorthStar Innovation Network"],
   ["core", "Inside the Core"],
   ["slicing", "Live Slicing"],
   ["ainative", "AI-Native Networks"],
@@ -28,11 +29,9 @@ const DECK = [
   ["ntn", "Non-Terrestrial Networks"],
   ["verticals", "Verticals in 2035"],
   ["economy", "The Business Model Shift"],
-  ["roadmap", "Roadmap"],
-  ["sixg", "Toward 6G"],
   ["vision", "Vision / CTA"],
 ];
-const META = { ui: "Shared UI & chrome", navLabels: "Nav-dot tooltips" };
+const META = { ui: "Shared UI & chrome", navLabels: "Nav-dot tooltips", roadmap: "Roadmap page (standalone)", sixg: "3GPP releases page (standalone)" };
 
 // Friendlier field labels (everything else is auto-prettified from the key).
 const LABELS = {

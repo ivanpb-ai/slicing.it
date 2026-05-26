@@ -516,6 +516,14 @@ export const COPY = {
         desc: "Full convergence: one core, many access types — aeronautical & maritime.",
         c: P.green
       }
+    ],
+    note: [
+      {
+        t: "Regenerative payloads",
+        c: P.green,
+        b: true
+      },
+      " process the radio signal on board the satellite — demodulating and re-modulating it rather than just amplifying and forwarding it (a transparent 'bent-pipe' relay) — effectively putting the gNodeB in orbit, enabling inter-satellite routing and lower latency."
     ]
   },
   verticals: {

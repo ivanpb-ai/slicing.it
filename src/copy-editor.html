@@ -83,6 +83,10 @@
     .collection[data-coupled] .coll-title::after { content: "fixed length"; font-size: 10px; color: var(--dim); font-weight: 400; border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; }
     /* Rich-text fragments */
     .rich-box { display: flex; flex-direction: column; gap: 6px; border: 1px dashed var(--line); border-radius: 9px; padding: 10px; }
+    .rich-row { display: flex; align-items: flex-start; gap: 8px; }
+    .rich-content { flex: 1; min-width: 0; }
+    .rich-ctrls { display: flex; gap: 4px; flex: none; padding-top: 2px; }
+    .rich-foot { display: flex; gap: 8px; padding-top: 2px; }
     .seg { display: flex; flex-direction: column; gap: 6px; padding: 7px 9px; border-radius: 7px; background: rgba(0,212,255,0.05); }
     .seg-plain, .seg-text { width: 100%; font: inherit; padding: 7px 9px; border-radius: 7px; border: 1px solid var(--line); background: rgba(0,0,0,0.28); color: var(--light); }
     .seg-plain:focus, .seg-text:focus { outline: none; border-color: var(--cyan); }

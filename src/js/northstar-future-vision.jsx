@@ -850,11 +850,6 @@ export default function NorthStarFutureVision() {
                 </Reveal>
               ))}
             </div>
-            <Reveal active={active === 3} delay={0.6}>
-              <div style={{ marginTop: 22, fontSize: 12, color: P.dim, textAlign: "center", lineHeight: 1.5, maxWidth: 1000, marginLeft: "auto", marginRight: "auto" }}>
-                {COPY.innovation.community}
-              </div>
-            </Reveal>
           </div>
         </div>
 

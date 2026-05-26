@@ -202,9 +202,9 @@ export const COPY = {
         summary: "Network as software. Slices, APIs, edge breakout, on-demand QoS — the moment connectivity becomes a controllable resource.",
         bullets: [
           "Network slicing at scale across consumer, enterprise, mission-critical",
-          "CAMARA APIs commercialized — Quality-on-Demand, Location, Device Status",
-          "Edge breakout to many nodes across Sweden providing AI compute",
-          "L4S deployed end-to-end with realistic partner workloads"
+          "CAMARA APIs commercialized — Quality-on-Demand, Location, Device Status and more",
+          "Edge breakout to multiple nodes distributed across Sweden providing AI compute",
+          "Low Latency, Low Loss, Scalable throughput (L4S) deployed end-to-end with realistic partner workloads"
         ]
       },
       {

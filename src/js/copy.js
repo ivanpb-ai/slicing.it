@@ -19,7 +19,6 @@ export const COPY = {
     "Positioning",
     "Sky as Network",
     "Verticals 2035",
-    "Business Models",
     "The $1.3T Shift",
     "Vision"
   ],
@@ -610,23 +609,6 @@ export const COPY = {
       }
     ]
   },
-  business: {
-    kicker: "New Business Models",
-    headline: [
-      "From ",
-      { t: "pipes", c: P.muted },
-      " to ",
-      { t: "platforms", c: P.cyan },
-      " to ",
-      { t: "experiences", c: P.magenta }
-    ],
-    body: "From gigabytes to value-based business models. The traditional way of pricing data is evolving. As we move toward an 'intelligence fabric', telecom operators must shift from selling gigabytes to exposing network capabilities and APIs — customers increasingly pay for performance outcomes, real-time intelligence and guaranteed capabilities.",
-    points: [
-      { title: "Pipes", desc: "Selling gigabytes and raw connectivity — capacity priced as a commodity.", c: P.muted },
-      { title: "Platforms", desc: "Exposing network capabilities and APIs — Quality-on-Demand, location and slicing on tap.", c: P.cyan },
-      { title: "Experiences", desc: "Customers pay for outcomes — real-time intelligence and guaranteed capabilities like ultra-reliable low latency.", c: P.magenta }
-    ]
-  },
   economy: {
     kicker: "The Business Model Shift",
     headline: [
@@ -646,7 +628,7 @@ export const COPY = {
         c: P.gold
       }
     ],
-    body: "Connectivity revenue flattens as it commoditises. The new value pool — slices, exposed APIs, and sensing — grows faster every year of the decade.",
+    body: "The traditional way of pricing data is evolving — from selling gigabytes to exposing network capabilities and APIs. Customers increasingly pay for outcomes: real-time intelligence and guaranteed capabilities like ultra-reliable low latency. So connectivity revenue flattens as it commoditises, while the new value pool — slices, exposed APIs and sensing — grows faster every year of the decade.",
     caption: "Illustrative trajectory. Connectivity ARPU flattens as commoditisation accelerates; new value moves to slices, exposed APIs and sensing services.",
     legend: [
       {

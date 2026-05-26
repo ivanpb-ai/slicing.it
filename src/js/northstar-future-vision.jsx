@@ -26,8 +26,14 @@ const FF_MONO = "'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace";
 
 // Section ids (structural — order matches COPY.navLabels)
 const SECTIONS = [
-  "hero", "inflection", "waves", "innovation", "core", "slicing", "ainative", "ambient",
+  "hero", "inflection", "waves", "innovation", "demo", "core", "slicing", "ainative", "ambient",
   "positioning", "ntn", "verticals", "economy", "vision",
+];
+
+// AstaZero demo clips (asset URLs — paired by index with COPY.demo.clips).
+const DEMO_VIDEOS = [
+  new URL("../assets/videos/astazero-besteffort.mp4", import.meta.url),
+  new URL("../assets/videos/astazero-lowlatency.mp4", import.meta.url),
 ];
 
 // ═════════════════════════════════════════════════════════════════════════
@@ -107,7 +113,7 @@ function NeuralNebula({ active }) {
       const time = t.current;
       const w = window.innerWidth;
       const h = window.innerHeight;
-      const isFuture = active >= 6; // shift palette toward cyan/teal in future sections
+      const isFuture = active >= 7; // shift palette toward cyan/teal in future sections
       const palette = isFuture ? paletteFuture : palettePurple;
 
       if (last.current !== active) last.current = active;
@@ -166,7 +172,7 @@ function NeuralNebula({ active }) {
         ctx.fill();
       }
 
-      if (active === 0 || active === 5 || active === 6) {
+      if (active === 0 || active === 6 || active === 7) {
         const burst = 8;
         for (let k = 0; k < burst; k++) {
           const phase = (time * 0.6 + k / burst) % 1;
@@ -853,13 +859,36 @@ export default function NorthStarFutureVision() {
           </div>
         </div>
 
-        {/* ════════════ 4. INSIDE THE CORE — iframe ════════════ */}
+        {/* ════════════ 4. ASTAZERO LATENCY DEMO ════════════ */}
+        <div style={S}>
+          <div style={{ maxWidth: 1180, width: "100%" }}>
+            <Reveal active={active === 4}><Kicker color={P.cyan}>{COPY.demo.kicker}</Kicker></Reveal>
+            <Reveal active={active === 4} delay={0.08}><Heading parts={COPY.demo.headline} size="clamp(26px, 5vw, 50px)" mb={12} /></Reveal>
+            <Reveal active={active === 4} delay={0.16}><Lede size={14} mb={26} max={900}>{COPY.demo.body}</Lede></Reveal>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "start" }}>
+              {COPY.demo.clips.map((clip, i) => (
+                <Reveal key={i} active={active === 4} delay={0.26 + i * 0.12}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ fontFamily: FF_MONO, fontSize: 12, color: clip.c, letterSpacing: 1, textTransform: "uppercase" }}>{clip.tag}</div>
+                    <video
+                      src={DEMO_VIDEOS[i]} autoPlay muted loop playsInline controls preload="metadata"
+                      style={{ width: "100%", borderRadius: 14, border: `1px solid ${clip.c}59`, boxShadow: "0 10px 34px rgba(0,0,0,0.45)", display: "block", background: "#000" }}
+                    />
+                    <div style={{ fontSize: 13, color: P.dim, lineHeight: 1.55 }}>{clip.outcome}</div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ════════════ 5. INSIDE THE CORE — iframe ════════════ */}
         <div style={S}>
           <div style={{ maxWidth: 1280, width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-            <Reveal active={active === 4}><Kicker color={P.gold} mb={8}>{COPY.core.kicker}</Kicker></Reveal>
-            <Reveal active={active === 4} delay={0.08}><Heading parts={COPY.core.headline} size="clamp(24px, 4vw, 42px)" mb={14} /></Reveal>
-            <Reveal active={active === 4} delay={0.16}><Lede size={14} mb={16} max={760}>{COPY.core.body}</Lede></Reveal>
-            <Reveal active={active === 4} delay={0.24} style={{ flex: 1, minHeight: 0 }}>
+            <Reveal active={active === 5}><Kicker color={P.gold} mb={8}>{COPY.core.kicker}</Kicker></Reveal>
+            <Reveal active={active === 5} delay={0.08}><Heading parts={COPY.core.headline} size="clamp(24px, 4vw, 42px)" mb={14} /></Reveal>
+            <Reveal active={active === 5} delay={0.16}><Lede size={14} mb={16} max={760}>{COPY.core.body}</Lede></Reveal>
+            <Reveal active={active === 5} delay={0.24} style={{ flex: 1, minHeight: 0 }}>
               <div style={{
                 width: "100%", height: "100%", minHeight: 480, borderRadius: 18, overflow: "hidden",
                 border: `1px solid ${P.purple}33`, boxShadow: `0 20px 60px rgba(0,0,0,0.45), 0 0 24px ${P.purple}33`, background: P.dark,
@@ -870,13 +899,13 @@ export default function NorthStarFutureVision() {
           </div>
         </div>
 
-        {/* ════════════ 5. LIVE SLICING — iframe ════════════ */}
+        {/* ════════════ 6. LIVE SLICING — iframe ════════════ */}
         <div style={S}>
           <div style={{ maxWidth: 1280, width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-            <Reveal active={active === 5}><Kicker color={P.cyan} mb={8}>{COPY.slicing.kicker}</Kicker></Reveal>
-            <Reveal active={active === 5} delay={0.08}><Heading parts={COPY.slicing.headline} size="clamp(24px, 4vw, 42px)" mb={14} /></Reveal>
-            <Reveal active={active === 5} delay={0.16}><Lede size={14} mb={16} max={820}>{COPY.slicing.body}</Lede></Reveal>
-            <Reveal active={active === 5} delay={0.24} style={{ flex: 1, minHeight: 0 }}>
+            <Reveal active={active === 6}><Kicker color={P.cyan} mb={8}>{COPY.slicing.kicker}</Kicker></Reveal>
+            <Reveal active={active === 6} delay={0.08}><Heading parts={COPY.slicing.headline} size="clamp(24px, 4vw, 42px)" mb={14} /></Reveal>
+            <Reveal active={active === 6} delay={0.16}><Lede size={14} mb={16} max={820}>{COPY.slicing.body}</Lede></Reveal>
+            <Reveal active={active === 6} delay={0.24} style={{ flex: 1, minHeight: 0 }}>
               <div style={{
                 width: "100%", height: "100%", minHeight: 480, borderRadius: 18, overflow: "hidden",
                 border: `1px solid ${P.cyan}33`, boxShadow: `0 20px 60px rgba(0,0,0,0.45), 0 0 24px ${P.cyan}33`, background: P.dark,
@@ -887,23 +916,23 @@ export default function NorthStarFutureVision() {
           </div>
         </div>
 
-        {/* ════════════ 6. AI-NATIVE NETWORKS ════════════ */}
+        {/* ════════════ 7. AI-NATIVE NETWORKS ════════════ */}
         <div style={S}>
           <div style={{ maxWidth: 1100, width: "100%" }}>
-            <Reveal active={active === 6}><Kicker color={P.magenta}>{COPY.ainative.kicker}</Kicker></Reveal>
-            <Reveal active={active === 6} delay={0.08}><Heading parts={COPY.ainative.headline} mb={8} /></Reveal>
-            <Reveal active={active === 6} delay={0.16}><Lede mb={24}>{COPY.ainative.body}</Lede></Reveal>
+            <Reveal active={active === 7}><Kicker color={P.magenta}>{COPY.ainative.kicker}</Kicker></Reveal>
+            <Reveal active={active === 7} delay={0.08}><Heading parts={COPY.ainative.headline} mb={8} /></Reveal>
+            <Reveal active={active === 7} delay={0.16}><Lede mb={24}>{COPY.ainative.body}</Lede></Reveal>
 
             <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 24, alignItems: "center" }}>
-              <Reveal active={active === 6} delay={0.24}>
+              <Reveal active={active === 7} delay={0.24}>
                 <div>
-                  <ClosedLoopSVG active={active === 6} />
+                  <ClosedLoopSVG active={active === 7} />
                   <p style={{ margin: "12px 6px 0", fontSize: 11.5, color: P.dim, lineHeight: 1.55 }}>
                     <Rich parts={COPY.ainative.note} />
                   </p>
                 </div>
               </Reveal>
-              <Reveal active={active === 6} delay={0.34}>
+              <Reveal active={active === 7} delay={0.34}>
                 <div>
                   {COPY.ainative.points.map((it, i) => (
                     <div key={i} style={{ marginBottom: 14 }}>
@@ -922,16 +951,16 @@ export default function NorthStarFutureVision() {
           </div>
         </div>
 
-        {/* ════════════ 7. AMBIENT — ISAC ════════════ */}
+        {/* ════════════ 8. AMBIENT — ISAC ════════════ */}
         <div style={S}>
           <div style={{ maxWidth: 1100, width: "100%" }}>
-            <Reveal active={active === 7}><Kicker color={P.gold}>{COPY.ambient.kicker}</Kicker></Reveal>
-            <Reveal active={active === 7} delay={0.08}><Heading parts={COPY.ambient.headline} mb={12} /></Reveal>
-            <Reveal active={active === 7} delay={0.16}><Lede mb={32} max={800}><Rich parts={COPY.ambient.body} /></Lede></Reveal>
+            <Reveal active={active === 8}><Kicker color={P.gold}>{COPY.ambient.kicker}</Kicker></Reveal>
+            <Reveal active={active === 8} delay={0.08}><Heading parts={COPY.ambient.headline} mb={12} /></Reveal>
+            <Reveal active={active === 8} delay={0.16}><Lede mb={32} max={800}><Rich parts={COPY.ambient.body} /></Lede></Reveal>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "center" }}>
-              <Reveal active={active === 7} delay={0.24}><ISACVisual active={active === 7} /></Reveal>
-              <Reveal active={active === 7} delay={0.34}>
+              <Reveal active={active === 8} delay={0.24}><ISACVisual active={active === 8} /></Reveal>
+              <Reveal active={active === 8} delay={0.34}>
                 <div>
                   {COPY.ambient.uses.map((u, i) => (
                     <div key={i} style={{ display: "flex", gap: 12, marginBottom: 12 }}>
@@ -948,16 +977,16 @@ export default function NorthStarFutureVision() {
           </div>
         </div>
 
-        {/* ════════════ 8. POSITIONING ════════════ */}
+        {/* ════════════ 9. POSITIONING ════════════ */}
         <div style={S}>
           <div style={{ maxWidth: 1100, width: "100%" }}>
-            <Reveal active={active === 8}><Kicker color={P.green}>{COPY.positioning.kicker}</Kicker></Reveal>
-            <Reveal active={active === 8} delay={0.08}><Heading parts={COPY.positioning.headline} mb={12} /></Reveal>
-            <Reveal active={active === 8} delay={0.16}><Lede mb={30} max={760}>{COPY.positioning.body}</Lede></Reveal>
+            <Reveal active={active === 9}><Kicker color={P.green}>{COPY.positioning.kicker}</Kicker></Reveal>
+            <Reveal active={active === 9} delay={0.08}><Heading parts={COPY.positioning.headline} mb={12} /></Reveal>
+            <Reveal active={active === 9} delay={0.16}><Lede mb={30} max={760}>{COPY.positioning.body}</Lede></Reveal>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 14 }}>
               {COPY.positioning.ladder.map((p, i) => (
-                <Reveal key={i} active={active === 8} delay={0.22 + i * 0.1}>
+                <Reveal key={i} active={active === 9} delay={0.22 + i * 0.1}>
                   <div style={{
                     background: `linear-gradient(180deg, ${p.color}26, rgba(255,255,255,0.045))`,
                     border: `1px solid ${p.color}59`, borderRadius: 16, padding: "18px 16px", textAlign: "center", height: 200, position: "relative",
@@ -976,7 +1005,7 @@ export default function NorthStarFutureVision() {
               ))}
             </div>
 
-            <Reveal active={active === 8} delay={0.65}>
+            <Reveal active={active === 9} delay={0.65}>
               <div style={{ marginTop: 30, borderTop: `1px solid ${P.faint}`, paddingTop: 18 }}>
                 <div style={{ fontFamily: FF_MONO, fontSize: 11, color: P.dim, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>{COPY.positioning.examplesTitle}</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, fontSize: 12, color: P.dim }}>
@@ -992,16 +1021,16 @@ export default function NorthStarFutureVision() {
           </div>
         </div>
 
-        {/* ════════════ 9. NTN ════════════ */}
+        {/* ════════════ 10. NTN ════════════ */}
         <div style={S}>
           <div style={{ maxWidth: 1100, width: "100%" }}>
-            <Reveal active={active === 9}><Kicker color={P.cyan}>{COPY.ntn.kicker}</Kicker></Reveal>
-            <Reveal active={active === 9} delay={0.08}><Heading parts={COPY.ntn.headline} mb={12} /></Reveal>
-            <Reveal active={active === 9} delay={0.16}><Lede mb={30} max={760}>{COPY.ntn.body}</Lede></Reveal>
+            <Reveal active={active === 10}><Kicker color={P.cyan}>{COPY.ntn.kicker}</Kicker></Reveal>
+            <Reveal active={active === 10} delay={0.08}><Heading parts={COPY.ntn.headline} mb={12} /></Reveal>
+            <Reveal active={active === 10} delay={0.16}><Lede mb={30} max={760}>{COPY.ntn.body}</Lede></Reveal>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 32, alignItems: "center" }}>
-              <Reveal active={active === 9} delay={0.24}><OrbitalView active={active === 9} /></Reveal>
-              <Reveal active={active === 9} delay={0.34}>
+              <Reveal active={active === 10} delay={0.24}><OrbitalView active={active === 10} /></Reveal>
+              <Reveal active={active === 10} delay={0.34}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   {COPY.ntn.items.map((it, i) => (
                     <div key={i} style={{ background: `linear-gradient(180deg, ${it.c}10, transparent)`, border: `1px solid ${it.c}30`, borderRadius: 14, padding: "16px 14px" }}>
@@ -1014,7 +1043,7 @@ export default function NorthStarFutureVision() {
               </Reveal>
             </div>
 
-            <Reveal active={active === 9} delay={0.5}>
+            <Reveal active={active === 10} delay={0.5}>
               <p style={{ margin: "20px auto 0", maxWidth: 860, fontSize: 11.5, color: P.dim, lineHeight: 1.55, textAlign: "center" }}>
                 <Rich parts={COPY.ntn.note} />
               </p>
@@ -1022,32 +1051,32 @@ export default function NorthStarFutureVision() {
           </div>
         </div>
 
-        {/* ════════════ 10. VERTICAL TRANSFORMATIONS ════════════ */}
+        {/* ════════════ 11. VERTICAL TRANSFORMATIONS ════════════ */}
         <div style={S}>
           <div style={{ maxWidth: 1140, width: "100%" }}>
-            <Reveal active={active === 10}><Kicker color={P.magenta}>{COPY.verticals.kicker}</Kicker></Reveal>
-            <Reveal active={active === 10} delay={0.08}><Heading parts={COPY.verticals.headline} size="clamp(26px, 5vw, 50px)" mb={10} /></Reveal>
-            <Reveal active={active === 10} delay={0.16}><Lede size={14} mb={28} max={720}>{COPY.verticals.body}</Lede></Reveal>
+            <Reveal active={active === 11}><Kicker color={P.magenta}>{COPY.verticals.kicker}</Kicker></Reveal>
+            <Reveal active={active === 11} delay={0.08}><Heading parts={COPY.verticals.headline} size="clamp(26px, 5vw, 50px)" mb={10} /></Reveal>
+            <Reveal active={active === 11} delay={0.16}><Lede size={14} mb={28} max={720}>{COPY.verticals.body}</Lede></Reveal>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gridAutoRows: "1fr", gap: 14 }}>
               {COPY.verticals.cards.map((c, i) => (
-                <VerticalCard key={i} active={active === 10} delay={0.22 + i * 0.08}
+                <VerticalCard key={i} active={active === 11} delay={0.22 + i * 0.08}
                   icon={c.icon} year={c.year} title={c.title} color={c.color} body={c.body} tech={c.tech} />
               ))}
             </div>
           </div>
         </div>
 
-        {/* ════════════ 11. THE BUSINESS MODEL SHIFT ════════════ */}
+        {/* ════════════ 12. THE BUSINESS MODEL SHIFT ════════════ */}
         <div style={S}>
           <div style={{ maxWidth: 1100, width: "100%" }}>
-            <Reveal active={active === 11}><Kicker color={P.gold}>{COPY.economy.kicker}</Kicker></Reveal>
-            <Reveal active={active === 11} delay={0.08}><Heading parts={COPY.economy.headline} size="clamp(26px, 5vw, 50px)" mb={12} /></Reveal>
-            <Reveal active={active === 11} delay={0.16}><Lede size={14} mb={24} max={760}>{COPY.economy.body}</Lede></Reveal>
-            <Reveal active={active === 11} delay={0.24}><EconomyChart active={active === 11} /></Reveal>
+            <Reveal active={active === 12}><Kicker color={P.gold}>{COPY.economy.kicker}</Kicker></Reveal>
+            <Reveal active={active === 12} delay={0.08}><Heading parts={COPY.economy.headline} size="clamp(26px, 5vw, 50px)" mb={12} /></Reveal>
+            <Reveal active={active === 12} delay={0.16}><Lede size={14} mb={24} max={760}>{COPY.economy.body}</Lede></Reveal>
+            <Reveal active={active === 12} delay={0.24}><EconomyChart active={active === 12} /></Reveal>
             <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
               {COPY.economy.stats.map((s, i) => (
-                <Reveal key={i} active={active === 11} delay={0.4 + i * 0.08}>
+                <Reveal key={i} active={active === 12} delay={0.4 + i * 0.08}>
                   <div style={{ border: `1px solid ${s.c}33`, borderRadius: 14, padding: "16px 14px", background: `linear-gradient(180deg, ${s.c}0e, transparent)`, textAlign: "center" }}>
                     <div style={{ fontFamily: FF_HEAD, fontWeight: 300, fontSize: 26, color: s.c, letterSpacing: -0.5 }}>{s.v}</div>
                     <div style={{ fontSize: 11, color: P.dim, marginTop: 4, lineHeight: 1.4 }}>{s.l}</div>
@@ -1055,7 +1084,7 @@ export default function NorthStarFutureVision() {
                 </Reveal>
               ))}
             </div>
-            <Reveal active={active === 11} delay={0.72}>
+            <Reveal active={active === 12} delay={0.72}>
               <div style={{ marginTop: 16, fontSize: 12, color: P.dim, textAlign: "center", lineHeight: 1.5, maxWidth: 820, marginLeft: "auto", marginRight: "auto" }}>
                 {COPY.economy.note}
               </div>
@@ -1063,23 +1092,23 @@ export default function NorthStarFutureVision() {
           </div>
         </div>
 
-        {/* ════════════ 12. VISION / CTA ════════════ */}
+        {/* ════════════ 13. VISION / CTA ════════════ */}
         <div style={S}>
           <div style={{ maxWidth: 1000, textAlign: "center" }}>
-            <Reveal active={active === 12}>
+            <Reveal active={active === 13}>
               <div style={{ fontFamily: FF_MONO, fontSize: 12, color: P.cyan, letterSpacing: 6, textTransform: "uppercase", marginBottom: 28 }}>{COPY.vision.kicker}</div>
             </Reveal>
-            <Reveal active={active === 12} delay={0.1}>
+            <Reveal active={active === 13} delay={0.1}>
               <div style={{ fontFamily: FF_HEAD, fontWeight: 300, fontSize: "clamp(36px, 6.5vw, 76px)", lineHeight: 1.05, letterSpacing: -2 }}>
                 <Rich parts={COPY.vision.headline} />
               </div>
             </Reveal>
-            <Reveal active={active === 12} delay={0.3}>
+            <Reveal active={active === 13} delay={0.3}>
               <p style={{ fontSize: 17, color: P.dim, marginTop: 32, lineHeight: 1.7, maxWidth: 720, margin: "32px auto 0" }}>
                 {COPY.vision.body}
               </p>
             </Reveal>
-            <Reveal active={active === 12} delay={0.5}>
+            <Reveal active={active === 13} delay={0.5}>
               <div style={{ marginTop: 44, display: "flex", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
                 {COPY.vision.ctas.map((c, i) => (
                   <a key={i} href={c.href} style={c.primary ? ctaPrimary : ctaGhost}>{c.label}</a>

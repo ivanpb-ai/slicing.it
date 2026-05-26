@@ -21,6 +21,7 @@ const DECK = [
   ["inflection", "The Inflection Point"],
   ["waves", "Three Waves"],
   ["innovation", "NorthStar Innovation Network"],
+  ["demo", "AstaZero Latency Demo"],
   ["core", "Inside the Core"],
   ["slicing", "Live Slicing"],
   ["ainative", "AI-Native Networks"],

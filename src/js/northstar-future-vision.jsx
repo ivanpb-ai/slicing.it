@@ -656,6 +656,102 @@ export function Lede({ children, size = 15, mb = 28, max = 780 }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// NORTHSTAR TOPOLOGY CIRCLE — core / edge / RAN with nomadic towers
+// ─────────────────────────────────────────────────────────────────────────
+function NorthStarCircle({ active }) {
+  const R_OUT = 268, R_MID = 175, R_IN = 88;
+  const TOWERS = 10, NOMADIC = 3, EDGE = 12;
+
+  const renderTower = (key, x, y, deg, color, isNomadic) => (
+    <g key={key} transform={`translate(${x},${y}) rotate(${deg})`}>
+      <line x1="0" y1="0" x2="0" y2="-18" stroke={color} strokeWidth="1.5" />
+      <line x1="-6" y1="-4" x2="6" y2="-4" stroke={color} strokeWidth="1" />
+      <line x1="-8" y1="-9" x2="8" y2="-9" stroke={color} strokeWidth="1" />
+      <line x1="-5" y1="-14" x2="5" y2="-14" stroke={color} strokeWidth="1" />
+      <circle cx="0" cy="-19" r="2" fill={color} />
+      <path d="M -8 -19 Q 0 -28 8 -19" fill="none" stroke={color} strokeOpacity="0.6" strokeWidth="0.9" />
+      <path d="M -12 -20 Q 0 -33 12 -20" fill="none" stroke={color} strokeOpacity="0.35" strokeWidth="0.8" />
+      {isNomadic && (
+        <circle cx="0" cy="-21" r="3" fill="none" stroke={color} strokeWidth="0.8">
+          <animate attributeName="r" from="3" to="14" dur="2.4s" repeatCount="indefinite" />
+          <animate attributeName="opacity" from="0.85" to="0" dur="2.4s" repeatCount="indefinite" />
+        </circle>
+      )}
+    </g>
+  );
+
+  const staticT = Array.from({ length: TOWERS }, (_, i) => {
+    const a = (i / TOWERS) * 2 * Math.PI - Math.PI / 2 + Math.PI / TOWERS;
+    return { x: Math.cos(a) * R_OUT, y: Math.sin(a) * R_OUT, deg: (a * 180 / Math.PI) + 90 };
+  });
+  const nomadicT = Array.from({ length: NOMADIC }, (_, i) => {
+    const a = -Math.PI / 2 + 0.55 + (i - 1) * 0.22;
+    return { x: Math.cos(a) * R_OUT, y: Math.sin(a) * R_OUT, deg: (a * 180 / Math.PI) + 90 };
+  });
+  const edges = Array.from({ length: EDGE }, (_, i) => {
+    const a = (i / EDGE) * 2 * Math.PI - Math.PI / 2;
+    return { x: Math.cos(a) * R_MID, y: Math.sin(a) * R_MID, isReg: i % 4 === 0 };
+  });
+
+  return (
+    <svg viewBox="-300 -300 600 600" style={{ width: "100%", height: "100%", display: "block", overflow: "visible" }}>
+      {/* Soft glow under outer ring */}
+      <circle r={R_OUT} fill="none" stroke={`${P.cyan}1f`} strokeWidth="16" />
+      {/* Three concentric rings */}
+      <circle r={R_OUT} fill="none" stroke={`${P.cyan}55`} strokeWidth="1.4" strokeDasharray="3 6" />
+      <circle r={R_MID} fill="none" stroke={`${P.magenta}55`} strokeWidth="1.4" strokeDasharray="3 6" />
+      <circle r={R_IN} fill={`${P.deep}cc`} stroke={`${P.cyan}aa`} strokeWidth="2" />
+
+      {/* Ring labels (just outside each ring) */}
+      <text x="0" y={-(R_OUT + 18)} textAnchor="middle" fontFamily={FF_MONO} fontSize="11" fill={P.cyan} letterSpacing="2">5G RAN · some towers nomadic</text>
+      <text x="0" y={-(R_MID + 14)} textAnchor="middle" fontFamily={FF_MONO} fontSize="10" fill={P.magenta} letterSpacing="2">5G edge nodes with AI</text>
+
+      {/* Center: 5G SA CORE — title + three chips */}
+      <g fontFamily={FF_MONO} textAnchor="middle">
+        <text x="0" y="-52" fontSize="10" fill={P.cyan} letterSpacing="2">5G SA CORE</text>
+        {[
+          { x: -32, y: -15, label: "Public", color: P.dim },
+          { x: 32, y: -15, label: "Innovation", color: P.cyan },
+          { x: 0, y: 33, label: "Special purpose", color: P.gold },
+        ].map((c, i) => (
+          <g key={i} transform={`translate(${c.x},${c.y})`}>
+            <rect x="-14" y="-9" width="28" height="18" rx="3" fill={`${c.color}24`} stroke={c.color} strokeWidth="1.2" />
+            <text y="3.5" fontSize="9" fill={c.color} fontWeight="700">5G</text>
+            <text y="22" fontSize="8" fill={c.color}>{c.label}</text>
+          </g>
+        ))}
+      </g>
+
+      {/* Edge nodes (middle ring) */}
+      {edges.map((n, i) => {
+        const c = n.isReg ? P.gold : P.cyan;
+        return (
+          <g key={`e${i}`} transform={`translate(${n.x},${n.y})`}>
+            <rect x="-9" y="-9" width="18" height="18" rx="3" fill={`${c}40`} stroke={c} strokeWidth="1.2" />
+            <circle cx="-3.5" cy="-3.5" r="1.2" fill={c} />
+            <circle cx="3.5" cy="-3.5" r="1.2" fill={c} />
+            <circle cx="-3.5" cy="3.5" r="1.2" fill={c} />
+            <circle cx="3.5" cy="3.5" r="1.2" fill={c} />
+            <text x="0" y="24" textAnchor="middle" fontFamily={FF_MONO} fontSize="8" fill={n.isReg ? P.gold : P.dim}>{n.isReg ? "regional" : "local"}</text>
+          </g>
+        );
+      })}
+
+      {/* Static towers (outer ring) */}
+      {staticT.map((t, i) => renderTower(`t${i}`, t.x, t.y, t.deg, P.light, false))}
+
+      {/* Nomadic towers — a group that rotates around the perimeter */}
+      <g>
+        {nomadicT.map((t, i) => renderTower(`n${i}`, t.x, t.y, t.deg, P.gold, true))}
+        {active && (
+          <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="55s" repeatCount="indefinite" />
+        )}
+      </g>
+    </svg>
+  );
+}
+
 // ═════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═════════════════════════════════════════════════════════════════════════
@@ -837,24 +933,37 @@ export default function NorthStarFutureVision() {
 
         {/* ════════════ 3. NORTHSTAR INNOVATION NETWORK ════════════ */}
         <div style={S}>
-          <div style={{ maxWidth: 1140, width: "100%" }}>
+          <div style={{ maxWidth: 1180, width: "100%" }}>
             <Reveal active={active === 3}><Kicker color={P.cyan}>{COPY.innovation.kicker}</Kicker></Reveal>
-            <Reveal active={active === 3} delay={0.08}><Heading parts={COPY.innovation.headline} size="clamp(26px, 5vw, 50px)" mb={12} /></Reveal>
-            <Reveal active={active === 3} delay={0.16}><Lede size={14} mb={28} max={840}>{COPY.innovation.body}</Lede></Reveal>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, alignItems: "stretch" }}>
-              {COPY.innovation.pillars.map((p, i) => (
-                <Reveal key={i} active={active === 3} delay={0.24 + i * 0.08}>
-                  <div style={{
-                    height: "100%", boxSizing: "border-box",
-                    background: `linear-gradient(180deg, ${p.c}1a, rgba(255,255,255,0.03))`,
-                    border: `1px solid ${p.c}4d`, borderRadius: 16, padding: "18px 16px", boxShadow: "0 6px 20px rgba(0,0,0,0.28)",
-                  }}>
-                    <div style={{ fontSize: 24, marginBottom: 8 }}>{p.icon}</div>
-                    <div style={{ fontFamily: FF_HEAD, fontWeight: 300, fontSize: 18, color: P.white, marginBottom: 8, lineHeight: 1.2 }}>{p.title}</div>
-                    <div style={{ fontSize: 12, color: P.dim, lineHeight: 1.55 }}>{p.desc}</div>
-                  </div>
-                </Reveal>
-              ))}
+            <Reveal active={active === 3} delay={0.08}><Heading parts={COPY.innovation.headline} size="clamp(26px, 5vw, 50px)" mb={10} /></Reveal>
+            <Reveal active={active === 3} delay={0.16}><Lede size={14} mb={14} max={820}>{COPY.innovation.body}</Lede></Reveal>
+            <div style={{ position: "relative", width: "100%", height: 580, marginTop: 6 }}>
+              <Reveal active={active === 3} delay={0.24} style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
+                <div style={{ width: 560, height: 560 }}>
+                  <NorthStarCircle active={active === 3} />
+                </div>
+              </Reveal>
+              {COPY.innovation.pillars.map((p, i) => {
+                const corners = [
+                  { top: 6, left: 6 },
+                  { top: 6, right: 6 },
+                  { bottom: 6, left: 6 },
+                  { bottom: 6, right: 6 },
+                ];
+                return (
+                  <Reveal key={i} active={active === 3} delay={0.4 + i * 0.08} style={{ position: "absolute", ...corners[i], width: 290, zIndex: 2 }}>
+                    <div style={{
+                      background: `linear-gradient(180deg, ${p.c}26, rgba(20,8,38,0.85))`,
+                      border: `1px solid ${p.c}66`, borderRadius: 14, padding: "12px 14px",
+                      boxShadow: "0 10px 28px rgba(0,0,0,0.55)", backdropFilter: "blur(6px)",
+                    }}>
+                      <div style={{ fontSize: 20, marginBottom: 4 }}>{p.icon}</div>
+                      <div style={{ fontFamily: FF_HEAD, fontWeight: 300, fontSize: 15, color: P.white, marginBottom: 4, lineHeight: 1.2 }}>{p.title}</div>
+                      <div style={{ fontSize: 11.5, color: P.dim, lineHeight: 1.5 }}>{p.desc}</div>
+                    </div>
+                  </Reveal>
+                );
+              })}
             </div>
           </div>
         </div>

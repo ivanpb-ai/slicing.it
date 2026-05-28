@@ -242,7 +242,7 @@ export const COPY = {
     headline: [
       "A live ",
       {
-        t: "5G Standalone",
+        t: "5G SA",
         c: P.cyan
       },
       " network to prove what's next"
@@ -252,25 +252,25 @@ export const COPY = {
       {
         icon: "🧠",
         title: "Always the latest 5G SA core functions",
-        desc: "Always updated state-of-the-art independent 5G Standalone dual core SA/NSA/LTE on the latest 3GPP release available — alongside the live network but dedicated for advanced R&D.",
+        desc: "Independent dual 5G SA core, always on the latest 3GPP — dedicated for R&D alongside the live network.",
         c: P.cyan
       },
       {
         icon: "📡",
         title: "Radio where it's needed",
-        desc: "Dedicated or shared public radio at customer premises (using Radio Resource Partitions, RRPs), connected over Telia's extensive national IP transport network.",
+        desc: "Dedicated or shared public radio at customer sites (RRPs), over Telia's national IP transport.",
         c: P.magenta
       },
       {
         icon: "🧩",
         title: "Slices for real use cases",
-        desc: "Quality-tuned use case connectivity configurations using network slices, RRPs, and 5QI quality parameters tied to DNNs defined for traffic such as vehicle video uplink, remote drone control and factory automation — adapted on demand through orchestration.",
+        desc: "Use-case slices and 5QIs tied to DNNs — orchestrated on demand for V2X, drone control, factory automation.",
         c: P.gold
       },
       {
         icon: "⚡",
         title: "Open and intelligent",
-        desc: "A multi-tiered network of distributed regional and local edge nodes providing compute capabilities. CAMARA APIs for developers to control quality and extract location data as well as many other functions. Extra nodes: Ericsson Security Manager and Network Locator.",
+        desc: "Distributed regional + local edge nodes for compute, CAMARA APIs, plus Security Manager and Network Locator.",
         c: P.green
       }
     ]

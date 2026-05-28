@@ -665,15 +665,32 @@ function NorthStarCircle({ active }) {
 
   const renderTower = (key, x, y, deg, color, isNomadic) => (
     <g key={key} transform={`translate(${x},${y}) rotate(${deg})`}>
-      <line x1="0" y1="0" x2="0" y2="-18" stroke={color} strokeWidth="1.5" />
-      <line x1="-6" y1="-4" x2="6" y2="-4" stroke={color} strokeWidth="1" />
-      <line x1="-8" y1="-9" x2="8" y2="-9" stroke={color} strokeWidth="1" />
-      <line x1="-5" y1="-14" x2="5" y2="-14" stroke={color} strokeWidth="1" />
-      <circle cx="0" cy="-19" r="2" fill={color} />
-      <path d="M -8 -19 Q 0 -28 8 -19" fill="none" stroke={color} strokeOpacity="0.6" strokeWidth="0.9" />
-      <path d="M -12 -20 Q 0 -33 12 -20" fill="none" stroke={color} strokeOpacity="0.35" strokeWidth="0.8" />
+      {/* Triangular truss — two outer legs widening to the base */}
+      <line x1="-5" y1="3" x2="-1.5" y2="-14" stroke={color} strokeWidth="1.4" />
+      <line x1="5" y1="3" x2="1.5" y2="-14" stroke={color} strokeWidth="1.4" />
+      {/* Base bar */}
+      <line x1="-6" y1="3" x2="6" y2="3" stroke={color} strokeWidth="1" />
+      {/* Horizontal rungs */}
+      <line x1="-4.5" y1="-3" x2="4.5" y2="-3" stroke={color} strokeWidth="0.8" />
+      <line x1="-3.2" y1="-9" x2="3.2" y2="-9" stroke={color} strokeWidth="0.8" />
+      {/* X-brace lattice */}
+      <line x1="-5" y1="3" x2="0" y2="-3" stroke={color} strokeOpacity="0.55" strokeWidth="0.6" />
+      <line x1="5" y1="3" x2="0" y2="-3" stroke={color} strokeOpacity="0.55" strokeWidth="0.6" />
+      <line x1="-4" y1="-3" x2="0" y2="-9" stroke={color} strokeOpacity="0.55" strokeWidth="0.6" />
+      <line x1="4" y1="-3" x2="0" y2="-9" stroke={color} strokeOpacity="0.55" strokeWidth="0.6" />
+      <line x1="-2.5" y1="-9" x2="0" y2="-14" stroke={color} strokeOpacity="0.55" strokeWidth="0.6" />
+      <line x1="2.5" y1="-9" x2="0" y2="-14" stroke={color} strokeOpacity="0.55" strokeWidth="0.6" />
+      {/* Top platform */}
+      <line x1="-2.6" y1="-14" x2="2.6" y2="-14" stroke={color} strokeWidth="1.4" />
+      {/* Three sector-antenna panels at the top */}
+      <rect x="-3.6" y="-18.5" width="1.7" height="4.6" rx="0.4" fill={color} />
+      <rect x="-0.85" y="-19.6" width="1.7" height="5.7" rx="0.4" fill={color} />
+      <rect x="1.9" y="-18.5" width="1.7" height="4.6" rx="0.4" fill={color} />
+      {/* Signal lobes */}
+      <path d="M -8 -19 Q 0 -27 8 -19" fill="none" stroke={color} strokeOpacity="0.6" strokeWidth="0.9" />
+      <path d="M -11 -20 Q 0 -32 11 -20" fill="none" stroke={color} strokeOpacity="0.3" strokeWidth="0.7" />
       {isNomadic && (
-        <circle cx="0" cy="-21" r="3" fill="none" stroke={color} strokeWidth="0.8">
+        <circle cx="0" cy="-22" r="3" fill="none" stroke={color} strokeWidth="0.8">
           <animate attributeName="r" from="3" to="14" dur="2.4s" repeatCount="indefinite" />
           <animate attributeName="opacity" from="0.85" to="0" dur="2.4s" repeatCount="indefinite" />
         </circle>
@@ -704,8 +721,8 @@ function NorthStarCircle({ active }) {
       <circle r={R_IN} fill={`${P.deep}cc`} stroke={`${P.cyan}aa`} strokeWidth="2" />
 
       {/* Ring labels (just outside each ring) */}
-      <text x="0" y={-(R_OUT + 18)} textAnchor="middle" fontFamily={FF_MONO} fontSize="11" fill={P.cyan} letterSpacing="2">5G RAN · some towers nomadic</text>
-      <text x="0" y={-(R_MID + 14)} textAnchor="middle" fontFamily={FF_MONO} fontSize="10" fill={P.magenta} letterSpacing="2">5G edge nodes with AI</text>
+      <text x="0" y={-(R_OUT + 18)} textAnchor="middle" fontFamily={FF_MONO} fontSize="11" fill={P.cyan} letterSpacing="2">5G RAN · including nomadic coverage</text>
+      <text x="0" y={-(R_MID + 14)} textAnchor="middle" fontFamily={FF_MONO} fontSize="11" fill={P.light} letterSpacing="2">5G edge nodes with AI</text>
 
       {/* Center: 5G SA CORE — title + three chips */}
       <g fontFamily={FF_MONO} textAnchor="middle">
@@ -716,9 +733,19 @@ function NorthStarCircle({ active }) {
           { x: 0, y: 33, label: "Special purpose", color: P.gold },
         ].map((c, i) => (
           <g key={i} transform={`translate(${c.x},${c.y})`}>
-            <rect x="-14" y="-9" width="28" height="18" rx="3" fill={`${c.color}24`} stroke={c.color} strokeWidth="1.2" />
-            <text y="3.5" fontSize="9" fill={c.color} fontWeight="700">5G</text>
-            <text y="22" fontSize="8" fill={c.color}>{c.label}</text>
+            {/* Outer hex glow */}
+            <polygon points="-15,0 -7.5,-13 7.5,-13 15,0 7.5,13 -7.5,13" fill="none" stroke={`${c.color}40`} strokeWidth="2.5" />
+            {/* Hex body */}
+            <polygon points="-13,0 -6.5,-11.3 6.5,-11.3 13,0 6.5,11.3 -6.5,11.3" fill={`${c.color}33`} stroke={c.color} strokeWidth="1.4" />
+            {/* Inner top highlight */}
+            <polygon points="-9,-1 -4.5,-8 4.5,-8 9,-1" fill={`${c.color}38`} stroke="none" />
+            {/* Vertex link dots (suggest network links) */}
+            <circle cx="-13" cy="0" r="1.3" fill={c.color} />
+            <circle cx="13" cy="0" r="1.3" fill={c.color} />
+            {/* 5G label */}
+            <text y="3" fontSize="8" fill={c.color} fontWeight="700">5G</text>
+            {/* Core name */}
+            <text y="24" fontSize="8" fill={c.color}>{c.label}</text>
           </g>
         ))}
       </g>
@@ -728,11 +755,18 @@ function NorthStarCircle({ active }) {
         const c = n.isReg ? P.gold : P.cyan;
         return (
           <g key={`e${i}`} transform={`translate(${n.x},${n.y})`}>
-            <rect x="-9" y="-9" width="18" height="18" rx="3" fill={`${c}40`} stroke={c} strokeWidth="1.2" />
-            <circle cx="-3.5" cy="-3.5" r="1.2" fill={c} />
-            <circle cx="3.5" cy="-3.5" r="1.2" fill={c} />
-            <circle cx="-3.5" cy="3.5" r="1.2" fill={c} />
-            <circle cx="3.5" cy="3.5" r="1.2" fill={c} />
+            {/* Soft halo */}
+            <rect x="-11" y="-10" width="22" height="20" rx="3" fill={`${c}1f`} stroke="none" />
+            {/* Server cabinet body */}
+            <rect x="-9" y="-9" width="18" height="18" rx="2.5" fill={`${c}40`} stroke={c} strokeWidth="1.2" />
+            {/* Blade slots */}
+            <line x1="-6" y1="-5" x2="6" y2="-5" stroke={c} strokeOpacity="0.75" strokeWidth="0.7" />
+            <line x1="-6" y1="-1.5" x2="6" y2="-1.5" stroke={c} strokeOpacity="0.75" strokeWidth="0.7" />
+            <line x1="-6" y1="2" x2="6" y2="2" stroke={c} strokeOpacity="0.75" strokeWidth="0.7" />
+            <line x1="-6" y1="5.5" x2="6" y2="5.5" stroke={c} strokeOpacity="0.75" strokeWidth="0.7" />
+            {/* Status / AI LEDs */}
+            <circle cx="6.5" cy="-7" r="1.2" fill={c} />
+            <circle cx="-6.5" cy="-7" r="1.1" fill={`${c}80`} />
             <text x="0" y="24" textAnchor="middle" fontFamily={FF_MONO} fontSize="8" fill={n.isReg ? P.gold : P.dim}>{n.isReg ? "regional" : "local"}</text>
           </g>
         );
@@ -947,8 +981,8 @@ export default function NorthStarFutureVision() {
                 const corners = [
                   { top: 6, left: 6 },
                   { top: 6, right: 6 },
-                  { bottom: 6, left: 6 },
-                  { bottom: 6, right: 6 },
+                  { bottom: 60, left: 6 },
+                  { bottom: 60, right: 6 },
                 ];
                 return (
                   <Reveal key={i} active={active === 3} delay={0.4 + i * 0.08} style={{ position: "absolute", ...corners[i], width: 290, zIndex: 2 }}>

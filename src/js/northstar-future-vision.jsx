@@ -1036,10 +1036,11 @@ export default function NorthStarFutureVision() {
                 </h2>
               </div>
             </Reveal>
-            <Reveal active={active === 5} delay={0.16} style={{ flex: 1, minHeight: 0 }}>
+            <Reveal active={active === 5} delay={0.16} style={{ flex: 1, minHeight: 0, marginLeft: -16, marginRight: -16 }}>
               <div style={{
-                width: "100%", height: "100%", borderRadius: 12, overflow: "hidden",
-                border: `1px solid ${P.purple}33`, boxShadow: `0 8px 24px rgba(0,0,0,0.4)`, background: P.dark,
+                width: "calc(100% + 32px)", height: "100%", overflow: "hidden",
+                borderTop: `1px solid ${P.purple}33`, borderBottom: `1px solid ${P.purple}33`,
+                boxShadow: `0 8px 24px rgba(0,0,0,0.4)`, background: P.dark,
               }}>
                 <iframe src="unified-5g-viz.html?teaser=1" title="Network slicing — animated preview" style={{ width: "100%", height: "100%", border: 0, display: "block", pointerEvents: "none" }} loading="lazy" />
               </div>

@@ -933,7 +933,7 @@
           ${s.showSpectrumPanel ? '<div id="spectrum-panel-container">' + this.renderSpectrumPanelContent() + '</div>' : ''}
           ${s.show5qiPanel ? this._render5QIPanel() : ''}
 
-          <svg viewBox="${teaserViewBox}" class="svg-canvas">
+          <svg viewBox="${teaserViewBox}" ${this._minimal ? 'preserveAspectRatio="xMidYMax slice"' : ''} class="svg-canvas">
             <defs>
               <marker id="arrow-down" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
                 <polygon points="0 0, 8 3, 0 6" fill="#fbbf24"/>

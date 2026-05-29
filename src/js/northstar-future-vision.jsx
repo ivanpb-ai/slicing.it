@@ -1026,11 +1026,11 @@ export default function NorthStarFutureVision() {
         </div>
 
         {/* ════════════ 5. INSIDE THE CORE — iframe ════════════ */}
-        <div style={S}>
-          <div style={{ maxWidth: 1280, width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-            <Reveal active={active === 5}><Kicker color={P.gold} mb={8}>{COPY.core.kicker}</Kicker></Reveal>
-            <Reveal active={active === 5} delay={0.08}><Heading parts={COPY.core.headline} size="clamp(24px, 4vw, 42px)" mb={14} /></Reveal>
-            <Reveal active={active === 5} delay={0.16}><Lede size={14} mb={16} max={760}>{COPY.core.body}</Lede></Reveal>
+        <div style={{ ...S, padding: "18px 32px" }}>
+          <div style={{ maxWidth: 1520, width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
+            <Reveal active={active === 5}><Kicker color={P.gold} mb={4}>{COPY.core.kicker}</Kicker></Reveal>
+            <Reveal active={active === 5} delay={0.08}><Heading parts={COPY.core.headline} size="clamp(22px, 3.5vw, 34px)" mb={8} /></Reveal>
+            <Reveal active={active === 5} delay={0.16}><Lede size={13} mb={8} max={760}>{COPY.core.body}</Lede></Reveal>
             <Reveal active={active === 5} delay={0.24} style={{ flex: 1, minHeight: 0 }}>
               <div style={{
                 width: "100%", height: "100%", minHeight: 480, borderRadius: 18, overflow: "hidden",

@@ -1026,15 +1026,20 @@ export default function NorthStarFutureVision() {
         </div>
 
         {/* ════════════ 5. INSIDE THE CORE — iframe ════════════ */}
-        <div style={{ ...S, padding: "18px 32px" }}>
-          <div style={{ maxWidth: 1520, width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-            <Reveal active={active === 5}><Kicker color={P.gold} mb={4}>{COPY.core.kicker}</Kicker></Reveal>
-            <Reveal active={active === 5} delay={0.08}><Heading parts={COPY.core.headline} size="clamp(22px, 3.5vw, 34px)" mb={8} /></Reveal>
-            <Reveal active={active === 5} delay={0.16}><Lede size={13} mb={8} max={760}>{COPY.core.body}</Lede></Reveal>
-            <Reveal active={active === 5} delay={0.24} style={{ flex: 1, minHeight: 0 }}>
+        <div style={{ ...S, padding: "8px 16px" }}>
+          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
+            <Reveal active={active === 5} style={{ flex: "none" }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap", marginBottom: 6, paddingLeft: 4 }}>
+                <span style={{ fontFamily: FF_MONO, fontSize: 11, color: P.gold, letterSpacing: 1.5, textTransform: "uppercase", flex: "none" }}>{COPY.core.kicker}</span>
+                <h2 style={{ margin: 0, fontFamily: FF_HEAD, fontWeight: 300, fontSize: "clamp(18px, 2.4vw, 26px)", lineHeight: 1.15, letterSpacing: -0.5 }}>
+                  <Rich parts={COPY.core.headline} />
+                </h2>
+              </div>
+            </Reveal>
+            <Reveal active={active === 5} delay={0.16} style={{ flex: 1, minHeight: 0 }}>
               <div style={{
-                width: "100%", height: "100%", minHeight: 480, borderRadius: 18, overflow: "hidden",
-                border: `1px solid ${P.purple}33`, boxShadow: `0 20px 60px rgba(0,0,0,0.45), 0 0 24px ${P.purple}33`, background: P.dark,
+                width: "100%", height: "100%", borderRadius: 12, overflow: "hidden",
+                border: `1px solid ${P.purple}33`, boxShadow: `0 8px 24px rgba(0,0,0,0.4)`, background: P.dark,
               }}>
                 <iframe src="unified-5g-viz.html?teaser=1" title="Network slicing — animated preview" style={{ width: "100%", height: "100%", border: 0, display: "block", pointerEvents: "none" }} loading="lazy" />
               </div>

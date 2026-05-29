@@ -473,7 +473,7 @@ function EconomyChart({ active }) {
           </linearGradient>
         </defs>
 
-        {[0, 100, 200, 300].map(v => (
+        {[0, 50, 100, 150, 200].map(v => (
           <g key={v}>
             <line x1="50" x2="780" y1={280 - (v / max) * 240} y2={280 - (v / max) * 240} stroke={P.faint} strokeDasharray="2 4" />
             <text x="40" y={284 - (v / max) * 240} textAnchor="end" fontSize="9" fill={P.muted} fontFamily={FF_MONO}>${v}B</text>

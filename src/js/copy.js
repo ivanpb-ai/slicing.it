@@ -742,28 +742,28 @@ export const COPY = {
         44,
         84
       ],
-      axisMax: 400
+      axisMax: 200
     },
     stats: [
       {
         v: "+10–25%",
         l: "Consumer premium ARPU uplift",
-        c: P.cyan
+        c: P.dim
       },
       {
         v: "$200–500B",
         l: "Enterprise slice TAM by 2030",
-        c: P.magenta
+        c: P.cyan
       },
       {
         v: "$150B+",
         l: "Network API economy (CAMARA)",
-        c: P.gold
+        c: P.magenta
       },
       {
         v: "$10–80B",
         l: "Sensing-as-a-Service by 2035 (emerging)",
-        c: P.green
+        c: P.gold
       }
     ],
     note: "Illustrative figures — directional analyst/industry forecasts (enterprise-5G, network-API and sensing estimates), not audited."

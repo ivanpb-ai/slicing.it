@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NorthStar 5G - L4S Data Flows</title>
+  <link rel="icon" type="image/png" href="assets/images/favicon.png">
+  <link rel="stylesheet" href="./css/styles.css">
+  <style>
+    body { margin: 0; padding: 0; min-height: 100vh; }
+    .l4s-section {
+      margin: 40px auto;
+      max-width: 1200px;
+      padding: 0 20px;
+    }
+    .l4s-section h2 {
+      text-align: center;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+    l4s-flow-viz {
+      display: block;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .back-link {
+      margin: 20px 0;
+      padding: 20px 20px 20px 24px;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .back-link a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #F4E0FF;
+      text-decoration: underline;
+      text-decoration-color: #990AE3;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 4px;
+      font-family: "Telia Sans", system-ui, sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      background: none;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      transition: color .15s ease, text-decoration-color .15s ease;
+    }
+    .back-link a:hover { color: #FFFFFF; text-decoration-color: #FFFFFF; background: none; transform: none; }
+  </style>
+</head>
+<body>
+  <div class="back-link">
+    <a href="index.html">&larr; Back to NorthStar main page</a>
+    <a href="network-slice.html">← Network Slice Visualization</a>
+  </div>
+
+  <section class="l4s-section">
+    <h2>L4S Data Flow Visualization</h2>
+    <p style="text-align: center; color: #f4f3f3; margin-bottom: 20px;">
+      Explore how L4S (Low Latency, Low Loss, Scalable Throughput) enables rate-adaptive applications<br>
+      over dedicated and default QoS flows in the NorthStar 5G SA network.
+    </p>
+    <l4s-flow-viz></l4s-flow-viz>
+  </section>
+
+  <div class="back-link">
+    <a href="index.html">&larr; Back to NorthStar main page</a>
+  </div>
+
+  <!-- Load the L4S Flow Visualization Web Component -->
+  <script src="./js/l4s-flow-viz-webcomponent.js"></script>
+</body>
+</html>

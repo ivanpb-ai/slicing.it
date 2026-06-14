@@ -7,3 +7,12 @@
 [[edge_functions]]
   path = "/copy-editor"
   function = "editor-auth"
+
+# The Presentation Studio is an authoring tool too — gate it the same way.
+[[edge_functions]]
+  path = "/presentation-studio.html"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/presentation-studio"
+  function = "editor-auth"

@@ -442,7 +442,7 @@ export function Navigator({ slides, current, onSelect, onAdd, onDuplicate, onDel
 }
 
 /* ── Toolbar ────────────────────────────────────────────────────────────── */
-export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, onNew, onImport, onExport, saved }) {
+function Dropdown({ btnClass = "st-btn", label, wrapClass, menuClass, render }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => {
@@ -451,32 +451,64 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
     return () => document.removeEventListener("pointerdown", close);
   }, []);
   return (
+    <div className={wrapClass} ref={ref}>
+      <button className={btnClass} onClick={() => setOpen((v) => !v)}>{label}</button>
+      {open && <div className={menuClass}>{render(() => setOpen(false))}</div>}
+    </div>
+  );
+}
+
+function relTime(ts) {
+  if (!ts) return "";
+  const s = (Date.now() - ts) / 1000;
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, saved }) {
+  return (
     <div className="st-toolbar">
       <div className="st-tb-left">
         <span className="st-brand">◆ Studio</span>
-        <input className="st-title" value={title} onFocus={onCheckpoint} onChange={(e) => onTitle(e.target.value)} />
-      </div>
-      <div className="st-tb-center" ref={ref}>
-        <div className="st-insert">
-          <button className="st-btn primary" onClick={() => setOpen((v) => !v)}>✚ Insert ▾</button>
-          {open && (
-            <div className="st-insert-menu">
-              {ELEMENT_TYPES.map((t) => (
-                <button key={t.type} className="st-insert-item" onClick={() => { onInsert(t.type); setOpen(false); }}>
-                  <span className="st-insert-ic">{t.icon}</span>{t.label}
-                </button>
+        <Dropdown wrapClass="st-decks" menuClass="st-decks-menu" label="▤ Decks ▾" render={(close) => (
+          <>
+            <div className="st-decks-list">
+              {(!library || !library.length) && <div className="st-deckdate" style={{ padding: "8px 10px" }}>No saved presentations yet.</div>}
+              {library && library.map((it) => (
+                <div key={it.id} className={"st-deckrow" + (it.id === currentId ? " on" : "")}>
+                  <button className="st-deckopen" onClick={() => { onOpenDeck(it.id); close(); }}>
+                    <span className="st-deckname">{it.title || "Untitled"}</span>
+                    <span className="st-deckdate">{it.id === currentId ? "editing now" : `edited ${relTime(it.updatedAt)}`}</span>
+                  </button>
+                  <button className="st-icon danger st-deck-del" title="Delete presentation" onClick={() => onDeleteDeck(it.id)}>✕</button>
+                </div>
               ))}
             </div>
-          )}
-        </div>
+            <div className="st-decks-foot">
+              <button className="st-btn sm" onClick={() => { onNewDeck(); close(); }}>+ New</button>
+              <button className="st-btn sm" onClick={() => { onDuplicateDeck(); close(); }}>Duplicate</button>
+              <button className="st-btn sm" onClick={() => { onImport(); close(); }}>Import…</button>
+            </div>
+          </>
+        )} />
+        <input className="st-title" value={title} onFocus={onCheckpoint} onChange={(e) => onTitle(e.target.value)} title="Rename this presentation" />
+      </div>
+      <div className="st-tb-center">
+        <Dropdown wrapClass="st-insert" menuClass="st-insert-menu" btnClass="st-btn primary" label="✚ Insert ▾" render={(close) => (
+          ELEMENT_TYPES.map((t) => (
+            <button key={t.type} className="st-insert-item" onClick={() => { onInsert(t.type); close(); }}>
+              <span className="st-insert-ic">{t.icon}</span>{t.label}
+            </button>
+          ))
+        )} />
         <button className="st-btn" disabled={!canUndo} onClick={onUndo} title="Undo (Ctrl+Z)">↶</button>
         <button className="st-btn" disabled={!canRedo} onClick={onRedo} title="Redo (Ctrl+Shift+Z)">↷</button>
       </div>
       <div className="st-tb-right">
         <span className={"st-saved" + (saved ? " on" : "")}>{saved ? "Saved ✓" : "Saving…"}</span>
-        <button className="st-btn" onClick={onImport}>Import</button>
-        <button className="st-btn" onClick={onExport}>Export</button>
-        <button className="st-btn" onClick={onNew}>New</button>
+        <button className="st-btn" onClick={onExport} title="Download this presentation as .json">Export</button>
         <a className="st-btn" href="copy-editor.html" title="Edit the live NorthStar deck copy">Copy editor</a>
         <button className="st-btn primary" onClick={onPresent}>▶ Present</button>
       </div>

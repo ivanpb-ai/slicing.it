@@ -5,7 +5,7 @@
 // sheet injected below (KEYFRAMES drives every animation in effects.js).
 // ─────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { STAGE_W, STAGE_H, P, cloneDeep, uid, createElement, createSlide, createPresentation, starterDeck, loadDeck, saveDeck, validateDeck, downloadDeck } from "./model";
+import { STAGE_W, STAGE_H, P, cloneDeep, uid, createElement, createSlide, createPresentation, starterDeck, loadManifest, listDecks, loadDeckById, saveDeckToLib, deleteDeckFromLib, setCurrentDeckId, duplicateDeckObj, validateDeck, downloadDeck } from "./model";
 import { KEYFRAMES } from "./effects";
 import { SlideStage, SlideView } from "./stage";
 import { Navigator, Inspector, Toolbar } from "./panels";
@@ -87,9 +87,23 @@ function Present({ deck, startIndex = 0, onClose }) {
   );
 }
 
+// Pick the deck to open on launch: last-edited, else first in the library, else
+// seed the starter deck (and persist it so it joins the library).
+function initialDeck() {
+  const m = loadManifest();
+  for (const id of [m.currentId, m.items[0]?.id].filter(Boolean)) {
+    const d = loadDeckById(id);
+    if (d) return d;
+  }
+  const starter = starterDeck();
+  saveDeckToLib(starter);
+  return starter;
+}
+
 // ── main editor ─────────────────────────────────────────────────────────────
 export default function StudioApp() {
-  const [deck, setDeck] = useState(() => loadDeck() || starterDeck());
+  const [deck, setDeck] = useState(initialDeck);
+  const [library, setLibrary] = useState(() => listDecks());
   const [current, setCurrent] = useState(0);
   const [selectedId, setSelectedId] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -110,7 +124,7 @@ export default function StudioApp() {
   useEffect(() => {
     setSaved(false);
     clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => { saveDeck(deckRef.current); setSaved(true); }, 600);
+    saveTimer.current = setTimeout(() => { saveDeckToLib(deckRef.current); setLibrary(listDecks()); setSaved(true); }, 600);
     return () => clearTimeout(saveTimer.current);
   }, [deck]);
 
@@ -206,10 +220,25 @@ export default function StudioApp() {
     setCurrent(j);
   };
 
-  // deck ops
-  const newDeck = () => {
-    if (!window.confirm("Start a new, empty presentation? Your current deck stays saved until you overwrite it.")) return;
-    checkpoint(); setDeck(createPresentation()); setCurrent(0); setSelectedId(null);
+  // library / deck ops — each presentation is stored separately
+  const untitledName = () => `Untitled presentation ${library.length + 1}`;
+  const persistCurrent = () => saveDeckToLib(deckRef.current);
+  const switchTo = (d) => {
+    setDeck(d); setCurrent(0); setSelectedId(null); setEditingId(null);
+    setUndo([]); setRedo([]); setCurrentDeckId(d.id); setLibrary(listDecks());
+  };
+  const openDeck = (id) => { if (id === deck.id) return; persistCurrent(); const d = loadDeckById(id); if (d) switchTo(d); };
+  const newPresentation = () => { persistCurrent(); const blank = createPresentation({ title: untitledName() }); saveDeckToLib(blank); switchTo(blank); };
+  const duplicateCurrentDeck = () => { persistCurrent(); const copy = duplicateDeckObj(deck); saveDeckToLib(copy); switchTo(copy); };
+  const deleteDeck = (id) => {
+    const item = library.find((x) => x.id === id);
+    if (!window.confirm(`Delete “${item?.title || "this presentation"}”? This can't be undone.`)) return;
+    const m = deleteDeckFromLib(id);
+    if (id === deck.id) {
+      const next = m.currentId ? loadDeckById(m.currentId) : null;
+      if (next) switchTo(next);
+      else { const blank = createPresentation({ title: "Untitled presentation 1" }); saveDeckToLib(blank); switchTo(blank); }
+    } else setLibrary(listDecks());
   };
   const importDeck = () => fileRef.current?.click();
   const onFile = (e) => {
@@ -219,7 +248,9 @@ export default function StudioApp() {
       try {
         const parsed = validateDeck(JSON.parse(reader.result));
         if (!parsed) throw new Error("bad");
-        checkpoint(); setDeck(parsed); setCurrent(0); setSelectedId(null);
+        persistCurrent();
+        const imported = { ...parsed, id: uid("deck") }; // distinct library entry
+        saveDeckToLib(imported); switchTo(imported);
       } catch { window.alert("That file isn't a valid Studio presentation (.json)."); }
     };
     reader.readAsText(f);
@@ -261,7 +292,9 @@ export default function StudioApp() {
       <Toolbar
         title={deck.title} onTitle={(v) => setDeck((d) => ({ ...d, title: v }))} onCheckpoint={checkpoint}
         onInsert={insertElement} onUndo={doUndo} onRedo={doRedo} canUndo={undo.length > 0} canRedo={redo.length > 0}
-        onPresent={() => { setStartAt(current); setPresenting(true); }} onNew={newDeck} onImport={importDeck} onExport={exportDeck} saved={saved}
+        onPresent={() => { setStartAt(current); setPresenting(true); }}
+        library={library} currentId={deck.id} onOpenDeck={openDeck} onNewDeck={newPresentation} onDuplicateDeck={duplicateCurrentDeck} onDeleteDeck={deleteDeck}
+        onImport={importDeck} onExport={exportDeck} saved={saved}
       />
 
       <div className="st-body">
@@ -324,6 +357,22 @@ const STUDIO_CSS = `
 .st-insert-item{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);color:#F4E0FF;border-radius:8px;padding:8px 10px;text-align:left;}
 .st-insert-item:hover{border-color:${P.cyan};background:rgba(0,212,255,0.08);}
 .st-insert-ic{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:${P.cyan};font-weight:700;}
+
+/* decks menu */
+.st-decks{position:relative;}
+.st-decks-menu{position:absolute;top:120%;left:0;z-index:30;width:300px;background:#22093b;border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.5);overflow:hidden;}
+.st-decks-list{max-height:320px;overflow-y:auto;padding:6px;display:flex;flex-direction:column;gap:4px;}
+.st-deckrow{display:flex;align-items:stretch;gap:4px;border-radius:8px;border:1px solid transparent;}
+.st-deckrow.on{background:rgba(0,212,255,0.08);border-color:${P.cyan}55;}
+.st-deckrow:hover{background:rgba(255,255,255,0.04);}
+.st-deckopen{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;align-items:flex-start;background:transparent;border:0;color:#F4E0FF;padding:8px 10px;text-align:left;}
+.st-deckname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.st-deckdate{font-size:10.5px;color:${P.muted};font-family:ui-monospace,monospace;}
+.st-deckrow.on .st-deckname{color:${P.cyan};}
+.st-deck-del{align-self:center;margin-right:6px;opacity:0;}
+.st-deckrow:hover .st-deck-del,.st-deckrow.on .st-deck-del{opacity:1;}
+.st-decks-foot{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line);background:rgba(0,0,0,0.2);}
+.st-decks-foot .st-btn{flex:1;justify-content:center;}
 
 /* body */
 .st-body{flex:1;display:grid;grid-template-columns:248px 1fr 332px;min-height:0;}

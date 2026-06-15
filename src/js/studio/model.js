@@ -400,4 +400,73 @@ export function downloadDeck(deck) {
   URL.revokeObjectURL(url);
 }
 
+// ── Library: many separate presentations ───────────────────────────────────
+// A manifest lists every deck ({id,title,updatedAt}); each deck is stored under
+// its own key so autosave only rewrites the one being edited. A pre-existing
+// single deck (v1) is migrated into the library on first load.
+const MANIFEST_KEY = "northstar.studio.library.v1";
+const deckKey = (id) => "northstar.studio.deck." + id;
+
+const readJSON = (key) => { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch { return null; } };
+const writeJSON = (key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch { return false; } };
+
+export function loadManifest() {
+  let m = readJSON(MANIFEST_KEY);
+  if (!m || !Array.isArray(m.items)) m = { currentId: null, items: [] };
+  if (!m.items.length) {
+    const legacy = readJSON(STORE_KEY);
+    const valid = legacy && validateDeck(legacy);
+    if (valid) {
+      writeJSON(deckKey(valid.id), valid);
+      m = { currentId: valid.id, items: [{ id: valid.id, title: valid.title, updatedAt: Date.now() }] };
+      writeJSON(MANIFEST_KEY, m);
+      clearDeck();
+    }
+  }
+  return m;
+}
+
+export function listDecks() {
+  return loadManifest().items.slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+}
+
+export function loadDeckById(id) {
+  const d = readJSON(deckKey(id));
+  return d ? validateDeck(d) : null;
+}
+
+// Persist a deck and upsert its manifest entry; marks it as the current deck.
+export function saveDeckToLib(deck) {
+  writeJSON(deckKey(deck.id), deck);
+  const m = loadManifest();
+  const entry = { id: deck.id, title: deck.title || "Untitled", updatedAt: Date.now() };
+  const i = m.items.findIndex((x) => x.id === deck.id);
+  if (i >= 0) m.items[i] = entry; else m.items.push(entry);
+  m.currentId = deck.id;
+  writeJSON(MANIFEST_KEY, m);
+  return listDecks();
+}
+
+export function deleteDeckFromLib(id) {
+  try { localStorage.removeItem(deckKey(id)); } catch { /* ignore */ }
+  const m = loadManifest();
+  m.items = m.items.filter((x) => x.id !== id);
+  if (m.currentId === id) m.currentId = m.items[0]?.id || null;
+  writeJSON(MANIFEST_KEY, m);
+  return m;
+}
+
+export function setCurrentDeckId(id) {
+  const m = loadManifest(); m.currentId = id; writeJSON(MANIFEST_KEY, m);
+}
+
+// Deep clone a deck with brand-new ids (deck + every slide + every element).
+export function duplicateDeckObj(deck, title) {
+  return {
+    ...cloneDeep(deck), id: uid("deck"),
+    title: title ?? `${deck.title || "Untitled"} copy`,
+    slides: deck.slides.map((s) => ({ ...cloneDeep(s), id: uid("slide"), elements: s.elements.map((e) => ({ ...cloneDeep(e), id: uid("el") })) })),
+  };
+}
+
 export { baseAnim };

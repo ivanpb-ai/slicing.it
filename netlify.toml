@@ -1,4 +1,5 @@
-# Gate the copy editor behind HTTP Basic Auth (see netlify/edge-functions/editor-auth.js).
+# Gate the editor tools behind a password (form + cookie login; see
+# netlify/edge-functions/editor-auth.js). The rest of the site stays public.
 # Build command and publish directory remain as configured in the Netlify dashboard.
 [[edge_functions]]
   path = "/copy-editor.html"

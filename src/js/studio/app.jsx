@@ -15,10 +15,10 @@ const cloneSlide = (s) => ({ ...cloneDeep(s), id: uid("slide"), elements: s.elem
 // ── Present overlay ────────────────────────────────────────────────────────
 const TRANS = {
   fade: { o: 0, t: "none" },
-  "slide-left": { o: 0, t: "translateX(70px)" },
-  "slide-up": { o: 0, t: "translateY(70px)" },
-  zoom: { o: 0, t: "scale(0.92)" },
-  flip: { o: 0, t: "perspective(1400px) rotateY(14deg)" },
+  "slide-left": { o: 0, t: "translateX(160px)" },
+  "slide-up": { o: 0, t: "translateY(140px)" },
+  zoom: { o: 0, t: "scale(0.82)" },
+  flip: { o: 0, t: "perspective(1600px) rotateY(28deg)" },
   none: { o: 1, t: "none" },
 };
 
@@ -33,11 +33,17 @@ function Present({ deck, startIndex = 0, onClose }) {
     return () => window.removeEventListener("resize", fit);
   }, []);
 
-  // Re-trigger entrance animations whenever the slide changes.
+  // When the slide changes, reset to the pre-entrance state *during render*
+  // (before paint) so the chosen transition starts from its beginning — then
+  // flip to active on the next frames to play it. (If we only reset in an
+  // effect, the new slide paints already-settled and the transition is skipped.)
+  const [shownI, setShownI] = useState(i);
+  if (shownI !== i) { setShownI(i); setActive(false); }
+
   useEffect(() => {
-    setActive(false);
-    const r = requestAnimationFrame(() => requestAnimationFrame(() => setActive(true)));
-    return () => cancelAnimationFrame(r);
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => { raf2 = requestAnimationFrame(() => setActive(true)); });
+    return () => { cancelAnimationFrame(raf1); cancelAnimationFrame(raf2); };
   }, [i]);
 
   const go = useCallback((d) => setI((p) => Math.max(0, Math.min(deck.slides.length - 1, p + d))), [deck.slides.length]);
@@ -64,7 +70,7 @@ function Present({ deck, startIndex = 0, onClose }) {
           position: "absolute", top: 0, left: 0, width: STAGE_W, height: STAGE_H, transform: `scale(${scale})`, transformOrigin: "top left",
           borderRadius: 4, overflow: "hidden",
         }}>
-          <div style={{
+          <div className="st-slide-fx" style={{
             width: "100%", height: "100%", position: "relative",
             opacity: active ? 1 : tr.o, transform: active ? "none" : tr.t,
             transition: "opacity 0.55s cubic-bezier(0.16,1,0.3,1), transform 0.55s cubic-bezier(0.16,1,0.3,1)",

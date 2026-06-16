@@ -13,81 +13,119 @@ import { Navigator, Inspector, Toolbar } from "./panels";
 const cloneSlide = (s) => ({ ...cloneDeep(s), id: uid("slide"), elements: s.elements.map((e) => ({ ...cloneDeep(e), id: uid("el") })) });
 
 // ── Present overlay ────────────────────────────────────────────────────────
-const TRANS = {
-  fade: { o: 0, t: "none" },
-  "slide-left": { o: 0, t: "translateX(160px)" },
-  "slide-up": { o: 0, t: "translateY(140px)" },
-  zoom: { o: 0, t: "scale(0.82)" },
-  flip: { o: 0, t: "perspective(1600px) rotateY(28deg)" },
-  none: { o: 1, t: "none" },
-};
+const TRANS_DUR = 0.9; // seconds — slide transition speed
+const TR_CSS = `opacity ${TRANS_DUR}s cubic-bezier(0.16,1,0.3,1), transform ${TRANS_DUR}s cubic-bezier(0.16,1,0.3,1)`;
+
+// Paired enter/exit states for the incoming and outgoing slides. `dir` is +1 when
+// advancing, -1 when going back, so pushes and flips reverse direction sensibly.
+function transitionStates(type, dir) {
+  switch (type) {
+    case "none":
+      return { enterFrom: { o: 1, t: "none" }, exitTo: { o: 1, t: "none" } };
+    case "fade":
+      return { enterFrom: { o: 0, t: "none" }, exitTo: { o: 0, t: "none" } };
+    case "slide-left":
+      return { enterFrom: { o: 1, t: `translateX(${STAGE_W * dir}px)` }, exitTo: { o: 1, t: `translateX(${-STAGE_W * dir}px)` } };
+    case "slide-up":
+      return { enterFrom: { o: 1, t: `translateY(${STAGE_H * dir}px)` }, exitTo: { o: 1, t: `translateY(${-STAGE_H * dir}px)` } };
+    case "zoom":
+      return { enterFrom: { o: 0, t: "scale(0.82)" }, exitTo: { o: 0, t: "scale(1.14)" } };
+    case "flip":
+      return { enterFrom: { o: 0, t: `perspective(1800px) rotateY(${35 * dir}deg)` }, exitTo: { o: 0, t: `perspective(1800px) rotateY(${-35 * dir}deg)` } };
+    default:
+      return { enterFrom: { o: 0, t: "none" }, exitTo: { o: 0, t: "none" } };
+  }
+}
 
 function Present({ deck, startIndex = 0, onClose }) {
   const [i, setI] = useState(startIndex);
+  const [prev, setPrev] = useState(null); // outgoing slide index during a transition
+  const [dir, setDir] = useState(1);
   const [active, setActive] = useState(false);
   const [scale, setScale] = useState(1);
+  const iRef = useRef(i); iRef.current = i;
+  const navTimer = useRef(0);
 
   useEffect(() => {
     const fit = () => setScale(Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H));
     fit(); window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
   }, []);
+  useEffect(() => () => clearTimeout(navTimer.current), []);
 
-  // When the slide changes, reset to the pre-entrance state *during render*
-  // (before paint) so the chosen transition starts from its beginning — then
-  // flip to active on the next frames to play it. (If we only reset in an
-  // effect, the new slide paints already-settled and the transition is skipped.)
-  const [shownI, setShownI] = useState(i);
-  if (shownI !== i) { setShownI(i); setActive(false); }
+  // Go to another slide: mount the outgoing slide alongside the incoming one in
+  // their pre-transition states, then flip `active` on the next frames so both
+  // animate together. The outgoing layer is unmounted once the motion finishes.
+  const navigate = useCallback((d, target) => {
+    const cur = iRef.current;
+    const ni = Math.max(0, Math.min(deck.slides.length - 1, target != null ? target : cur + d));
+    if (ni === cur) return;
+    clearTimeout(navTimer.current);
+    const animateOut = deck.slides[ni].transition !== "none";
+    setPrev(animateOut ? cur : null);
+    setDir(ni >= cur ? 1 : -1);
+    setActive(false);
+    setI(ni);
+    if (animateOut) navTimer.current = setTimeout(() => setPrev(null), TRANS_DUR * 1000 + 90);
+  }, [deck.slides]);
 
+  // Trigger the transition a couple of frames after the new slide has painted.
   useEffect(() => {
     let raf2 = 0;
     const raf1 = requestAnimationFrame(() => { raf2 = requestAnimationFrame(() => setActive(true)); });
     return () => { cancelAnimationFrame(raf1); cancelAnimationFrame(raf2); };
   }, [i]);
 
-  const go = useCallback((d) => setI((p) => Math.max(0, Math.min(deck.slides.length - 1, p + d))), [deck.slides.length]);
-
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); go(1); }
-      else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); go(-1); }
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); navigate(1); }
+      else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); navigate(-1); }
       else if (e.key === "Escape") onClose();
-      else if (e.key === "Home") setI(0);
-      else if (e.key === "End") setI(deck.slides.length - 1);
+      else if (e.key === "Home") navigate(-1, 0);
+      else if (e.key === "End") navigate(1, deck.slides.length - 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [go, onClose, deck.slides.length]);
+  }, [navigate, onClose, deck.slides.length]);
 
-  const slide = deck.slides[i];
-  const tr = TRANS[slide.transition] || TRANS.fade;
+  const incoming = deck.slides[i];
+  const outgoing = prev != null ? deck.slides[prev] : null;
+  const tt = transitionStates(incoming.transition, dir); // the transition you're going *to* drives both layers
+
+  const layer = { position: "absolute", inset: 0, transition: TR_CSS };
 
   return (
-    <div className="st-present" onClick={(e) => { const mid = window.innerWidth / 2; if (e.clientX > mid) go(1); else go(-1); }}>
+    <div className="st-present" onClick={(e) => { const mid = window.innerWidth / 2; navigate(e.clientX > mid ? 1 : -1); }}>
       <div style={{ width: STAGE_W * scale, height: STAGE_H * scale, position: "relative" }}>
-        <div key={i} style={{
+        <div style={{
           position: "absolute", top: 0, left: 0, width: STAGE_W, height: STAGE_H, transform: `scale(${scale})`, transformOrigin: "top left",
           borderRadius: 4, overflow: "hidden",
         }}>
-          <div className="st-slide-fx" style={{
-            width: "100%", height: "100%", position: "relative",
-            opacity: active ? 1 : tr.o, transform: active ? "none" : tr.t,
-            transition: "opacity 0.55s cubic-bezier(0.16,1,0.3,1), transform 0.55s cubic-bezier(0.16,1,0.3,1)",
+          {outgoing && (
+            <div key={`out-${prev}`} className="st-slide-fx-out" style={{
+              ...layer, zIndex: 1,
+              opacity: active ? tt.exitTo.o : 1, transform: active ? tt.exitTo.t : "none",
+            }}>
+              <SlideView slide={outgoing} mode="present" active={true} />
+            </div>
+          )}
+          <div key={`in-${i}`} className="st-slide-fx" style={{
+            ...layer, zIndex: 2,
+            opacity: active ? 1 : tt.enterFrom.o, transform: active ? "none" : tt.enterFrom.t,
           }}>
-            <SlideView slide={slide} mode="present" active={active} />
+            <SlideView slide={incoming} mode="present" active={active} />
           </div>
         </div>
       </div>
 
       <div className="st-present-bar" onClick={(e) => e.stopPropagation()}>
-        <button className="st-btn" onClick={() => go(-1)} disabled={i === 0}>‹</button>
+        <button className="st-btn" onClick={() => navigate(-1)} disabled={i === 0}>‹</button>
         <span className="st-present-count">{i + 1} / {deck.slides.length}</span>
-        <button className="st-btn" onClick={() => go(1)} disabled={i === deck.slides.length - 1}>›</button>
+        <button className="st-btn" onClick={() => navigate(1)} disabled={i === deck.slides.length - 1}>›</button>
         <button className="st-btn" onClick={onClose}>✕ Exit</button>
       </div>
       <div className="st-present-dots" onClick={(e) => e.stopPropagation()}>
-        {deck.slides.map((s, k) => <button key={s.id} className={"st-pdot" + (k === i ? " on" : "")} onClick={() => setI(k)} title={s.name} />)}
+        {deck.slides.map((s, k) => <button key={s.id} className={"st-pdot" + (k === i ? " on" : "")} onClick={() => navigate(0, k)} title={s.name} />)}
       </div>
     </div>
   );

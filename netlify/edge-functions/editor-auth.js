@@ -42,7 +42,7 @@ function readCookie(header, name) {
 function loginPage(failed) {
   return `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-<meta name="robots" content="noindex"/><title>NorthStar editor · Sign in</title>
+<meta name="robots" content="noindex"/><title>NorthStar protected zone · Sign in</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
@@ -61,7 +61,7 @@ body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:c
 <body>
  <form class="card" method="post" autocomplete="on">
   <div class="brand">◆ NorthStar protected zone</div>
-  <p class="sub">Enter the editor password to continue.</p>
+  <p class="sub">Enter password to continue.</p>
   ${failed ? '<div class="err">Incorrect password — please try again.</div>' : ""}
   <input class="pw" type="password" name="password" placeholder="Password" autofocus autocomplete="current-password" required/>
   <button class="go" type="submit">Sign in</button>

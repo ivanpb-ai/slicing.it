@@ -1,0 +1,158 @@
+<!DOCTYPE html><html lang=en><meta charset=UTF-8><meta name=viewport content="width=device-width, initial-scale=1.0"><title>Digital Arena Sweden</title><link rel=icon type=image/png href="assets/images/favicon.png"><style>@font-face{font-family:Telia Sans Heading;src:url(assets/fonts/TeliaSansHeading-Heading.woff2)format("woff2");font-weight:300;font-style:normal;font-display:swap}@font-face{font-family:Telia Sans;src:url(assets/fonts/TeliaSans-Regular.woff2)format("woff2");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:Telia Sans;src:url(assets/fonts/TeliaSans-Medium.woff2)format("woff2");font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:Telia Sans;src:url(assets/fonts/TeliaSans-Bold.woff2)format("woff2");font-weight:700;font-style:normal;font-display:swap}:root{--deep-purple:#29003e;--core-purple:#990ae3;--light-purple:#f4e0ff;--teal:#00827c;--card-bg:#990ae314;--card-border:#990ae340;--glass-bg:#3d155673;--glass-border:#990ae34d}*{box-sizing:border-box;margin:0;padding:0}html,body{background:var(--deep-purple);width:100%;height:100%;color:var(--light-purple);font-family:Telia Sans,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow-x:hidden}body{background:radial-gradient(ellipse 80% 50% at 20% 40%,#990ae326 0%,transparent 70%),radial-gradient(ellipse 60% 40% at 80% 60%,#00827c14 0%,transparent 70%),linear-gradient(180deg,#1a0029 0%,var(--deep-purple)30%,#1e0030 100%);min-height:100vh}.back-link{z-index:1000;color:var(--light-purple);text-decoration:underline;text-decoration-color:var(--core-purple);text-underline-offset:4px;opacity:.7;font-size:15px;font-weight:500;text-decoration-thickness:2px;transition:opacity .15s,color .15s;position:fixed;top:16px;right:24px}.back-link:hover{opacity:1;color:#fff}.slide{max-width:1400px;margin:0 auto;padding:48px 48px 64px}.slide-title{color:#fff;letter-spacing:-.5px;margin-bottom:48px;font-family:Telia Sans Heading,Telia Sans,system-ui,sans-serif;font-size:48px;font-weight:300;line-height:1}.slide-title span{color:var(--core-purple)}.row{grid-template-columns:140px 1fr;align-items:start;margin-bottom:32px;display:grid;position:relative}.row-label{letter-spacing:2.5px;text-transform:uppercase;color:#f4e0ff80;writing-mode:horizontal-tb;padding-top:16px;font-size:12px;font-weight:700}.customers-grid{grid-template-columns:repeat(4,1fr);gap:16px;display:grid}.customer-chip{text-align:center;color:#fff;cursor:pointer;border-radius:12px;padding:18px 24px;font-size:14px;font-weight:700;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}.customer-chip:hover{transform:translateY(-2px);box-shadow:0 8px 32px #990ae366}.customer-chip:before{content:"";-webkit-mask-composite:xor;-webkit-mask-composite:xor;-webkit-mask-source-type:auto,auto;background:linear-gradient(135deg,#ffffff4d,#ffffff0d);border-radius:12px;padding:1.5px;position:absolute;inset:0;-webkit-mask-image:linear-gradient(#fff 0 0),linear-gradient(#fff 0 0);mask-image:linear-gradient(#fff 0 0),linear-gradient(#fff 0 0);-webkit-mask-position:0 0,0 0;mask-position:0 0,0 0;-webkit-mask-size:auto,auto;mask-size:auto,auto;-webkit-mask-repeat:repeat,repeat;mask-repeat:repeat,repeat;-webkit-mask-clip:content-box,border-box;mask-clip:content-box,border-box;-webkit-mask-origin:content-box,border-box;mask-origin:content-box,border-box;-webkit-mask-composite:xor;mask-composite:exclude;-webkit-mask-source-type:auto,auto;mask-mode:match-source,match-source}.customer-chip.mission{background:linear-gradient(135deg,#990ae3,#7b08b5)}.customer-chip.society{background:linear-gradient(135deg,#b340e8,#8a0cc0)}.customer-chip.business{background:linear-gradient(135deg,#c060ec,#990ae3)}.customer-chip.mass{background:linear-gradient(135deg,#d080f0,#a830e0)}.connector-zone{justify-content:center;padding:8px 0;display:flex}.connector-line{background:linear-gradient(180deg,var(--core-purple),#990ae333);width:2px;height:24px}.glass-panel{background:var(--glass-bg);border:1px solid var(--glass-border);-webkit-backdrop-filter:blur(12px);border-radius:16px;padding:24px;position:relative;overflow:hidden}.glass-panel:after{content:"";background:linear-gradient(90deg,#0000,#f4e0ff26,#0000);height:1px;position:absolute;top:0;left:0;right:0}.glass-panel-title{letter-spacing:1.5px;text-transform:uppercase;color:#f4e0ff99;text-align:center;margin-bottom:16px;font-size:13px;font-weight:700}.api-garden{padding:20px 24px 24px}.api-garden .glass-panel-title{letter-spacing:1px;color:var(--light-purple);cursor:pointer;margin-bottom:20px;font-size:16px;font-weight:700}.api-chips{flex-wrap:wrap;justify-content:center;gap:12px;display:flex}.api-chip{letter-spacing:.8px;text-transform:uppercase;color:#fff;cursor:pointer;background:linear-gradient(135deg,#990ae399,#990ae34d);border:1px solid #990ae380;border-radius:8px;padding:10px 20px;font-size:12px;font-weight:700;transition:all .2s}.api-chip:hover{border-color:var(--core-purple);background:linear-gradient(135deg,#990ae3cc,#990ae380);transform:translateY(-1px);box-shadow:0 4px 16px #990ae34d}.platforms-area{grid-template-columns:180px 1fr 180px;align-items:stretch;gap:16px;display:grid}.side-panel{text-align:center;cursor:pointer;justify-content:center;align-items:center;min-height:380px;display:flex}.side-panel .panel-name{color:var(--light-purple);font-family:Telia Sans Heading,Telia Sans,system-ui,sans-serif;font-size:22px;font-weight:300}.orchestration{padding:20px}.orchestration>.glass-panel-title{color:var(--light-purple);margin-bottom:20px;font-size:15px}.orch-inner{grid-template-columns:60px 1fr;align-items:stretch;gap:16px;display:grid}.transport-strip{writing-mode:vertical-lr;text-orientation:mixed;letter-spacing:2px;text-transform:uppercase;color:var(--teal);cursor:pointer;background:linear-gradient(#00827c4d,#00827c1a);border:1px solid #00827c66;border-radius:12px;justify-content:center;align-items:center;padding:16px 8px;font-size:13px;font-weight:700;transition:all .2s;display:flex;transform:rotate(180deg)}.transport-strip:hover{border-color:var(--teal);background:linear-gradient(#00827c73,#00827c33);box-shadow:0 0 20px #00827c33}.network-layers{flex-direction:column;gap:16px;display:flex}.layer-card{background:#29003e99;border:1px solid #990ae333;border-radius:12px;padding:16px 20px;transition:border-color .2s,box-shadow .2s}.layer-card:hover{border-color:#990ae380;box-shadow:0 0 24px #990ae31a}.layer-title{letter-spacing:1px;text-transform:uppercase;color:var(--light-purple);text-align:center;cursor:pointer;margin-bottom:12px;font-size:14px;font-weight:700}.layer-items{flex-wrap:wrap;justify-content:center;gap:10px;display:flex}.layer-item{letter-spacing:.6px;text-transform:uppercase;color:#fff;cursor:pointer;background:linear-gradient(135deg,#990ae380,#990ae340);border:1px solid #990ae366;border-radius:6px;padding:8px 16px;font-size:11px;font-weight:700;transition:all .2s}.layer-item:hover{background:linear-gradient(135deg,var(--core-purple),#990ae380);transform:translateY(-1px);box-shadow:0 4px 12px #990ae34d}.ai-panel{flex-direction:column;justify-content:center;align-items:center;gap:24px;display:flex}.ai-node{letter-spacing:.8px;text-transform:uppercase;color:#fff;text-align:center;cursor:pointer;background:linear-gradient(135deg,#990ae380,#990ae340);border:1px solid #990ae366;border-radius:10px;padding:14px 28px;font-size:13px;font-weight:700;transition:all .2s;position:relative}.ai-node:hover{background:linear-gradient(135deg,var(--core-purple),#990ae380);transform:translateY(-1px);box-shadow:0 4px 12px #990ae34d}.ai-connector{background:linear-gradient(180deg,var(--core-purple),#990ae333);width:2px;height:32px}.platforms-area .side-panel.right-panel{position:relative}.use-cases-grid{grid-template-columns:repeat(8,1fr);gap:20px;display:grid}.use-case{cursor:default;border-radius:12px;flex-direction:column;align-items:center;gap:10px;padding:16px 8px;transition:all .25s;display:flex}.use-case:hover{background:#990ae31a;transform:translateY(-3px)}.use-case-icon{background:linear-gradient(135deg,#990ae34d,#990ae31a);border:1px solid #990ae34d;border-radius:12px;justify-content:center;align-items:center;width:48px;height:48px;transition:all .25s;display:flex}.use-case:hover .use-case-icon{border-color:var(--core-purple);background:linear-gradient(135deg,#990ae380,#990ae333);box-shadow:0 0 20px #990ae34d}.use-case-icon svg{width:24px;height:24px;stroke:var(--light-purple);fill:none;stroke-width:1.5px;stroke-linecap:round;stroke-linejoin:round}.use-case-label{color:#f4e0ff99;text-align:center;font-size:11px;font-weight:500;line-height:1.3}.use-case:hover .use-case-label{color:var(--light-purple)}.telia-logo{opacity:.15;position:fixed;bottom:24px;right:32px}@keyframes fadeInUp{0%{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}.fade-in{animation:.5s both fadeInUp}.delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}.delay-3{animation-delay:.3s}.delay-4{animation-delay:.4s}.delay-5{animation-delay:.5s}.glow-dot{background:var(--core-purple);filter:blur(40px);opacity:.15;pointer-events:none;border-radius:50%;position:absolute}.info-overlay{z-index:2000;-webkit-backdrop-filter:blur(4px);background:#1a002999;justify-content:center;align-items:center;animation:.2s both overlayIn;display:none;position:fixed;inset:0}.info-overlay.visible{display:flex}@keyframes overlayIn{0%{opacity:0}to{opacity:1}}.info-panel{border:1px solid var(--glass-border);background:linear-gradient(135deg,#3d1556,#29003e);border-radius:20px;width:90%;max-width:560px;padding:36px 40px 32px;animation:.25s both panelIn;position:relative;box-shadow:0 24px 80px #00000080,0 0 60px #990ae326}@keyframes panelIn{0%{opacity:0;transform:translateY(20px)scale(.97)}to{opacity:1;transform:translateY(0)scale(1)}}.info-panel:after{content:"";background:linear-gradient(90deg,#0000,#f4e0ff33,#0000);border-radius:20px 20px 0 0;height:1px;position:absolute;top:0;left:0;right:0}.info-panel-title{color:#fff;margin-bottom:16px;padding-right:32px;font-size:20px;font-weight:700}.info-panel-body{color:#f4e0ffd9;font-size:15px;font-weight:400;line-height:1.6}.info-panel-close{width:32px;height:32px;color:var(--light-purple);cursor:pointer;background:#990ae326;border:1px solid #990ae34d;border-radius:8px;justify-content:center;align-items:center;font-size:18px;transition:all .15s;display:flex;position:absolute;top:20px;right:20px}.info-panel-close:hover{background:var(--core-purple);border-color:var(--core-purple);color:#fff}[data-info].active{outline:2px solid var(--core-purple);outline-offset:2px;box-shadow:0 0 24px #990ae366}@media (width<=1100px){.slide{padding:32px 24px}.slide-title{font-size:36px}.platforms-area{grid-template-columns:1fr}.side-panel{min-height:auto;padding:16px}.side-panel .panel-name{writing-mode:horizontal-tb}.use-cases-grid{grid-template-columns:repeat(4,1fr)}.customers-grid{grid-template-columns:repeat(2,1fr)}.info-panel{padding:28px 24px 24px}}</style><body>
+    <a class='back-link' href="index.html">← Back to NorthStar main page</a>
+
+    
+    <div class=info-overlay id=infoOverlay>
+        <div class=info-panel>
+            <button class=info-panel-close id=infoClose>×</button>
+            <div class=info-panel-title id=infoTitle></div>
+            <div class=info-panel-body id=infoBody></div>
+        </div>
+    </div>
+
+    <div class=slide>
+
+        <h1 class="fade-in slide-title">Digital Arena <span>Sweden</span></h1>
+
+        
+        <div class="delay-1 fade-in row">
+            <div class=row-label>Customers</div>
+            <div class=customers-grid>
+                <div class="customer-chip mission" data-info=mission-critical>Mission Critical</div>
+                <div class="customer-chip society" data-info=society-critical>Society Critical</div>
+                <div class="business customer-chip" data-info=business-critical>Business Critical</div>
+                <div class="customer-chip mass" data-info=mass-market>Mass Market</div>
+            </div>
+        </div>
+
+        
+        <div class="delay-2 fade-in row">
+            <div class=row-label></div>
+            <div class="api-garden glass-panel">
+                <div class=glass-panel-title data-info=api-garden>Telia API Garden</div>
+                <div class=api-chips>
+                    <div class=api-chip data-info=api-portal>API Portal</div>
+                    <div class=api-chip data-info=api-gateway>API Gateway</div>
+                    <div class=api-chip data-info=nef>Network Exposure Functions</div>
+                    <div class=api-chip data-info=3gpp-apis>3GPP APIs</div>
+                    <div class=api-chip data-info=camara>CAMARA</div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="delay-3 fade-in row">
+            <div class=row-label>Platforms</div>
+            <div class=platforms-area>
+
+                <div class="glass-panel side-panel" data-info=telia-iot>
+                    <div class=panel-name>Telia IoT</div>
+                </div>
+
+                <div class="glass-panel orchestration">
+                    <div class=glass-panel-title>Orchestration</div>
+                    <div class=orch-inner>
+                        <div class=transport-strip data-info=transport>Transport</div>
+                        <div class=network-layers>
+                            <div class=layer-card>
+                                <div class=layer-title data-info=core>Core</div>
+                                <div class=layer-items>
+                                    <div class=layer-item data-info=control-plane>Control Plane</div>
+                                    <div class=layer-item data-info=user-plane>User Plane</div>
+                                    <div class=layer-item data-info=policy-enforcement>Policy Enforcement</div>
+                                    <div class=layer-item data-info=interconnect>Interconnect to Public Core</div>
+                                </div>
+                            </div>
+                            <div class=layer-card>
+                                <div class=layer-title data-info=edge>Edge</div>
+                                <div class=layer-items>
+                                    <div class=layer-item data-info=regional-breakout>Regional Breakout</div>
+                                    <div class=layer-item data-info=local-breakout>Local Breakout</div>
+                                    <div class=layer-item data-info=onsite-breakout>On Site Breakout</div>
+                                </div>
+                            </div>
+                            <div class=layer-card>
+                                <div class=layer-title data-info=ran>RAN</div>
+                                <div class=layer-items>
+                                    <div class=layer-item data-info=public-sites>Public Sites</div>
+                                    <div class=layer-item data-info=private-sites>Private Sites</div>
+                                    <div class=layer-item data-info=nomadic-sites>Nomadic Sites</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-panel glass-panel right-panel side-panel">
+                    <div class=panel-name style=margin-bottom:8px data-info=telia-ai>Telia.AI</div>
+                    <div class=ai-node data-info=ai-central>Central</div>
+                    <div class=ai-connector></div>
+                    <div class=ai-node data-info=ai-distributed>Distributed</div>
+                </div>
+
+            </div>
+        </div>
+
+        
+        <div class="delay-4 fade-in row">
+            <div class=row-label>Use cases</div>
+            <div class=use-cases-grid>
+                <div class=use-case>
+                    <div class=use-case-icon>
+                        <svg viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5ZM2 17l10 5 10-5M2 12l10 5 10-5"/><circle cx=12 cy=5 r=1.5 fill=currentColor /></svg>
+                    </div>
+                    <div class=use-case-label>Drones &amp; UAV</div>
+                </div>
+                <div class=use-case>
+                    <div class=use-case-icon>
+                        <svg viewBox="0 0 24 24"><rect width=16 height=16 x=4 y=4 rx=2 /><path d="M9 9h6m-6 3h6m-6 3h3M15 2v4M9 2v4"/></svg>
+                    </div>
+                    <div class=use-case-label>Smart Grid</div>
+                </div>
+                <div class=use-case>
+                    <div class=use-case-icon>
+                        <svg viewBox="0 0 24 24"><circle cx=12 cy=12 r=3 /><path d="M12 1v4m0 14v4M4.22 4.22l2.83 2.83m9.9 9.9 2.83 2.83M1 12h4m14 0h4M4.22 19.78l2.83-2.83m9.9-9.9 2.83-2.83"/></svg>
+                    </div>
+                    <div class=use-case-label>Surveillance</div>
+                </div>
+                <div class=use-case>
+                    <div class=use-case-icon>
+                        <svg viewBox="0 0 24 24"><path d="M5 17h14M5 17l-2 4h18l-2-4M7 17V7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v10M10 9h4"/></svg>
+                    </div>
+                    <div class=use-case-label>Autonomous Vehicles</div>
+                </div>
+                <div class=use-case>
+                    <div class=use-case-icon>
+                        <svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l8-4v18m0 0V3l6 4v14M9 9h1m-1 4h1m5-4h1m-1 4h1"/></svg>
+                    </div>
+                    <div class=use-case-label>Smart Cities</div>
+                </div>
+                <div class=use-case>
+                    <div class=use-case-icon>
+                        <svg viewBox="0 0 24 24"><rect width=20 height=12 x=2 y=6 rx=2 /><path d="M6 12h2m2 0h2m2 0h2m2 0h.01M6 9h12M6 15h12"/></svg>
+                    </div>
+                    <div class=use-case-label>Logistics</div>
+                </div>
+                <div class=use-case>
+                    <div class=use-case-icon>
+                        <svg viewBox="0 0 24 24"><path d="M2 20h20M5 20V8l7-5 7 5v12"/><path d="M9 20v-4h6v4M9 12h6"/></svg>
+                    </div>
+                    <div class=use-case-label>Smart Industry</div>
+                </div>
+                <div class=use-case>
+                    <div class=use-case-icon>
+                        <svg viewBox="0 0 24 24"><circle cx=12 cy=12 r=10 /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10"/></svg>
+                    </div>
+                    <div class=use-case-label>Global Connectivity</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <svg width=48 height=48 fill=none class=telia-logo viewBox="0 0 48 48"><circle cx=24 cy=24 r=22 stroke=#990ae3 stroke-width=2 /><path stroke=#990ae3 stroke-linecap=round stroke-width=2 d="M14 24c0-5.523 4.477-10 10-10s10 4.477 10 10"/><path stroke=#990ae3 stroke-linecap=round stroke-width=2 d="M18 24a6 6 0 1 1 12 0"/><circle cx=24 cy=24 r=2 fill=#990ae3 /></svg>
+
+    <script>const INFO={"mission-critical":{title:"Mission Critical",body:"Customers whose operations depend on guaranteed connectivity with the highest reliability, lowest latency and strongest SLAs — such as emergency services, defence and critical infrastructure operators where any network failure directly threatens life or safety."},"society-critical":{title:"Society Critical",body:"Services essential to the functioning of society — energy grids, water utilities, healthcare and public transport — that require highly resilient, predictable connectivity to maintain continuous operation for the public good."},"business-critical":{title:"Business Critical",body:"Enterprise customers running operations where network performance directly impacts business outcomes — manufacturing, logistics, ports and mining — requiring dedicated capacity, low-latency control loops and strong quality-of-service guarantees."},"mass-market":{title:"Mass Market",body:"Consumer and broad enterprise segments served at scale through Telia’s public 5G network, benefiting from enhanced mobile broadband, improved coverage and new capabilities exposed through the NorthStar platform."},"api-garden":{title:"Telia API Garden",body:"The developer-facing environment that bundles Telia’s API Portal, API Gateway, 3GPP Network Exposure Functions, standardised 3GPP APIs and CAMARA-based APIs into a coherent platform for discovering, consuming and experimenting with advanced network capabilities."},"api-portal":{title:"API Portal",body:"The self-service entry point where developers discover, understand and onboard to Telia’s NorthStar APIs, including documentation, sandbox access, credentials management and lifecycle information for network and CAMARA APIs."},"api-gateway":{title:"API Gateway",body:"The front-door control and mediation layer that terminates external API calls, applies security and policy (authentication, authorisation, rate limiting) and routes requests to the appropriate backend network exposure functions and services within NorthStar."},nef:{title:"Network Exposure Functions",body:"The 5G core–integrated components that securely expose underlying network capabilities — such as QoS/slicing control, mobility/session information and event notifications — to the API Gateway in a standardised, programmable way."},"3gpp-apis":{title:"3GPP APIs",body:"The standardised network-facing interfaces defined by 3GPP that NorthStar uses to expose core functions (e.g. NEF/PCF-related capabilities) towards applications via the API Garden, ensuring interoperability and consistent behaviour across 5G SA networks."},camara:{title:"CAMARA",body:"The open, cross-operator API framework implemented in Telia API Garden to provide harmonised, developer-friendly network APIs (e.g. QoS-on-demand, edge exposure, device status) on top of 3GPP functions, enabling portable applications across Telia and other CAMARA-based networks."},"telia-iot":{title:"Telia IoT",body:"Telia’s IoT platform domain within the Digital Arena, providing managed connectivity, device management and data ingestion services for large-scale IoT deployments that leverage NorthStar’s 5G SA capabilities for industrial and smart-city use cases."},transport:{title:"Transport",body:"The end-to-end, QoS-aware IP/MPLS and optical connectivity fabric that securely and deterministically interconnects RAN sites, edge and central cores, exposure domains and partner platforms — enabling slice-specific performance, isolation and scalability for all NorthStar services."},core:{title:"5G Core",body:"Ericsson’s dual-mode 5G Core deployed as a purpose-built, standalone core that anchors the NorthStar innovation network — providing service-based, cloud-native control and user plane functions for advanced 5G capabilities such as differentiated connectivity, while being interconnected with Telia’s public 5G network."},"control-plane":{title:"Control Plane",body:"Hosts the signalling and service functions (session and mobility management, authentication, access control, policy control) that create, modify and terminate PDU sessions, steer traffic and expose APIs to applications — deciding how and where user data flows through the network."},"user-plane":{title:"User Plane",body:"The data-forwarding functions that handle actual user IP packets, applying QoS and routing decisions received from the Control Plane so that traffic is anchored, routed and broken out to local networks or the internet according to the slice, service and policy defined for each NorthStar use case."},"policy-enforcement":{title:"Policy Enforcement",body:"Applies subscriber, slice and application-specific rules (QoS profiles, prioritisation, charging, access restrictions) to each flow, ensuring that NorthStar’s differentiated connectivity and predictable performance guarantees are realised end-to-end."},interconnect:{title:"Interconnect to Public Core",body:"Provides secure, controlled connectivity between the NorthStar innovation 5G Core and Telia’s existing public 5G core, allowing devices and services to move between the innovation environment and the commercial network while keeping NorthStar’s dedicated capabilities logically separated."},edge:{title:"Edge Computing",body:"Running application workloads and 5G control/user-plane functions in distributed compute locations close to users or devices, minimising latency, jitter and backhaul dependence while remaining integrated with the central NorthStar 5G SA core."},"regional-breakout":{title:"Regional Breakout",body:"A NorthStar edge pattern where user traffic leaves the 5G core towards application workloads in a regional edge site — closer than a central data centre but still serving multiple cities or sites across a wider area."},"local-breakout":{title:"Local Breakout",body:"A NorthStar edge pattern where user traffic is broken out from the 5G core to application workloads at a local edge site serving one city or a small cluster of nearby sites, providing lower latency and more localised data handling than regional edge."},"onsite-breakout":{title:"On Site Breakout",body:"A NorthStar edge pattern where user traffic is terminated directly at an on-premises edge location on the customer’s site, keeping application workloads and breakout entirely on site for the lowest latency and maximal data locality."},ran:{title:"RAN (Radio Access Network)",body:"The 5G radio layer (gNBs and associated radio infrastructure) that connects user devices to the NorthStar 5G core and edge domains, forming the wireless foundation of the Digital Arena."},"public-sites":{title:"Public Sites",body:"NorthStar radio sites that provide shared, general 5G coverage for multiple customers and services, forming part of the common operator network footprint."},"private-sites":{title:"Private Sites",body:"NorthStar radio sites dedicated to a specific customer or location, designed to deliver tailored 5G coverage, capacity and isolation for that customer’s use cases."},"nomadic-sites":{title:"Nomadic Sites",body:"NorthStar radio sites that can be rapidly deployed, moved or reconfigured to provide temporary or flexible 5G coverage and capacity where and when needed."},"telia-ai":{title:"Telia.AI",body:"Telia’s AI/ML platform integrated into the Digital Arena, providing both centralised and distributed inference and analytics capabilities that leverage NorthStar’s low-latency, high-bandwidth 5G connectivity for real-time intelligent applications."},"ai-central":{title:"Telia.AI — Central",body:"Centralised AI/ML compute running in Telia’s core data centres, handling model training, large-scale inference and analytics workloads that benefit from concentrated compute resources and access to aggregated data."},"ai-distributed":{title:"Telia.AI — Distributed",body:"Distributed AI/ML inference deployed at edge locations close to the data source, enabling real-time decision-making for latency-sensitive use cases like autonomous vehicles, quality inspection and video analytics without round-tripping to the central cloud."}},overlay=document.getElementById("infoOverlay"),titleEl=document.getElementById("infoTitle"),bodyEl=document.getElementById("infoBody"),closeBtn=document.getElementById("infoClose");let activeEl=null;function showInfo(e,t){let i=INFO[e];i&&(activeEl&&activeEl.classList.remove("active"),activeEl=t,t.classList.add("active"),titleEl.textContent=i.title,bodyEl.textContent=i.body,overlay.classList.add("visible"))}function hideInfo(){overlay.classList.remove("visible"),activeEl&&(activeEl.classList.remove("active"),activeEl=null)}document.querySelectorAll("[data-info]").forEach(e=>{e.addEventListener("click",t=>{t.stopPropagation(),showInfo(e.dataset.info,e)})}),closeBtn.addEventListener("click",hideInfo),overlay.addEventListener("click",e=>{e.target===overlay&&hideInfo()}),document.addEventListener("keydown",e=>{"Escape"===e.key&&hideInfo()});</script>
+
+
+

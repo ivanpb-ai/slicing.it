@@ -17,3 +17,12 @@
 [[edge_functions]]
   path = "/presentation-studio"
   function = "editor-auth"
+
+# Digital Arena Sweden — gated the same way.
+[[edge_functions]]
+  path = "/digital-arena-sweden.html"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/digital-arena-sweden"
+  function = "editor-auth"

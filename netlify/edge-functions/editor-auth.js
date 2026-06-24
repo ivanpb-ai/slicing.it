@@ -60,7 +60,7 @@ body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:c
 </style></head>
 <body>
  <form class="card" method="post" autocomplete="on">
-  <div class="brand">◆ NorthStar editor</div>
+  <div class="brand">◆ NorthStar protected zone</div>
   <p class="sub">Enter the editor password to continue.</p>
   ${failed ? '<div class="err">Incorrect password — please try again.</div>' : ""}
   <input class="pw" type="password" name="password" placeholder="Password" autofocus autocomplete="current-password" required/>

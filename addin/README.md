@@ -8,13 +8,13 @@ Files here deploy to `https://slicing.it/addin/`:
 
 | File | Purpose |
 |------|---------|
-| `northstar-slide-embed.xml` | The add-in manifest (defaults to `/digital-arena-sweden.html`) |
+| `northstar-slide-embed.xml` | The add-in manifest (defaults to `/ns2.0-detailed.html`) |
 | `icon-32.png`, `icon-64.png` | Icons referenced by the manifest |
 
 ## Option A — no add-in needed (quickest)
 
 PowerPoint → **Insert → Get Add-ins** → search **"Web Viewer"** (Microsoft) →
-insert → paste `https://slicing.it/digital-arena-sweden.html`.
+insert → paste `https://slicing.it/ns2.0-detailed.html`.
 Skip the rest of this document.
 
 ## Option B — sideload this manifest
@@ -26,7 +26,7 @@ Download the manifest:
 1. Open your presentation at office.com
 2. **Insert → Add-ins → More Add-ins → My Add-ins → Upload My Add-in**
 3. Choose the downloaded `northstar-slide-embed.xml`
-4. The Digital Arena page appears on the slide as a resizable, interactive frame
+4. The NorthStar 2.0 detailed overview appears on the slide as a resizable, interactive frame
 
 ### PowerPoint for Windows (trusted catalog)
 1. Put the manifest in a network share, e.g. `\\server\addins\`

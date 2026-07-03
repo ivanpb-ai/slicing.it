@@ -18,20 +18,38 @@
   path = "/presentation-studio"
   function = "editor-auth"
 
-# Digital Arena Sweden — gated the same way.
-[[edge_functions]]
-  path = "/digital-arena-sweden.html"
-  function = "editor-auth"
-
-[[edge_functions]]
-  path = "/digital-arena-sweden"
-  function = "editor-auth"
-
-# NorthStar 2.0 viewer embeds the gated Digital Arena page — gate it too.
+# The NorthStar 2.0 viewer and the two overview pages it embeds — gated the
+# same way. The sign-in cookie is site-wide, so unlocking the viewer also
+# unlocks the embedded frames.
 [[edge_functions]]
   path = "/northstar-2.html"
   function = "editor-auth"
 
 [[edge_functions]]
   path = "/northstar-2"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/ns2.0-detailed.html"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/ns2.0-detailed"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/ns2.0-basic.html"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/ns2.0-basic"
+  function = "editor-auth"
+
+# The Slide Converter is an authoring tool — gate it the same way.
+[[edge_functions]]
+  path = "/slide-converter.html"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/slide-converter"
   function = "editor-auth"

@@ -5,7 +5,7 @@
   Embeds the interactive NorthStar architecture pages from
   northstar-program.com directly on a slide, live and clickable.
 
-  By default it loads https://slicing.it/digital-arena-sweden.html. To embed a different
+  By default it loads https://slicing.it/ns2.0-detailed.html. To embed a different
   NorthStar page, copy this file, change the <Id> to a new GUID and point
   <SourceLocation> at the page you want.
 
@@ -38,7 +38,7 @@
   </Hosts>
 
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://slicing.it/digital-arena-sweden.html"/>
+    <SourceLocation DefaultValue="https://slicing.it/ns2.0-detailed.html"/>
     <RequestedWidth>960</RequestedWidth>
     <RequestedHeight>540</RequestedHeight>
   </DefaultSettings>

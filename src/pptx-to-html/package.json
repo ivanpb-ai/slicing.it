@@ -1,0 +1,13 @@
+{
+  "name": "northstar-pptx-to-html",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Convert NorthStar PowerPoint slides into interactive Telia-branded HTML pages with corpus-sourced explanations",
+  "bin": {
+    "pptx-to-html": "./cli.mjs"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1"
+  }
+}

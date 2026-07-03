@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthStar Slide Converter</title>
+    <!-- This page is origin-independent: it can be served from slicing.it (or
+         anywhere) while its assets and APIs stay on northstar-program.com. The
+         favicon is inlined so it needs no hosted asset. -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20205%20216'%3E%3Cpath%20fill='%23990AE3'%20d='M141.19,151.57c27.97-16.22,53.16-43.73,61.11-63.35c2.26-16.23,2.71-18.29,2.99-36.15c0.04-2.47-0.12-4.85-0.34-7.12c-1.63,26.23-35.53,59.21-80.39,80.76c-54.1,25.99-94.7,32.99-112.81,13.16c6.29,12.42,10.42,18.46,17.49,27.68C50.14,185.07,94.11,178.88,141.19,151.57z'/%3E%3Cpath%20fill='%23990AE3'%20d='M118.25,107.13c51.04-24.62,86.58-59.64,80.38-82.86C188.45,6.69,167.86,0,145.78,0C80.33,0-0.01,43.14-0.01,98.18c0,7.07,1.56,14.99,4.36,23.27C19.29,141.27,64.93,132.85,118.25,107.13z'/%3E%3Cpath%20fill='%23990AE3'%20d='M113.95,185.15L113.95,185.15c-35.89,14.56-56.44,9.92-67.79,0.84L46,185.86c17.58,17.53,37.6,29.86,55.17,29.86c30.76,0,72.88-37.32,92.8-95.18C182.73,141.43,158.63,167.09,113.95,185.15z'/%3E%3C/svg%3E">
+    <style>
+        @font-face {
+          font-family: "Telia Sans Heading";
+          src: url("https://northstar-program.com/fonts/TeliaSansHeading-Heading.woff2") format("woff2");
+          font-weight: 300; font-style: normal; font-display: swap;
+        }
+        @font-face {
+          font-family: "Telia Sans";
+          src: url("https://northstar-program.com/fonts/TeliaSans-Regular.woff2") format("woff2");
+          font-weight: 400; font-style: normal; font-display: swap;
+        }
+        @font-face {
+          font-family: "Telia Sans";
+          src: url("https://northstar-program.com/fonts/TeliaSans-Medium.woff2") format("woff2");
+          font-weight: 500; font-style: normal; font-display: swap;
+        }
+        @font-face {
+          font-family: "Telia Sans";
+          src: url("https://northstar-program.com/fonts/TeliaSans-Bold.woff2") format("woff2");
+          font-weight: 700; font-style: normal; font-display: swap;
+        }
+
+        :root {
+            --deep-purple: #29003E;
+            --core-purple: #990AE3;
+            --light-purple: #F4E0FF;
+            --teal: #00827C;
+            --glass-bg: rgba(61, 21, 86, 0.45);
+            --glass-border: rgba(153, 10, 227, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            width: 100%; min-height: 100vh;
+            font-family: "Telia Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            background: var(--deep-purple);
+            color: var(--light-purple);
+        }
+        body {
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 40%, rgba(153, 10, 227, 0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(0, 130, 124, 0.08) 0%, transparent 70%),
+                linear-gradient(180deg, #1a0029 0%, var(--deep-purple) 30%, #1e0030 100%);
+        }
+
+        .back-link {
+            position: fixed; top: 16px; right: 24px; z-index: 1000;
+            color: var(--light-purple); text-decoration: underline;
+            text-decoration-color: var(--core-purple);
+            text-decoration-thickness: 2px; text-underline-offset: 4px;
+            font-size: 15px; font-weight: 500; opacity: 0.7;
+            transition: opacity .15s ease, color .15s ease;
+        }
+        .back-link:hover { opacity: 1; color: #fff; }
+
+        .page {
+            max-width: 900px; margin: 0 auto;
+            padding: 48px 48px 80px;
+        }
+
+        h1 {
+            font-family: "Telia Sans Heading", "Telia Sans", system-ui, sans-serif;
+            font-weight: 300; font-size: 42px; line-height: 1;
+            color: #fff; margin-bottom: 8px; letter-spacing: -0.5px;
+        }
+        h1 span { color: var(--core-purple); }
+        .subtitle {
+            font-size: 16px; font-weight: 400;
+            color: rgba(244, 224, 255, 0.6);
+            margin-bottom: 40px;
+        }
+
+        /* Steps */
+        .step {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            position: relative; overflow: hidden;
+        }
+        .step::after {
+            content: ''; position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(244, 224, 255, 0.12), transparent);
+        }
+        .step.disabled { opacity: 0.4; pointer-events: none; }
+        .step-header {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 16px;
+        }
+        .step-num {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--core-purple); color: #fff;
+            font-size: 14px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .step-num.done { background: var(--teal); }
+        .step-title {
+            font-weight: 700; font-size: 16px; color: #fff;
+        }
+
+        /* Drop zone */
+        .drop-zone {
+            border: 2px dashed rgba(153, 10, 227, 0.4);
+            border-radius: 12px;
+            padding: 40px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--core-purple);
+            background: rgba(153, 10, 227, 0.08);
+        }
+        /* Pulses while a generated page is being dragged from step 4 */
+        .drop-zone.drag-target {
+            border-color: var(--teal);
+            background: rgba(0, 130, 124, 0.1);
+            animation: dropPulse 1s ease infinite;
+        }
+        @keyframes dropPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 130, 124, 0.35); }
+            50% { box-shadow: 0 0 0 8px rgba(0, 130, 124, 0); }
+        }
+        .btn[draggable="true"] { cursor: grab; }
+        .btn[draggable="true"]:active { cursor: grabbing; }
+        .drop-zone input { display: none; }
+        .drop-zone-icon {
+            font-size: 36px; margin-bottom: 8px; opacity: 0.6;
+        }
+        .drop-zone-text {
+            font-size: 15px; color: rgba(244, 224, 255, 0.7);
+        }
+        .drop-zone-text strong { color: var(--core-purple); }
+        .file-name {
+            margin-top: 12px; font-weight: 700; font-size: 14px;
+            color: var(--teal);
+        }
+
+        /* Slide list */
+        .slide-list {
+            list-style: none; max-height: 300px;
+            overflow-y: auto; margin-top: 4px;
+        }
+        .slide-list::-webkit-scrollbar { width: 6px; }
+        .slide-list::-webkit-scrollbar-track { background: transparent; }
+        .slide-list::-webkit-scrollbar-thumb {
+            background: rgba(153, 10, 227, 0.3); border-radius: 3px;
+        }
+        .slide-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 16px; border-radius: 8px;
+            cursor: pointer; transition: background 0.15s ease;
+            font-size: 14px;
+        }
+        .slide-item:hover { background: rgba(153, 10, 227, 0.15); }
+        .slide-item.selected {
+            background: rgba(153, 10, 227, 0.25);
+            border: 1px solid rgba(153, 10, 227, 0.5);
+        }
+        .slide-item input[type="checkbox"] {
+            accent-color: var(--core-purple);
+            width: 16px; height: 16px; cursor: pointer;
+        }
+        .slide-num {
+            color: rgba(244, 224, 255, 0.4); font-size: 12px;
+            font-weight: 700; width: 24px; text-align: right;
+        }
+        .slide-name { flex: 1; }
+        .slide-meta {
+            font-size: 11px; color: rgba(244, 224, 255, 0.35);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 12px 28px; border-radius: 8px;
+            font-family: inherit; font-size: 14px; font-weight: 700;
+            border: none; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-primary {
+            background: var(--core-purple); color: #fff;
+        }
+        .btn-primary:hover {
+            background: #a82cf0;
+            box-shadow: 0 4px 20px rgba(153, 10, 227, 0.4);
+        }
+        .btn-primary:disabled {
+            opacity: 0.4; cursor: not-allowed;
+            box-shadow: none;
+        }
+        .btn-secondary {
+            background: rgba(153, 10, 227, 0.2);
+            border: 1px solid rgba(153, 10, 227, 0.4);
+            color: var(--light-purple);
+        }
+        .btn-secondary:hover {
+            background: rgba(153, 10, 227, 0.35);
+            border-color: var(--core-purple);
+        }
+        .btn-row {
+            display: flex; gap: 12px; flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        /* Progress */
+        .progress-bar {
+            width: 100%; height: 6px; border-radius: 3px;
+            background: rgba(153, 10, 227, 0.15);
+            margin: 16px 0 8px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; border-radius: 3px;
+            background: linear-gradient(90deg, var(--core-purple), var(--teal));
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        .progress-text {
+            font-size: 13px; color: rgba(244, 224, 255, 0.5);
+        }
+        .log {
+            margin-top: 12px; font-size: 13px;
+            color: rgba(244, 224, 255, 0.6);
+            max-height: 120px; overflow-y: auto;
+            font-family: monospace;
+        }
+        .log div { padding: 2px 0; }
+        .log .err { color: #e06070; }
+
+        /* Preview */
+        .preview-frame {
+            width: 100%; height: 500px;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px; background: #1a0029;
+            margin-top: 16px;
+        }
+        .preview-frame iframe {
+            width: 100%; height: 100%;
+            border: none; border-radius: 12px;
+        }
+
+        /* API mode options */
+        .api-options {
+            display: flex; flex-direction: column; gap: 8px;
+            margin-top: 12px;
+        }
+        .api-option {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 10px 14px; border-radius: 10px;
+            border: 1px solid rgba(153, 10, 227, 0.25);
+            background: rgba(153, 10, 227, 0.06);
+            font-size: 14px; line-height: 1.4; cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .api-option:hover { border-color: rgba(153, 10, 227, 0.5); background: rgba(153, 10, 227, 0.12); }
+        .api-option:has(input:checked) {
+            border-color: var(--core-purple);
+            background: rgba(153, 10, 227, 0.18);
+        }
+        .api-option input[type="radio"] {
+            accent-color: var(--core-purple);
+            width: 16px; height: 16px; margin-top: 2px; cursor: pointer;
+            flex-shrink: 0;
+        }
+        .api-option strong { color: #fff; }
+
+        .telia-logo {
+            position: fixed; bottom: 24px; right: 32px; opacity: 0.15;
+        }
+    </style>
+</head>
+<body>
+    <a href="https://northstar-program.com/" class="back-link">&larr; Back to NorthStar</a>
+
+    <div class="page">
+        <h1>Slide <span>Converter</span></h1>
+        <p class="subtitle">Upload a NorthStar PowerPoint and get an interactive, Telia-branded HTML page with click-to-explain panels.</p>
+
+        <!-- Step 1: Upload -->
+        <div class="step" id="step1">
+            <div class="step-header">
+                <div class="step-num" id="step1num">1</div>
+                <div class="step-title">Upload PowerPoint</div>
+            </div>
+            <div class="drop-zone" id="dropZone">
+                <input type="file" id="fileInput" accept=".pptx">
+                <div class="drop-zone-icon">&#128196;</div>
+                <div class="drop-zone-text">Drag &amp; drop a <strong>.pptx</strong> file here, or click to browse</div>
+                <div class="file-name" id="fileName"></div>
+            </div>
+        </div>
+
+        <!-- Step 2: Select slides -->
+        <div class="step disabled" id="step2">
+            <div class="step-header">
+                <div class="step-num" id="step2num">2</div>
+                <div class="step-title">Select slides</div>
+            </div>
+            <ul class="slide-list" id="slideList"></ul>
+            <div class="btn-row">
+                <button class="btn btn-secondary" id="selectAll">Select all</button>
+                <button class="btn btn-secondary" id="selectNone">Select none</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Configure & generate -->
+        <div class="step disabled" id="step3">
+            <div class="step-header">
+                <div class="step-num" id="step3num">3</div>
+                <div class="step-title">Generate</div>
+            </div>
+            <div class="api-options">
+                <label class="api-option">
+                    <input type="radio" name="apiMode" value="none">
+                    <span><strong>No API</strong> — components get generic placeholder text</span>
+                </label>
+                <label class="api-option">
+                    <input type="radio" name="apiMode" value="northstar" checked>
+                    <span><strong>NorthStar API</strong> — descriptions grounded in the NorthStar corpus (internal Telia/Ericsson material)</span>
+                </label>
+                <label class="api-option">
+                    <input type="radio" name="apiMode" value="generic">
+                    <span><strong>Generic Perplexity</strong> — plain web-knowledge answers, no NorthStar-specific context</span>
+                </label>
+            </div>
+            <div style="margin-top: 8px; font-size: 12px; color: rgba(244,224,255,0.45);">
+                Every generated page also carries its own explanation-source switch (default: built-in text) — viewers can cycle it to fetch fresh answers from the NorthStar or generic Perplexity API on each click.
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="generateBtn" disabled>Generate HTML</button>
+            </div>
+            <div class="progress-bar" id="progressBar" style="display:none">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText"></div>
+            <div class="log" id="log"></div>
+        </div>
+
+        <!-- Step 4: Preview & download -->
+        <div class="step disabled" id="step4">
+            <div class="step-header">
+                <div class="step-num" id="step4num">4</div>
+                <div class="step-title">Preview &amp; download</div>
+            </div>
+            <div class="preview-frame" id="previewFrame"></div>
+            <div class="btn-row" id="downloadBtns" style="margin-top: 16px;"></div>
+        </div>
+
+        <!-- Reverse: HTML → PowerPoint -->
+        <div class="step" id="reverseStep">
+            <div class="step-header">
+                <div class="step-num">5</div>
+                <div class="step-title">Reverse: HTML &rarr; PowerPoint</div>
+            </div>
+            <div style="margin-bottom: 14px; font-size: 13px; color: rgba(244,224,255,0.55); line-height: 1.5;">
+                Convert a page generated by this tool back into a .pptx slide. The conversion works purely
+                from what's in the HTML — shapes, text, colors, images and connector lines are rebuilt as
+                native PowerPoint objects, and the click-to-explain descriptions become speaker notes.
+                No access to any original PowerPoint file is needed or used.
+            </div>
+            <div class="drop-zone" id="htmlDropZone">
+                <input type="file" id="htmlFileInput" accept=".html,.htm">
+                <div class="drop-zone-icon">&#128260;</div>
+                <div class="drop-zone-text">Drag &amp; drop an <strong>.html</strong> page here — a file, or a <strong>Download button from step 4</strong> — or click to browse</div>
+                <div class="file-name" id="htmlFileName"></div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="htmlConvertBtn" disabled>Convert to PowerPoint</button>
+            </div>
+            <div class="log" id="reverseLog"></div>
+        </div>
+    </div>
+
+    <svg class="telia-logo" width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="22" stroke="#990AE3" stroke-width="2"/>
+        <path d="M14 24c0-5.523 4.477-10 10-10s10 4.477 10 10" stroke="#990AE3" stroke-width="2" stroke-linecap="round"/>
+        <path d="M18 24c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="#990AE3" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="24" cy="24" r="2" fill="#990AE3"/>
+    </svg>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <script>
+    // ========== State ==========
+    let parsedSlides = [];
+    let selectedIndices = new Set();
+    const generatedPages = [];
+
+    // Absolute so the converter works when served from slicing.it (or any
+    // origin) — the functions live on northstar-program.com and are CORS-enabled.
+    const API_URLS = {
+        northstar: "https://northstar-program.com/.netlify/functions/perplexity-api",
+        generic: "https://northstar-program.com/.netlify/functions/perplexity-generic",
+    };
+    function apiMode() {
+        return document.querySelector('input[name="apiMode"]:checked').value;
+    }
+
+    // ========== DOM refs ==========
+    const $ = id => document.getElementById(id);
+    const dropZone = $("dropZone");
+    const fileInput = $("fileInput");
+    const slideList = $("slideList");
+    const generateBtn = $("generateBtn");
+    const progressBar = $("progressBar");
+    const progressFill = $("progressFill");
+    const progressText = $("progressText");
+    const logEl = $("log");
+    const previewFrame = $("previewFrame");
+    const downloadBtns = $("downloadBtns");
+
+    // ========== Step management ==========
+    function enableStep(n) {
+        $("step" + n).classList.remove("disabled");
+    }
+    function markDone(n) {
+        $("step" + n + "num").classList.add("done");
+        $("step" + n + "num").textContent = "✓";
+    }
+
+    // ========== 1. File upload ==========
+    dropZone.addEventListener("click", () => fileInput.click());
+    dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("dragover"); });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+    dropZone.addEventListener("drop", e => {
+        e.preventDefault(); dropZone.classList.remove("dragover");
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener("change", () => {
+        if (fileInput.files.length) handleFile(fileInput.files[0]);
+    });
+
+    async function handleFile(file) {
+        if (!file.name.endsWith(".pptx")) {
+            alert("Please upload a .pptx file");
+            return;
+        }
+        $("fileName").textContent = file.name;
+        parsedSlides = await parsePptx(file);
+        markDone(1);
+        renderSlideList();
+        enableStep(2);
+    }
+
+    // ========== 2. Slide selection ==========
+    function renderSlideList() {
+        slideList.innerHTML = "";
+        selectedIndices.clear();
+        parsedSlides.forEach((slide, i) => {
+            selectedIndices.add(i);
+            const shp = slide.shapes || [];
+            const texts = shp.filter(x => x.textPlain).length;
+            const imgs = shp.filter(x => x.kind === "image").length;
+            const li = document.createElement("li");
+            li.className = "slide-item selected";
+            li.innerHTML = `
+                <input type="checkbox" checked data-idx="${i}">
+                <span class="slide-num">${i + 1}</span>
+                <span class="slide-name">${esc(slide.title || "(untitled)")}</span>
+                <span class="slide-meta">${shp.length} shapes / ${texts} text / ${imgs} images</span>
+            `;
+            li.querySelector("input").addEventListener("change", e => {
+                if (e.target.checked) { selectedIndices.add(i); li.classList.add("selected"); }
+                else { selectedIndices.delete(i); li.classList.remove("selected"); }
+                updateGenerateBtn();
+            });
+            li.addEventListener("click", e => {
+                if (e.target.tagName === "INPUT") return;
+                const cb = li.querySelector("input");
+                cb.checked = !cb.checked;
+                cb.dispatchEvent(new Event("change"));
+            });
+            slideList.appendChild(li);
+        });
+        enableStep(3);
+        updateGenerateBtn();
+    }
+
+    $("selectAll").addEventListener("click", () => {
+        slideList.querySelectorAll("input").forEach(cb => { cb.checked = true; cb.dispatchEvent(new Event("change")); });
+    });
+    $("selectNone").addEventListener("click", () => {
+        slideList.querySelectorAll("input").forEach(cb => { cb.checked = false; cb.dispatchEvent(new Event("change")); });
+    });
+
+    function updateGenerateBtn() {
+        generateBtn.disabled = selectedIndices.size === 0;
+    }
+
+    // ========== 3. Generate ==========
+    generateBtn.addEventListener("click", runGenerate);
+
+    async function runGenerate() {
+        generateBtn.disabled = true;
+        progressBar.style.display = "block";
+        logEl.innerHTML = "";
+        generatedPages.length = 0;
+
+        const indices = [...selectedIndices].sort((a, b) => a - b);
+        const total = indices.length;
+        let done = 0;
+
+        for (const idx of indices) {
+            const slide = parsedSlides[idx];
+            const title = slide.title || "Slide " + (idx + 1);
+            log("Processing slide " + (idx + 1) + ": " + title);
+
+            let descriptions = new Map();
+            const mode = apiMode();
+            if (mode !== "none") {
+                log("  Querying " + (mode === "northstar" ? "NorthStar" : "generic Perplexity") + " API...");
+                descriptions = await enrichSlide(slide, API_URLS[mode], mode);
+                log("  Got " + descriptions.size + " description(s)");
+            }
+
+            const html = generateHtml(slide, descriptions);
+            generatedPages.push({ idx, title, html });
+
+            done++;
+            progressFill.style.width = (done / total * 100) + "%";
+            progressText.textContent = done + " / " + total + " slides";
+        }
+
+        log("Done!");
+        markDone(3);
+        showResults();
+    }
+
+    function log(msg, isErr) {
+        const d = document.createElement("div");
+        if (isErr) d.className = "err";
+        d.textContent = msg;
+        logEl.appendChild(d);
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // ========== 4. Results ==========
+    function showResults() {
+        enableStep(4);
+        downloadBtns.innerHTML = "";
+        document.querySelectorAll(".preview-tabs").forEach(el => el.remove());
+
+        generatedPages.forEach((page, i) => {
+            const slug = page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+            const btn = document.createElement("button");
+            btn.className = "btn btn-secondary";
+            btn.textContent = "Download: " + slug + ".html";
+            btn.title = "Click to download — or drag onto the Reverse section below to convert back to PowerPoint";
+            btn.draggable = true;
+            btn.addEventListener("click", () => downloadFile(slug + ".html", page.html));
+            btn.addEventListener("dragstart", e => {
+                e.dataTransfer.setData("application/x-northstar-page-index", String(i));
+                e.dataTransfer.effectAllowed = "copy";
+                document.getElementById("htmlDropZone").classList.add("drag-target");
+            });
+            btn.addEventListener("dragend", () => {
+                document.getElementById("htmlDropZone").classList.remove("drag-target");
+            });
+            downloadBtns.appendChild(btn);
+
+            // Preview the first one
+            if (i === 0) {
+                const iframe = document.createElement("iframe");
+                iframe.srcdoc = page.html;
+                previewFrame.innerHTML = "";
+                previewFrame.appendChild(iframe);
+            }
+        });
+
+        // Tab-like preview selector if multiple — sits above the preview
+        if (generatedPages.length > 1) {
+            const tabRow = document.createElement("div");
+            tabRow.className = "preview-tabs";
+            tabRow.style.cssText = "display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;";
+            generatedPages.forEach((page, i) => {
+                const tab = document.createElement("button");
+                tab.className = "btn btn-secondary";
+                tab.style.cssText = "padding:6px 14px;font-size:12px;";
+                tab.textContent = "Preview: Slide " + (page.idx + 1);
+                tab.addEventListener("click", () => {
+                    const iframe = document.createElement("iframe");
+                    iframe.srcdoc = page.html;
+                    previewFrame.innerHTML = "";
+                    previewFrame.appendChild(iframe);
+                });
+                tabRow.appendChild(tab);
+            });
+            previewFrame.before(tabRow);
+        }
+
+        if (generatedPages.length > 1) {
+            const allBtn = document.createElement("button");
+            allBtn.className = "btn btn-primary";
+            allBtn.textContent = "Download all as .zip";
+            allBtn.addEventListener("click", downloadAllZip);
+            downloadBtns.appendChild(allBtn);
+        }
+
+        markDone(4);
+    }
+
+    function downloadFile(name, content) {
+        const blob = new Blob([content], { type: "text/html" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    async function downloadAllZip() {
+        const zip = new JSZip();
+        generatedPages.forEach(page => {
+            const slug = page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+            zip.file(slug + ".html", page.html);
+        });
+        const blob = await zip.generateAsync({ type: "blob" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "northstar-slides.zip";
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    // ========== PPTX Parser (browser) ==========
+    // Faithful visual model: every drawable (shape / picture / connector) is
+    // captured with absolute geometry and resolved styling so the generator
+    // can reproduce the slide as a scaled canvas. Mirrors scripts/pptx-to-html.
+    const EMU_PER_IN = 914400;
+    const MIME = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", svg: "image/svg+xml", webp: "image/webp" };
+    const SCHEME_MAP = { tx1: "dk1", bg1: "lt1", tx2: "dk2", bg2: "lt2" };
+    const CHILD_TAGS = ["sp", "pic", "cxnSp", "grpSp"];
+
+    async function parsePptx(file) {
+        const buf = await file.arrayBuffer();
+        const zip = await JSZip.loadAsync(buf);
+
+        let slideW = 12192000, slideH = 6858000;
+        const presFile = zip.file("ppt/presentation.xml");
+        if (presFile) {
+            const m = (await presFile.async("string")).match(/<p:sldSz\s+cx="(\d+)"\s+cy="(\d+)"/);
+            if (m) { slideW = +m[1]; slideH = +m[2]; }
+        }
+
+        const theme = await loadTheme(zip);
+
+        const slideFiles = Object.keys(zip.files)
+            .filter(f => /^ppt\/slides\/slide\d+\.xml$/.test(f))
+            .sort((a, b) => slideNum(a) - slideNum(b));
+
+        const slides = [];
+        for (const sf of slideFiles) {
+            const xml = await zip.file(sf).async("string");
+            const rels = await readRels(zip, sf);
+            const embeds = await readEmbeds(zip, rels);
+
+            let layoutXml = "", masterXml = "";
+            const layoutTarget = Object.values(rels).find(t => /slideLayout/.test(t));
+            if (layoutTarget) {
+                const layoutPath = "ppt/" + layoutTarget.replace(/^(\.\.\/)+/, "");
+                layoutXml = (await zip.file(layoutPath)?.async("string")) || "";
+                const lrels = await readRels(zip, layoutPath);
+                const masterTarget = Object.values(lrels).find(t => /slideMaster/.test(t));
+                if (masterTarget) {
+                    masterXml = (await zip.file("ppt/" + masterTarget.replace(/^(\.\.\/)+/, ""))?.async("string")) || "";
+                }
+            }
+            slides.push(buildSlide(xml, layoutXml, masterXml, slideW, slideH, theme, embeds));
+        }
+        return slides;
+    }
+
+    function slideNum(s) { return parseInt(s.match(/slide(\d+)/)[1], 10); }
+
+    async function readRels(zip, path) {
+        const parts = path.split("/");
+        const relsPath = parts.slice(0, -1).join("/") + "/_rels/" + parts[parts.length - 1] + ".rels";
+        const f = zip.file(relsPath);
+        if (!f) return {};
+        const xml = await f.async("string");
+        const out = {};
+        for (const m of xml.matchAll(/Id="([^"]+)"[^>]*Target="([^"]+)"/g)) out[m[1]] = m[2];
+        return out;
+    }
+
+    async function readEmbeds(zip, rels) {
+        const embeds = {};
+        for (const [id, target] of Object.entries(rels)) {
+            const mime = MIME[target.split(".").pop().toLowerCase()];
+            if (!mime) continue;
+            const f = zip.file("ppt/" + target.replace(/^(\.\.\/)+/, ""));
+            if (!f) continue;
+            embeds[id] = "data:" + mime + ";base64," + await f.async("base64");
+        }
+        return embeds;
+    }
+
+    async function loadTheme(zip) {
+        const path = Object.keys(zip.files).find(f => /^ppt\/theme\/theme1\.xml$/.test(f));
+        const colors = {};
+        if (path) {
+            const xml = await zip.file(path).async("string");
+            const scheme = (xml.match(/<a:clrScheme[\s\S]*?<\/a:clrScheme>/) || [""])[0];
+            for (const m of scheme.matchAll(/<a:(dk1|lt1|dk2|lt2|accent[1-6]|hlink|folHlink)>\s*<a:(?:srgbClr val="([0-9A-Fa-f]{6})"|sysClr[^>]*lastClr="([0-9A-Fa-f]{6})")/g))
+                colors[m[1]] = "#" + (m[2] || m[3]);
+        }
+        return colors;
+    }
+
+    function resolveColor(snippet, theme) {
+        if (!snippet) return null;
+        const m = snippet.match(/<a:(srgbClr|schemeClr)\s+val="([^"]+)"\s*(\/>|>([\s\S]*?)<\/a:\1>)/);
+        if (!m) return null;
+        let hex;
+        if (m[1] === "srgbClr") hex = "#" + m[2];
+        else { hex = theme[SCHEME_MAP[m[2]] || m[2]]; if (!hex) return null; }
+        const mods = m[4] || "";
+        let [r, g, b] = hexRgb(hex);
+        const val = tag => { const mm = mods.match(new RegExp("<a:" + tag + " val=\"(\\d+)\"")); return mm ? +mm[1] / 100000 : null; };
+        const shade = val("shade");
+        if (shade !== null) [r, g, b] = [r, g, b].map(c => c * shade);
+        const tint = val("tint");
+        if (tint !== null) [r, g, b] = [r, g, b].map(c => c * tint + 255 * (1 - tint));
+        const lumMod = val("lumMod"), lumOff = val("lumOff");
+        if (lumMod !== null || lumOff !== null) {
+            let [h, s, l] = rgbHsl(r, g, b);
+            l = l * (lumMod ?? 1) + (lumOff ?? 0);
+            [r, g, b] = hslRgb(h, s, Math.max(0, Math.min(1, l)));
+        }
+        const alpha = val("alpha");
+        const to = c => Math.round(Math.max(0, Math.min(255, c)));
+        if (alpha !== null && alpha < 1) return "rgba(" + to(r) + "," + to(g) + "," + to(b) + "," + alpha.toFixed(3) + ")";
+        return "#" + [r, g, b].map(c => to(c).toString(16).padStart(2, "0")).join("");
+    }
+
+    function hexRgb(hex) {
+        const h = hex.replace("#", "");
+        return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+    }
+    function rgbHsl(r, g, b) {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h = 0, s = 0; const l = (max + min) / 2;
+        if (max !== min) {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+            else if (max === g) h = (b - r) / d + 2;
+            else h = (r - g) / d + 4;
+            h /= 6;
+        }
+        return [h, s, l];
+    }
+    function hslRgb(h, s, l) {
+        if (s === 0) return [l * 255, l * 255, l * 255];
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        const f = t => {
+            if (t < 0) t += 1; if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        };
+        return [f(h + 1 / 3) * 255, f(h) * 255, f(h - 1 / 3) * 255];
+    }
+
+    function validBoundary(xml, idx, open) {
+        const c = xml[idx + open.length];
+        return c === " " || c === ">" || c === "\r" || c === "\n" || c === "/";
+    }
+    function nextIndexOf(xml, open, from) {
+        let i = from;
+        while (true) {
+            const j = xml.indexOf(open, i);
+            if (j === -1) return -1;
+            if (validBoundary(xml, j, open)) return j;
+            i = j + open.length;
+        }
+    }
+    function findClose(xml, start, tag) {
+        const open = "<p:" + tag, close = "</p:" + tag + ">";
+        let depth = 0, i = start;
+        while (i < xml.length) {
+            const o = nextIndexOf(xml, open, i);
+            const c = xml.indexOf(close, i);
+            if (c === -1) return xml.length;
+            if (o !== -1 && o < c) { depth++; i = o + open.length; }
+            else { depth--; i = c + close.length; if (depth === 0) return i; }
+        }
+        return xml.length;
+    }
+    function* childBlocks(xml) {
+        let i = 0;
+        while (i < xml.length) {
+            let bestTag = null, bestIdx = -1;
+            for (const tag of CHILD_TAGS) {
+                const j = nextIndexOf(xml, "<p:" + tag, i);
+                if (j !== -1 && (bestIdx === -1 || j < bestIdx)) { bestIdx = j; bestTag = tag; }
+            }
+            if (bestIdx === -1) return;
+            const end = findClose(xml, bestIdx, bestTag);
+            yield { tag: bestTag, xml: xml.slice(bestIdx, end) };
+            i = end;
+        }
+    }
+
+    function xfrmOf(xml) {
+        const x = xml.match(/<a:xfrm([^>]*)>([\s\S]*?)<\/a:xfrm>/);
+        if (!x) return null;
+        const attrs = x[1], body = x[2];
+        const g = re => { const m = body.match(re); return m ? m.slice(1).map(Number) : null; };
+        const off = g(/<a:off\s+x="(-?\d+)"\s+y="(-?\d+)"/);
+        const ext = g(/<a:ext\s+cx="(\d+)"\s+cy="(\d+)"/);
+        const chOff = g(/<a:chOff\s+x="(-?\d+)"\s+y="(-?\d+)"/);
+        const chExt = g(/<a:chExt\s+cx="(\d+)"\s+cy="(\d+)"/);
+        const rot = attrs.match(/rot="(-?\d+)"/);
+        return {
+            off: off && { x: off[0], y: off[1] },
+            ext: ext && { cx: ext[0], cy: ext[1] },
+            chOff: chOff && { x: chOff[0], y: chOff[1] },
+            chExt: chExt && { cx: chExt[0], cy: chExt[1] },
+            rot: rot ? +rot[1] / 60000 : 0,
+            flipH: /flipH="1"/.test(attrs),
+            flipV: /flipV="1"/.test(attrs),
+        };
+    }
+
+    function xmlDecode(s) {
+        return s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+            .replace(/&quot;/g, '"').replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n));
+    }
+
+    // Extract paragraphs preserving *per-run* styling (size, bold, color,
+    // typeface) — a paragraph often mixes a bold lead-in with regular text.
+    function extractParas(xml, theme) {
+        const paras = [];
+        let fontSize = 0, bold = false, color = null;
+        for (const pm of xml.matchAll(/<a:p\b[\s\S]*?<\/a:p>/g)) {
+            const para = pm[0];
+            const algn = (para.match(/<a:pPr[^>]*algn="([^"]+)"/) || [])[1] || null;
+            const runs = [];
+            for (const rm of para.matchAll(/<a:r>([\s\S]*?)<\/a:r>/g)) {
+                const run = rm[1];
+                const t = run.match(/<a:t>([\s\S]*?)<\/a:t>/);
+                if (!t) continue;
+                const rPr = (run.match(/<a:rPr\b[^>]*(?:\/>|>[\s\S]*?<\/a:rPr>)/) || [""])[0];
+                const sz = rPr.match(/sz="(\d+)"/);
+                const size = sz ? +sz[1] / 100 : null;
+                const rBold = /\bb="1"/.test(rPr);
+                const face = (rPr.match(/<a:latin typeface="([^"]+)"/) || [])[1] || null;
+                const fill = (rPr.match(/<a:solidFill>[\s\S]*?<\/a:solidFill>/) || [""])[0];
+                const rColor = resolveColor(fill, theme);
+                const text = xmlDecode(t[1]).replace(/[\t\r\n]+/g, " ");
+                runs.push({ text, size, bold: rBold, color: rColor, face });
+                if (size) fontSize = Math.max(fontSize, size);
+                if (rBold) bold = true;
+                if (!color && rColor) color = rColor;
+            }
+            if (runs.length) {
+                runs[0].text = runs[0].text.replace(/^\s+/, "");
+                runs[runs.length - 1].text = runs[runs.length - 1].text.replace(/\s+$/, "");
+            }
+            const textJoined = runs.map(r => r.text).join("");
+            if (textJoined.trim()) {
+                paras.push({ algn, face: (runs.find(r => r.face) || {}).face || null, runs: runs.filter(r => r.text) });
+            }
+        }
+        return { paras, fontSize, bold, color };
+    }
+
+    function fillOf(spPr, theme) {
+        const own = spPr.replace(/<a:ln\b[\s\S]*?<\/a:ln>/g, "").replace(/<a:effectLst[\s\S]*?<\/a:effectLst>/g, "");
+        if (/<a:noFill\/>/.test(own)) return null;
+        const solid = (own.match(/<a:solidFill>[\s\S]*?<\/a:solidFill>/) || [""])[0];
+        if (solid) return resolveColor(solid, theme);
+        const grad = (own.match(/<a:gradFill[\s\S]*?<\/a:gradFill>/) || [""])[0];
+        if (grad) { const gs = (grad.match(/<a:gs [^>]*>[\s\S]*?<\/a:gs>/) || [""])[0]; return resolveColor(gs, theme); }
+        return undefined;
+    }
+
+    function strokeOf(spPr, theme) {
+        const ln = (spPr.match(/<a:ln\b[\s\S]*?<\/a:ln>/) || [""])[0];
+        if (!ln || /<a:noFill\/>/.test(ln)) return null;
+        const color = resolveColor(ln, theme);
+        if (!color) return null;
+        const w = ln.match(/w="(\d+)"/);
+        return { color, w: w ? +w[1] : 9525 };
+    }
+
+    function placeholderXfrms(xml) {
+        const map = {};
+        if (!xml) return map;
+        const tree = between(xml, "<p:spTree", "</p:spTree>") || xml;
+        for (const blk of childBlocks(tree)) {
+            if (blk.tag !== "sp") continue;
+            const ph = blk.xml.match(/<p:ph\s+([^>]*)\/>/);
+            if (!ph) continue;
+            const type = (ph[1].match(/type="([^"]+)"/) || [])[1] || "body";
+            const idx = (ph[1].match(/idx="([^"]+)"/) || [])[1];
+            const xf = xfrmOf(blk.xml);
+            if (!xf || !xf.off || !xf.ext) continue;
+            if (idx !== undefined) map["idx:" + idx] = xf;
+            map["type:" + type] = map["type:" + type] || xf;
+        }
+        return map;
+    }
+
+    function slideBg(xml, theme) {
+        if (!xml) return null;
+        const bg = (xml.match(/<p:bg>[\s\S]*?<\/p:bg>/) || [""])[0];
+        if (!bg) return null;
+        return resolveColor(bg, theme);
+    }
+
+    function between(xml, startTag, endTag) {
+        const i = xml.indexOf(startTag);
+        if (i === -1) return null;
+        const j = xml.indexOf(endTag, i);
+        if (j === -1) return null;
+        return xml.slice(i, j + endTag.length);
+    }
+
+    function buildSlide(xml, layoutXml, masterXml, slideW, slideH, theme, embeds) {
+        const spTree = between(xml, "<p:spTree", "</p:spTree>") || xml;
+        const phLayout = placeholderXfrms(layoutXml);
+        const phMaster = placeholderXfrms(masterXml);
+
+        const bg = slideBg(xml, theme) || slideBg(layoutXml, theme) || slideBg(masterXml, theme) || "#FFFFFF";
+
+        const shapes = [];
+        let title = "";
+        const identity = { offX: 0, offY: 0, chOffX: 0, chOffY: 0, sx: 1, sy: 1 };
+
+        const walk = (frag, ctx) => {
+            for (const blk of childBlocks(frag)) {
+                if (blk.tag === "grpSp") {
+                    const inner = blk.xml.slice(
+                        blk.xml.indexOf("</p:grpSpPr>") + "</p:grpSpPr>".length,
+                        blk.xml.lastIndexOf("</p:grpSp>"));
+                    const xf = xfrmOf(blk.xml);
+                    if (!xf || !xf.off || !xf.ext || !xf.chExt) { walk(inner, ctx); continue; }
+                    const offX = ctx.offX + (xf.off.x - ctx.chOffX) * ctx.sx;
+                    const offY = ctx.offY + (xf.off.y - ctx.chOffY) * ctx.sy;
+                    walk(inner, {
+                        offX, offY,
+                        chOffX: xf.chOff ? xf.chOff.x : 0,
+                        chOffY: xf.chOff ? xf.chOff.y : 0,
+                        sx: ctx.sx * (xf.ext.cx / xf.chExt.cx),
+                        sy: ctx.sy * (xf.ext.cy / xf.chExt.cy),
+                    });
+                    continue;
+                }
+
+                let xf = xfrmOf(blk.xml);
+                const phM = blk.xml.match(/<p:ph\s+([^>]*)\/>/);
+                let phType = null;
+                if (phM) {
+                    phType = (phM[1].match(/type="([^"]+)"/) || [])[1] || "body";
+                    const idx = (phM[1].match(/idx="([^"]+)"/) || [])[1];
+                    if (!xf || !xf.off) {
+                        xf = (idx !== undefined && (phLayout["idx:" + idx] || phMaster["idx:" + idx]))
+                            || phLayout["type:" + phType] || phMaster["type:" + phType] || xf;
+                    }
+                }
+                if (!xf || !xf.off || !xf.ext) continue;
+
+                const x = ctx.offX + (xf.off.x - ctx.chOffX) * ctx.sx;
+                const y = ctx.offY + (xf.off.y - ctx.chOffY) * ctx.sy;
+                const w = xf.ext.cx * ctx.sx;
+                const h = xf.ext.cy * ctx.sy;
+
+                if (blk.tag === "pic") {
+                    const embed = (blk.xml.match(/r:embed="([^"]+)"/) || [])[1];
+                    const dataUri = embed && embeds[embed];
+                    if (!dataUri) continue;
+                    const alt = (blk.xml.match(/name="([^"]*)"/) || [])[1] || "";
+                    shapes.push({ kind: "image", x, y, w, h, rot: xf.rot, flipH: xf.flipH, flipV: xf.flipV, image: { dataUri, alt } });
+                    continue;
+                }
+
+                const spPr = (blk.xml.match(/<p:spPr>[\s\S]*?<\/p:spPr>/) || [""])[0];
+                const prst = (spPr.match(/<a:prstGeom prst="([^"]+)"/) || [])[1] || "";
+                const stroke = strokeOf(spPr, theme);
+
+                if (blk.tag === "cxnSp" || prst === "line" || prst.startsWith("straightConnector") || prst.startsWith("bentConnector")) {
+                    shapes.push({ kind: "line", x, y, w, h, flipH: xf.flipH, flipV: xf.flipV, rot: xf.rot, stroke: stroke || { color: "#000000", w: 9525 } });
+                    continue;
+                }
+
+                const fill = fillOf(spPr, theme);
+                let { paras, fontSize, bold, color } = extractParas(blk.xml, theme);
+                if (!color) {
+                    const fontRef = (blk.xml.match(/<a:fontRef[\s\S]*?<\/a:fontRef>/) || [""])[0];
+                    color = resolveColor(fontRef, theme);
+                }
+                const bodyPr = (blk.xml.match(/<a:bodyPr[^>]*>/) || [""])[0];
+                const anchor = (bodyPr.match(/anchor="([^"]+)"/) || [])[1] || "t";
+                const ins = (name, def) => {
+                    const m = bodyPr.match(new RegExp(name + '="(-?\\d+)"'));
+                    return m ? +m[1] : def;
+                };
+                const insets = { l: ins("lIns", 91440), t: ins("tIns", 45720), r: ins("rIns", 91440), b: ins("bIns", 45720) };
+
+                let radius = 0;
+                if (prst === "roundRect" || prst === "round2SameRect") {
+                    const adj = spPr.match(/<a:gd name="adj"[^>]*fmla="val (\d+)"/);
+                    radius = Math.min(w, h) * ((adj ? +adj[1] : 16667) / 100000);
+                } else if (prst === "ellipse") {
+                    radius = Math.max(w, h);
+                }
+
+                const textPlain = paras.map(p => p.runs.map(r => r.text).join("")).join(" ").replace(/\s+/g, " ").trim();
+                if (!textPlain && fill == null && !stroke) continue;
+
+                if (phType === "title" || phType === "ctrTitle") title = textPlain || title;
+
+                shapes.push({
+                    kind: "shape", x, y, w, h,
+                    rot: xf.rot, flipH: xf.flipH, flipV: xf.flipV,
+                    fill: fill ?? null, stroke, radius,
+                    paras, textPlain,
+                    fontSize: fontSize || ((phType === "title" || phType === "ctrTitle") ? 34 : 18),
+                    bold, color, anchor, insets,
+                    isTitle: phType === "title" || phType === "ctrTitle",
+                });
+            }
+        };
+
+        walk(spTree, identity);
+
+        if (!title) {
+            let best = null;
+            for (const s of shapes)
+                if (s.kind === "shape" && s.textPlain && s.y < 0.25 * slideH)
+                    if (!best || s.fontSize > best.fontSize) best = s;
+            if (best) title = best.textPlain;
+        }
+
+        return { title, width: slideW, height: slideH, bg, shapes };
+    }
+
+    // ========== Enrichment API (browser) ==========
+    // The API often echoes the queried term as a "LABEL – " prefix, which
+    // duplicates the modal title. Strip it, but only when followed by a
+    // separator — a normal sentence starting with the term stays intact.
+    function stripLabelEcho(label, text) {
+        const escd = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const re = new RegExp("^\\s*(?:\\*\\*)?" + escd + "(?:\\*\\*)?\\s*[–—:-]\\s*", "i");
+        let t = text;
+        while (re.test(t)) t = t.replace(re, "");
+        return t;
+    }
+
+    async function enrichSlide(slide, apiUrl, mode) {
+        const descriptions = new Map();
+        const seen = new Set();
+        const labels = [];
+        for (const s of slide.shapes || []) {
+            const t = (s.textPlain || "").trim();
+            if (!t || seen.has(t)) continue;
+            if (/^\d{1,3}$/.test(t)) continue;
+            if (/internal$/i.test(t)) continue;
+            seen.add(t);
+            labels.push(t);
+        }
+        if (!labels.length) return descriptions;
+
+        const framing = mode === "generic"
+            ? "In the context of 5G mobile networks, give a one-sentence description for each of the following terms."
+            : "In the NorthStar / Telia 5G SA architecture, give a one-sentence description for each of the following components.";
+
+        const batchSize = 8;
+        for (let i = 0; i < labels.length; i += batchSize) {
+            const batch = labels.slice(i, i + batchSize);
+            const listStr = batch.map((l, j) => (j + 1) + ". " + l).join("\n");
+            const query = framing + " Return ONLY a numbered list matching the input — one line per item, number then description. No markdown headers.\n\n" + listStr;
+
+            try {
+                const res = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query, history: [] }),
+                });
+                if (!res.ok) throw new Error("HTTP " + res.status);
+
+                const reader = res.body.getReader();
+                const dec = new TextDecoder();
+                let buf = "", out = "";
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buf += dec.decode(value, { stream: true });
+                    const lines = buf.split("\n");
+                    buf = lines.pop();
+                    for (const line of lines) {
+                        const t = line.trim();
+                        if (!t.startsWith("data:")) continue;
+                        const payload = t.slice(5).trim();
+                        if (!payload || payload === "[DONE]") continue;
+                        try {
+                            const j = JSON.parse(payload);
+                            const c = j.choices?.[0]?.delta?.content ?? j.choices?.[0]?.message?.content ?? "";
+                            if (c) out += c;
+                        } catch {}
+                    }
+                }
+                const resultLines = out.split("\n").filter(l => /^\d+[\.\)]\s/.test(l.trim()));
+                for (let k = 0; k < Math.min(resultLines.length, batch.length); k++) {
+                    // strip leading numbering, Perplexity citation markers like
+                    // [3][6], and a leading echo of the queried label
+                    let desc = resultLines[k].replace(/^\d+[\.\)]\s*/, "")
+                        .replace(/\s*\[\d+\]/g, "").replace(/\s{2,}/g, " ").trim();
+                    desc = stripLabelEcho(batch[k], desc);
+                    if (desc && !desc.toLowerCase().startsWith("not available")) {
+                        descriptions.set(batch[k], desc);
+                    }
+                }
+            } catch (err) {
+                log("  API error: " + err.message, true);
+            }
+        }
+        return descriptions;
+    }
+
+    // ========== HTML Generator (browser) ==========
+    // Faithful scaled canvas: shapes absolutely positioned at their original
+    // coordinates with original fills, text styling, rotation, images and
+    // connector lines. Mirrors scripts/pptx-to-html/generate-html.mjs.
+
+    // Fonts hosted on this site (public/fonts/, CORS-enabled) so generated
+    // pages keep the Telia typography even when downloaded standalone.
+    const FONT_BASE = "https://northstar-program.com/fonts";
+
+    // Telia pebble favicon inlined so standalone pages always show it.
+    const TELIA_FAVICON = "data:image/svg+xml," + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 205 216"><path fill="#990AE3" d="M141.19,151.57c27.97-16.22,53.16-43.73,61.11-63.35c2.26-16.23,2.71-18.29,2.99-36.15c0.04-2.47-0.12-4.85-0.34-7.12c-1.63,26.23-35.53,59.21-80.39,80.76c-54.1,25.99-94.7,32.99-112.81,13.16c6.29,12.42,10.42,18.46,17.49,27.68C50.14,185.07,94.11,178.88,141.19,151.57z"/><path fill="#990AE3" d="M118.25,107.13c51.04-24.62,86.58-59.64,80.38-82.86C188.45,6.69,167.86,0,145.78,0C80.33,0-0.01,43.14-0.01,98.18c0,7.07,1.56,14.99,4.36,23.27C19.29,141.27,64.93,132.85,118.25,107.13z"/><path fill="#990AE3" d="M113.95,185.15L113.95,185.15c-35.89,14.56-56.44,9.92-67.79,0.84L46,185.86c17.58,17.53,37.6,29.86,55.17,29.86c30.76,0,72.88-37.32,92.8-95.18C182.73,141.43,158.63,167.09,113.95,185.15z"/></svg>');
+
+    function generateHtml(slide, descriptions) {
+        const pageTitle = slide.title || "NorthStar";
+        const W = slide.width, H = slide.height;
+        const slideWIn = W / EMU_PER_IN;
+
+        const pct = (v, total) => (v / total * 100).toFixed(3);
+        const cqw = pt => (pt / 72 / slideWIn * 100).toFixed(3);
+
+        const infoEntries = [];
+        const seenKeys = new Set();
+        const toKey = t => (t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60)) || "item";
+        function addEntry(text) {
+            const key = toKey(text);
+            if (!seenKeys.has(key)) {
+                seenKeys.add(key);
+                infoEntries.push({ key, title: text, body: descriptions.get(text) || "Component of the NorthStar architecture." });
+            }
+            return key;
+        }
+
+        const ANCHOR = { t: "flex-start", ctr: "center", b: "flex-end" };
+        const ALIGN = { l: "left", ctr: "center", r: "right", just: "justify" };
+
+        let shapesHtml = "", linesSvg = "";
+
+        for (const s of slide.shapes) {
+            if (s.kind === "line") {
+                let x1 = s.x, y1 = s.y, x2 = s.x + s.w, y2 = s.y + s.h;
+                if (s.flipH) { const t = x1; x1 = x2; x2 = t; }
+                if (s.flipV) { const t = y1; y1 = y2; y2 = t; }
+                linesSvg += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + s.stroke.color + '" stroke-width="' + Math.max(s.stroke.w, 6350) + '"/>\n';
+                continue;
+            }
+
+            let style = "left:" + pct(s.x, W) + "%;top:" + pct(s.y, H) + "%;width:" + pct(s.w, W) + "%;height:" + pct(s.h, H) + "%;";
+            const transforms = [];
+            if (s.rot) transforms.push("rotate(" + s.rot.toFixed(2) + "deg)");
+            if (s.flipH) transforms.push("scaleX(-1)");
+            if (s.flipV) transforms.push("scaleY(-1)");
+            if (transforms.length) style += "transform:" + transforms.join(" ") + ";";
+
+            if (s.kind === "image") {
+                shapesHtml += '<div class="shp img" style="' + style + '"><img src="' + s.image.dataUri + '" alt="' + esc(s.image.alt) + '" loading="lazy"></div>\n';
+                continue;
+            }
+
+            if (s.fill) style += "background:" + s.fill + ";";
+            if (s.stroke) style += "border:calc(" + cqw(s.stroke.w / EMU_PER_IN * 72) + "cqw) solid " + s.stroke.color + ";";
+            if (s.radius) style += "border-radius:" + cqw(s.radius / EMU_PER_IN * 72) + "cqw;";
+            style += "justify-content:" + (ANCHOR[s.anchor] || "flex-start") + ";";
+            if (s.insets) {
+                const eCqw = emu => (emu / W * 100).toFixed(3);
+                style += "padding:" + eCqw(s.insets.t) + "cqw " + eCqw(s.insets.r) + "cqw " + eCqw(s.insets.b) + "cqw " + eCqw(s.insets.l) + "cqw;";
+            }
+
+            const color = s.color || (s.isTitle ? "#29003E" : "#121214");
+            const invisible = s.fill && color.toLowerCase() === String(s.fill).toLowerCase();
+
+            let inner = "";
+            if (s.paras.length && !invisible) {
+                for (const p of s.paras) {
+                    const align = ALIGN[p.algn] || "left";
+                    let spans = "";
+                    for (const r of p.runs) {
+                        const pt = r.size || s.fontSize;
+                        const fs = cqw(pt);
+                        const col = r.color || color;
+                        const fam = cssFamily(r.face || p.face, s.isTitle);
+                        spans += '<span data-pt="' + pt + '" style="font-size:' + fs + 'cqw;color:' + col + ';' + (r.bold ? "font-weight:700;" : "") + (fam ? "font-family:" + fam + ";" : "") + '">' + esc(r.text) + '</span>';
+                    }
+                    inner += '<div class="para" style="text-align:' + align + ';">' + spans + '</div>';
+                }
+            }
+
+            if (s.textPlain && !invisible) {
+                const key = addEntry(s.textPlain);
+                const cls = s.isTitle ? "shp txt title" : "shp txt";
+                shapesHtml += '<div class="' + cls + '" data-info="' + esc(key) + '" style="' + style + '">' + inner + '</div>\n';
+            } else {
+                shapesHtml += '<div class="shp" style="' + style + '"></div>\n';
+            }
+        }
+
+        const infoJs = infoEntries.map(e =>
+            '        "' + e.key + '": {\n            title: ' + JSON.stringify(e.title) + ',\n            body: ' + JSON.stringify(e.body) + '\n        }'
+        ).join(",\n");
+
+        return '<!DOCTYPE html>\n<html lang="en">\n<head>\n'
+            + '    <meta charset="UTF-8">\n'
+            + '    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+            + '    <title>' + esc(pageTitle) + '</title>\n'
+            + '    <link rel="icon" type="image/svg+xml" href="' + TELIA_FAVICON + '">\n'
+            + '    <style>\n'
+            + '        @font-face { font-family: "Telia Sans Heading"; src: url("' + FONT_BASE + '/TeliaSansHeading-Heading.woff2") format("woff2"); font-weight: 300; font-style: normal; font-display: swap; }\n'
+            + '        @font-face { font-family: "Telia Sans"; src: url("' + FONT_BASE + '/TeliaSans-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }\n'
+            + '        @font-face { font-family: "Telia Sans"; src: url("' + FONT_BASE + '/TeliaSans-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }\n'
+            + '        @font-face { font-family: "Telia Sans"; src: url("' + FONT_BASE + '/TeliaSans-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }\n'
+            + '        * { margin: 0; padding: 0; box-sizing: border-box; }\n'
+            + '        html, body { width: 100%; min-height: 100vh; font-family: "Telia Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #1a0029; }\n'
+            + '        body { display: flex; align-items: center; justify-content: center; padding: 24px; }\n'
+            + '        .canvas { position: relative; width: min(100%, 1500px); aspect-ratio: ' + W + ' / ' + H + '; background: ' + slide.bg + '; container-type: inline-size; border-radius: 12px; overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,0.5); }\n'
+            + '        .connectors { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }\n'
+            + '        .shp { position: absolute; display: flex; flex-direction: column; overflow: visible; }\n'
+            + '        .shp .para { width: 100%; line-height: 1.15; white-space: pre-wrap; }\n'
+            + '        .shp.title .para { font-family: "Telia Sans Heading", "Telia Sans", system-ui, sans-serif; font-weight: 300; }\n'
+            + '        .shp.img { padding: 0; }\n'
+            + '        .shp.img img { width: 100%; height: 100%; object-fit: contain; display: block; }\n'
+            + '        .shp.txt { cursor: pointer; transition: filter 0.15s ease, outline-color 0.15s ease; outline: 2px solid transparent; outline-offset: 2px; }\n'
+            + '        .shp.txt:hover { filter: brightness(1.12); outline-color: rgba(153,10,227,0.7); border-radius: 6px; }\n'
+            + '        [data-info].active { outline-color: #990AE3 !important; box-shadow: 0 0 24px rgba(153,10,227,0.4); }\n'
+            + '        .info-overlay { display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(26,0,41,0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; }\n'
+            + '        .info-overlay.visible { display: flex; }\n'
+            + '        .info-panel { background: linear-gradient(135deg, #3D1556, #29003E); border: 1px solid rgba(153,10,227,0.3); border-radius: 20px; padding: 36px 40px 32px; max-width: 560px; width: 90%; position: relative; box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 60px rgba(153,10,227,0.15); }\n'
+            + '        .info-panel-title { font-family: "Telia Sans Heading", "Telia Sans", system-ui, sans-serif; font-weight: 700; font-size: 20px; color: #fff; margin-bottom: 16px; padding-right: 32px; }\n'
+            + '        .info-panel-body { font-size: 15px; line-height: 1.6; color: rgba(244,224,255,0.85); }\n'
+            + '        .info-panel-close { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(153,10,227,0.3); background: rgba(153,10,227,0.15); color: #F4E0FF; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }\n'
+            + '        .info-panel-close:hover { background: #990AE3; border-color: #990AE3; color: #fff; }\n'
+            + '        .live-toggle { position: fixed; bottom: 20px; left: 24px; z-index: 1500; display: flex; align-items: center; gap: 9px; padding: 8px 16px; border-radius: 999px; background: rgba(61,21,86,0.9); border: 1px solid rgba(153,10,227,0.4); color: #F4E0FF; font-size: 13px; font-weight: 500; cursor: pointer; user-select: none; transition: border-color 0.15s; }\n'
+            + '        .live-toggle:hover { border-color: #990AE3; }\n'
+            + '        .live-toggle .dot { width: 10px; height: 10px; border-radius: 50%; background: #6E5C84; transition: background 0.15s, box-shadow 0.15s; }\n'
+            + '        .live-toggle.northstar .dot { background: #3FBFA0; box-shadow: 0 0 10px rgba(63,191,160,0.7); }\n'
+            + '        .live-toggle.generic .dot { background: #CE7DF2; box-shadow: 0 0 10px rgba(206,125,242,0.7); }\n'
+            + '        .live-wait { color: rgba(244,224,255,0.6); animation: livePulse 1.2s ease infinite; }\n'
+            + '        @keyframes livePulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }\n'
+            + '        .live-note { font-size: 12px; color: #F2A33C; margin-bottom: 12px; }\n'
+            + '        @media (max-width: 700px) { body { padding: 8px; } }\n'
+            + '    </style>\n</head>\n<body>\n'
+            + '    <div class="info-overlay" id="infoOverlay">\n'
+            + '        <div class="info-panel">\n'
+            + '            <button class="info-panel-close" id="infoClose">&times;</button>\n'
+            + '            <div class="info-panel-title" id="infoTitle"></div>\n'
+            + '            <div class="info-panel-body" id="infoBody"></div>\n'
+            + '        </div>\n    </div>\n'
+            + '    <div class="canvas">\n'
+            + '        <svg class="connectors" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">\n'
+            + linesSvg
+            + '        </svg>\n'
+            + shapesHtml
+            + '    </div>\n'
+            + '    <div class="live-toggle" id="liveToggle" title="Click to cycle where explanations come from: the text built into this page, the NorthStar corpus API, or the generic Perplexity API">\n'
+            + '        <span class="dot"></span> Explanations: <b id="liveState">built-in</b>\n'
+            + '    </div>\n'
+            + '    <script>\n'
+            + '    const INFO = {\n' + infoJs + '\n    };\n'
+            + '    const API_URLS = {\n'
+            + '        northstar: "https://northstar-program.com/.netlify/functions/perplexity-api",\n'
+            + '        generic: "https://northstar-program.com/.netlify/functions/perplexity-generic",\n'
+            + '    };\n'
+            + '    const MODES = ["off", "northstar", "generic"];\n'
+            + '    const MODE_LABELS = { off: "built-in", northstar: "NorthStar API", generic: "Perplexity (generic)" };\n'
+            + "    const overlay = document.getElementById('infoOverlay');\n"
+            + "    const titleEl = document.getElementById('infoTitle');\n"
+            + "    const bodyEl  = document.getElementById('infoBody');\n"
+            + "    const closeBtn = document.getElementById('infoClose');\n"
+            + "    const liveToggle = document.getElementById('liveToggle');\n"
+            + "    const liveState = document.getElementById('liveState');\n"
+            + '    let activeEl = null;\n'
+            + '    let liveMode = "off";\n'
+            + '    let reqSeq = 0;\n'
+            + '    const liveCache = new Map();\n'
+            + "    liveToggle.addEventListener('click', () => {\n"
+            + '        liveMode = MODES[(MODES.indexOf(liveMode) + 1) % MODES.length];\n'
+            + "        liveToggle.classList.toggle('northstar', liveMode === 'northstar');\n"
+            + "        liveToggle.classList.toggle('generic', liveMode === 'generic');\n"
+            + '        liveState.textContent = MODE_LABELS[liveMode];\n'
+            + '    });\n'
+            + '    function mdBody(t) {\n'
+            + "        const e = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n"
+            + "        return e.replace(/\\s*\\[\\d+\\]/g, '')\n"
+            + "            .replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>')\n"
+            + "            .replace(/\\*([^*]+)\\*/g, '<em>$1</em>');\n"
+            + '    }\n'
+            + '    function stripEcho(label, text) {\n'
+            + "        const escd = label.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n"
+            + "        const re = new RegExp('^\\\\s*(?:\\\\*\\\\*)?' + escd + '(?:\\\\*\\\\*)?\\\\s*[–—:-]\\\\s*', 'i');\n"
+            + '        let t = text;\n'
+            + "        while (re.test(t)) t = t.replace(re, '');\n"
+            + '        return t;\n'
+            + '    }\n'
+            + '    async function fetchLive(label, mode, render) {\n'
+            + '        const cacheKey = mode + ":" + label;\n'
+            + '        if (liveCache.has(cacheKey)) { render(liveCache.get(cacheKey)); return; }\n'
+            + '        const query = mode === "generic"\n'
+            + '            ? "In the context of 5G mobile networks, explain briefly (one short paragraph, no headings): " + label\n'
+            + '            : "In the NorthStar / Telia 5G SA architecture, explain briefly (one short paragraph, no headings): " + label;\n'
+            + '        const res = await fetch(API_URLS[mode], { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query, history: [] }) });\n'
+            + '        if (!res.ok) throw new Error("HTTP " + res.status);\n'
+            + '        const reader = res.body.getReader();\n'
+            + '        const dec = new TextDecoder();\n'
+            + '        let buf = "", out = "";\n'
+            + '        while (true) {\n'
+            + '            const { done, value } = await reader.read();\n'
+            + '            if (done) break;\n'
+            + '            buf += dec.decode(value, { stream: true });\n'
+            + '            const lines = buf.split("\\n");\n'
+            + '            buf = lines.pop();\n'
+            + '            for (const line of lines) {\n'
+            + '                const t = line.trim();\n'
+            + '                if (!t.startsWith("data:")) continue;\n'
+            + '                const p = t.slice(5).trim();\n'
+            + '                if (!p || p === "[DONE]") continue;\n'
+            + '                try {\n'
+            + '                    const j = JSON.parse(p);\n'
+            + '                    const c = j.choices?.[0]?.delta?.content ?? j.choices?.[0]?.message?.content ?? "";\n'
+            + '                    if (c) { out += c; render(out); }\n'
+            + '                } catch {}\n'
+            + '            }\n'
+            + '        }\n'
+            + '        if (out) liveCache.set(cacheKey, out);\n'
+            + '    }\n'
+            + '    function showInfo(key, srcEl) {\n'
+            + '        const entry = INFO[key]; if (!entry) return;\n'
+            + "        if (activeEl) activeEl.classList.remove('active');\n"
+            + "        activeEl = srcEl; srcEl.classList.add('active');\n"
+            + '        titleEl.textContent = entry.title;\n'
+            + "        overlay.classList.add('visible');\n"
+            + '        const my = ++reqSeq;\n'
+            + '        if (liveMode !== "off") {\n'
+            + '            bodyEl.innerHTML = \'<span class="live-wait">Asking \' + (liveMode === "generic" ? "Perplexity" : "NorthStar") + \'&hellip;</span>\';\n'
+            + '            fetchLive(entry.title, liveMode, txt => { if (my === reqSeq) bodyEl.innerHTML = mdBody(stripEcho(entry.title, txt)); })\n'
+            + '                .catch(() => { if (my === reqSeq) bodyEl.innerHTML = \'<div class="live-note">&#9888; Live API unreachable &mdash; showing built-in text instead</div>\' + mdBody(stripEcho(entry.title, entry.body)); });\n'
+            + '        } else {\n'
+            + '            bodyEl.innerHTML = mdBody(stripEcho(entry.title, entry.body));\n'
+            + '        }\n'
+            + '    }\n'
+            + "    function hideInfo() { overlay.classList.remove('visible'); if (activeEl) { activeEl.classList.remove('active'); activeEl = null; } }\n"
+            + "    document.querySelectorAll('[data-info]').forEach(el => {\n"
+            + "        el.addEventListener('click', e => { e.stopPropagation(); showInfo(el.dataset.info, el); });\n"
+            + '    });\n'
+            + "    closeBtn.addEventListener('click', hideInfo);\n"
+            + "    overlay.addEventListener('click', e => { if (e.target === overlay) hideInfo(); });\n"
+            + "    document.addEventListener('keydown', e => { if (e.key === 'Escape') hideInfo(); });\n"
+            + '    <\/script>\n</body>\n</html>';
+    }
+
+
+    function esc(s) {
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    // Map a pptx typeface to a CSS family stack. PowerPoint knows the heading
+    // cut by its GDI name "Telia Sans Heading Heading"; on the web we alias it
+    // as "Telia Sans Heading". Unknown faces are passed through with fallbacks.
+    function cssFamily(typeface, isTitle) {
+        if (!typeface) {
+            return isTitle ? "'Telia Sans Heading', 'Telia Sans', system-ui, sans-serif" : null;
+        }
+        if (/telia sans heading/i.test(typeface)) return "'Telia Sans Heading', 'Telia Sans', system-ui, sans-serif";
+        if (/^telia sans$/i.test(typeface)) return null;
+        return "'" + typeface.replace(/'/g, "") + "', 'Telia Sans', system-ui, sans-serif";
+    }
+
+    // ========== Reverse: HTML → PowerPoint ==========
+    // Rebuilds a .pptx slide purely from a page generated by this converter:
+    // the canvas geometry (percentages / cqw / EMU) maps back to inches, and
+    // shapes, text runs, images and connector lines become native PowerPoint
+    // objects. The click-to-explain descriptions land in the speaker notes.
+    const htmlDropZone = $("htmlDropZone");
+    const htmlFileInput = $("htmlFileInput");
+    const htmlConvertBtn = $("htmlConvertBtn");
+    const reverseLog = $("reverseLog");
+    let reverseHtmlText = null;
+    let reverseFileName = "slide";
+
+    function rlog(msg, isErr) {
+        const d = document.createElement("div");
+        if (isErr) d.className = "err";
+        d.textContent = msg;
+        reverseLog.appendChild(d);
+        reverseLog.scrollTop = reverseLog.scrollHeight;
+    }
+
+    htmlDropZone.addEventListener("click", () => htmlFileInput.click());
+    htmlDropZone.addEventListener("dragover", e => { e.preventDefault(); htmlDropZone.classList.add("dragover"); });
+    htmlDropZone.addEventListener("dragleave", () => htmlDropZone.classList.remove("dragover"));
+    htmlDropZone.addEventListener("drop", e => {
+        e.preventDefault();
+        htmlDropZone.classList.remove("dragover");
+        htmlDropZone.classList.remove("drag-target");
+        // In-page drag from the "Preview & download" section
+        const pageIdx = e.dataTransfer.getData("application/x-northstar-page-index");
+        if (pageIdx !== "") {
+            const page = generatedPages[+pageIdx];
+            if (page) {
+                const slug = page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "slide";
+                setReverseSource(page.html, slug, slug + ".html (from step 4)");
+                return;
+            }
+        }
+        if (e.dataTransfer.files.length) handleHtmlFile(e.dataTransfer.files[0]);
+    });
+    htmlFileInput.addEventListener("change", () => { if (htmlFileInput.files.length) handleHtmlFile(htmlFileInput.files[0]); });
+
+    function setReverseSource(htmlText, baseName, displayName) {
+        reverseHtmlText = htmlText;
+        reverseFileName = baseName;
+        $("htmlFileName").textContent = displayName;
+        htmlConvertBtn.disabled = false;
+    }
+
+    async function handleHtmlFile(file) {
+        setReverseSource(await file.text(), file.name.replace(/\.html?$/i, ""), file.name);
+    }
+
+    htmlConvertBtn.addEventListener("click", () => {
+        reverseLog.innerHTML = "";
+        try { htmlToPptx(reverseHtmlText, reverseFileName); }
+        catch (err) { rlog("Error: " + err.message, true); }
+    });
+
+    function cssLen(v) { const m = /(-?[\d.]+)/.exec(v || ""); return m ? parseFloat(m[1]) : 0; }
+
+    function cssColor(c) {
+        if (!c) return null;
+        c = c.trim();
+        let m = /^#([0-9a-f]{6})$/i.exec(c);
+        if (m) return { color: m[1].toUpperCase() };
+        m = /^#([0-9a-f]{3})$/i.exec(c);
+        if (m) return { color: m[1].split("").map(x => x + x).join("").toUpperCase() };
+        m = /^rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s/]+([\d.]+))?\)$/i.exec(c);
+        if (m) {
+            const hex = [m[1], m[2], m[3]].map(n => (+n).toString(16).padStart(2, "0")).join("").toUpperCase();
+            const out = { color: hex };
+            if (m[4] !== undefined) out.transparency = Math.round((1 - parseFloat(m[4])) * 100);
+            return out;
+        }
+        return null;
+    }
+
+    function htmlToPptx(htmlText, baseName) {
+        const doc = new DOMParser().parseFromString(htmlText, "text/html");
+        const canvas = doc.querySelector(".canvas");
+        if (!canvas) throw new Error("No slide canvas found — this doesn't look like a page generated by this converter.");
+
+        // Slide geometry + background live in the page's stylesheet
+        const css = [...doc.querySelectorAll("style")].map(s => s.textContent).join("\n");
+        const cm = css.match(/\.canvas\s*\{[^}]*aspect-ratio:\s*(\d+)\s*\/\s*(\d+)[^}]*\}/);
+        if (!cm) throw new Error("Slide dimensions not found in the page.");
+        const W = +cm[1], H = +cm[2];
+        const WIn = W / EMU_PER_IN, HIn = H / EMU_PER_IN;
+        const bgm = cm[0].match(/background:\s*(#[0-9a-fA-F]{6}|rgba?\([^)]*\))/);
+        const bg = bgm ? cssColor(bgm[1]) : null;
+
+        rlog("Slide: " + WIn.toFixed(2) + '" × ' + HIn.toFixed(2) + '"' + (bg ? ", background #" + bg.color : ""));
+
+        const pptx = new PptxGenJS();
+        pptx.defineLayout({ name: "SRC", width: WIn, height: HIn });
+        pptx.layout = "SRC";
+        const slide = pptx.addSlide();
+        if (bg) slide.background = { color: bg.color };
+
+        const pctX = v => v / 100 * WIn;
+        const pctY = v => v / 100 * HIn;
+        const cqwIn = v => v / 100 * WIn;
+
+        // Connector lines (SVG overlay, coordinates in EMU)
+        let lines = 0;
+        doc.querySelectorAll(".connectors line").forEach(ln => {
+            const x1 = +ln.getAttribute("x1") / EMU_PER_IN, y1 = +ln.getAttribute("y1") / EMU_PER_IN;
+            const x2 = +ln.getAttribute("x2") / EMU_PER_IN, y2 = +ln.getAttribute("y2") / EMU_PER_IN;
+            const col = cssColor(ln.getAttribute("stroke")) || { color: "000000" };
+            const wpt = (+ln.getAttribute("stroke-width") || 9525) / EMU_PER_IN * 72;
+            slide.addShape(pptx.shapes.LINE, {
+                x: Math.min(x1, x2), y: Math.min(y1, y2),
+                w: Math.abs(x2 - x1), h: Math.abs(y2 - y1),
+                flipV: (x2 - x1) * (y2 - y1) < 0,
+                line: { color: col.color, width: Math.max(wpt, 0.75) },
+            });
+            lines++;
+        });
+
+        // Shapes, text and images
+        let boxCount = 0, textCount = 0, imageCount = 0;
+        doc.querySelectorAll(".canvas > .shp").forEach(shp => {
+            const st = shp.style;
+            const x = pctX(cssLen(st.left)), y = pctY(cssLen(st.top));
+            const w = pctX(cssLen(st.width)), h = pctY(cssLen(st.height));
+            if (!w || !h) return;
+
+            const rotM = /rotate\((-?[\d.]+)deg\)/.exec(st.transform || "");
+            const rotate = rotM ? ((parseFloat(rotM[1]) % 360) + 360) % 360 : 0;
+
+            const img = shp.querySelector("img");
+            if (img) {
+                slide.addImage({ data: img.getAttribute("src"), x, y, w, h, rotate });
+                imageCount++;
+                return;
+            }
+
+            const fill = cssColor(st.background || st.backgroundColor);
+            const radius = cssLen(st.borderRadius);
+            const borderM = /solid\s+(#[0-9a-fA-F]{6}|rgba?\([^)]*\))/.exec(st.border || "");
+            const line = borderM
+                ? { color: cssColor(borderM[1]).color, width: Math.max(cqwIn(cssLen(st.border)) * 72, 0.5) }
+                : undefined;
+
+            const paras = [...shp.querySelectorAll(".para")];
+            const isHeading = shp.classList.contains("title");
+            const valign = { "flex-start": "top", center: "middle", "flex-end": "bottom" }[st.justifyContent] || "top";
+
+            const runs = [];
+            for (const p of paras) {
+                // Per-run styling lives on <span>s; fall back to the paragraph
+                // itself for pages generated before run-level fidelity.
+                const spans = [...p.querySelectorAll("span")];
+                const parts = spans.length ? spans : [p];
+                parts.forEach((el, j) => {
+                    const st = el.style;
+                    const famRaw = ((st.fontFamily || p.style.fontFamily) || "").split(",")[0].trim().replace(/^["']|["']$/g, "");
+                    let runFace = null;
+                    if (/telia sans heading/i.test(famRaw)) runFace = "Telia Sans Heading Heading";
+                    else if (famRaw && !/^telia sans$/i.test(famRaw)) runFace = famRaw;
+                    const weight = st.fontWeight || p.style.fontWeight;
+                    // Exact point size from data-pt when present; otherwise
+                    // reconstruct from cqw and snap to the nearest half point.
+                    const dataPt = el.getAttribute && el.getAttribute("data-pt");
+                    const fontSize = dataPt
+                        ? parseFloat(dataPt)
+                        : Math.max(Math.round(cqwIn(cssLen(st.fontSize || p.style.fontSize)) * 72 * 2) / 2, 6);
+                    const options = {
+                        fontSize,
+                        color: (cssColor(st.color || p.style.color) || { color: "121214" }).color,
+                        bold: weight === "700" || weight === "bold",
+                        align: p.style.textAlign || "left",
+                        breakLine: j === parts.length - 1,
+                    };
+                    if (runFace) options.fontFace = runFace;
+                    runs.push({ text: el.textContent, options });
+                });
+            }
+
+            const opts = {
+                x, y, w, h, rotate, valign,
+                // PowerPoint resolves fonts by their GDI name (nameID 1):
+                // the heading cut is literally "Telia Sans Heading Heading".
+                fontFace: isHeading ? "Telia Sans Heading Heading" : "Telia Sans",
+                shape: radius > 0 ? pptx.shapes.ROUNDED_RECTANGLE : pptx.shapes.RECTANGLE,
+            };
+            if (radius > 0) opts.rectRadius = cqwIn(radius);
+            if (fill) opts.fill = fill;
+            if (line) opts.line = line;
+
+            if (runs.length) { slide.addText(runs, opts); textCount++; }
+            else if (fill || line) { slide.addShape(opts.shape, opts); boxCount++; }
+        });
+
+        // The click-to-explain descriptions become speaker notes
+        const notes = [];
+        const infoRe = /title:\s*("(?:[^"\\]|\\.)*"),\s*\n\s*body:\s*("(?:[^"\\]|\\.)*")/g;
+        let nm;
+        while ((nm = infoRe.exec(htmlText)) !== null) {
+            try { notes.push(JSON.parse(nm[1]) + ": " + JSON.parse(nm[2])); } catch {}
+        }
+        if (notes.length) slide.addNotes(notes.join("\n\n"));
+
+        rlog("Rebuilt " + textCount + " text shape(s), " + boxCount + " box(es), " + imageCount + " image(s), " + lines + " line(s)" + (notes.length ? " — " + notes.length + " explanation(s) added as speaker notes" : ""));
+
+        const fileName = (baseName || "slide") + ".pptx";
+        pptx.writeFile({ fileName }).then(() => rlog("Saved " + fileName));
+    }
+    </script>
+</body>
+</html>

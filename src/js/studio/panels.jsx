@@ -467,7 +467,7 @@ function relTime(ts) {
   return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, saved }) {
+export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, saved }) {
   return (
     <div className="st-toolbar">
       <div className="st-tb-left">
@@ -508,7 +508,18 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
       </div>
       <div className="st-tb-right">
         <span className={"st-saved" + (saved ? " on" : "")}>{saved ? "Saved ✓" : "Saving…"}</span>
-        <button className="st-btn" onClick={onExport} title="Download this presentation as .json">Export</button>
+        <Dropdown wrapClass="st-export" menuClass="st-export-menu" label="Export ▾" render={(close) => (
+          <>
+            <button className="st-export-item" onClick={() => { onExportHtml(); close(); }}>
+              <b>HTML presentation</b>
+              <span>Complete interactive page — share or host it anywhere</span>
+            </button>
+            <button className="st-export-item" onClick={() => { onExport(); close(); }}>
+              <b>Studio JSON</b>
+              <span>Editable file — import it back into the Studio</span>
+            </button>
+          </>
+        )} />
         <a className="st-btn" href="copy-editor.html" title="Edit the live NorthStar deck copy">Copy editor</a>
         <button className="st-btn primary" onClick={onPresent}>▶ Present</button>
       </div>

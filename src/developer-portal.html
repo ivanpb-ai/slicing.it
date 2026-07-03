@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Arena — Developer Experience Hub</title>
+<style>
+  /* ------------------------------------------------------------------
+     Telia brand tokens
+     Telia Purple #990AE3 · Deep Purple #29003E · Light Purple #F4E0FF
+     Telia Sans via local() — falls back gracefully if not installed
+  ------------------------------------------------------------------ */
+  @font-face {
+    font-family: "Telia Sans";
+    src: local("TeliaSans"), local("Telia Sans"), local("TeliaSans-Regular");
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: "Telia Sans";
+    src: local("TeliaSans-Medium"), local("Telia Sans Medium");
+    font-weight: 500;
+  }
+  @font-face {
+    font-family: "Telia Sans";
+    src: local("TeliaSans-Bold"), local("Telia Sans Bold");
+    font-weight: 700;
+  }
+  :root {
+    --telia-purple: #990AE3;
+    --telia-deep: #29003E;
+    --telia-light: #F4E0FF;
+    --telia-lighter: #FBF3FF;
+    --telia-hover: #7B00C4;
+    --grey-50: #FAFAFA;
+    --grey-100: #F2F2F2;
+    --grey-200: #E0E0E0;
+    --grey-500: #6E6E6E;
+    --grey-900: #222222;
+    --green: #00875A;
+    --green-bg: #E3F5EE;
+    --amber: #8A6100;
+    --amber-bg: #FFF3D6;
+    --blue: #0057B8;
+    --blue-bg: #E5F0FB;
+    --radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Telia Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: var(--grey-100);
+    color: var(--grey-900);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .frame { max-width: 1440px; margin: 0 auto; background: var(--grey-50); min-height: 100vh; box-shadow: 0 0 40px rgba(41,0,62,.12); }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    background: var(--telia-deep);
+    color: #fff;
+    display: flex; align-items: center; gap: 24px;
+    padding: 12px 28px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .pebble {
+    width: 34px; height: 34px; background: var(--telia-purple);
+    border-radius: 46% 54% 55% 45% / 50% 44% 56% 50%;
+    display: grid; place-items: center; font-weight: 700; color: #fff; font-size: 15px;
+  }
+  .brand-name { line-height: 1.15; }
+  .brand-name strong { display: block; font-size: 15px; font-weight: 700; }
+  .brand-name span { font-size: 11px; opacity: .75; }
+  .search {
+    flex: 1; max-width: 460px; margin-left: auto;
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18);
+    border-radius: 24px; padding: 8px 16px; color: rgba(255,255,255,.75);
+    display: flex; align-items: center; gap: 8px; font-size: 13px;
+  }
+  .search kbd {
+    margin-left: auto; background: rgba(255,255,255,.15); border-radius: 6px;
+    padding: 1px 7px; font-size: 11px; font-family: inherit;
+  }
+  .lang-toggle {
+    display: flex; border: 1px solid rgba(255,255,255,.3); border-radius: 18px; overflow: hidden; font-size: 12px;
+  }
+  .lang-toggle span { padding: 5px 12px; cursor: pointer; }
+  .lang-toggle .on { background: #fff; color: var(--telia-deep); font-weight: 700; }
+  .tier-chip {
+    background: var(--telia-purple); border-radius: 18px; padding: 5px 14px;
+    font-size: 12px; font-weight: 700; white-space: nowrap;
+  }
+  .avatar {
+    display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500;
+  }
+  .avatar .dot {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--telia-purple);
+    display: grid; place-items: center; font-size: 12px; font-weight: 700;
+  }
+  .avatar small { display: block; font-weight: 400; font-size: 11px; opacity: .7; }
+
+  /* ---------- Nav ---------- */
+  nav {
+    background: #fff; border-bottom: 1px solid var(--grey-200);
+    display: flex; gap: 4px; padding: 0 28px; overflow-x: auto;
+  }
+  nav a {
+    padding: 14px 16px; text-decoration: none; color: var(--grey-500);
+    font-size: 13.5px; font-weight: 500; border-bottom: 3px solid transparent; white-space: nowrap;
+  }
+  nav a.active { color: var(--telia-purple); border-color: var(--telia-purple); font-weight: 700; }
+  nav a:hover { color: var(--telia-deep); }
+
+  main { padding: 24px 28px 12px; }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative; overflow: hidden;
+    background: linear-gradient(112deg, var(--telia-deep) 0%, #4B0A78 55%, var(--telia-purple) 100%);
+    border-radius: var(--radius); color: #fff; padding: 28px 32px;
+    display: flex; justify-content: space-between; align-items: center; gap: 28px;
+  }
+  .hero::before, .hero::after {
+    content: ""; position: absolute; background: rgba(255,255,255,.06);
+    border-radius: 46% 54% 55% 45% / 50% 44% 56% 50%;
+  }
+  .hero::before { width: 340px; height: 340px; right: -90px; top: -160px; }
+  .hero::after { width: 220px; height: 220px; right: 220px; bottom: -140px; background: rgba(255,255,255,.045); }
+  .hero h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .hero p { font-size: 13.5px; opacity: .85; max-width: 520px; line-height: 1.5; }
+  .hero-actions { display: flex; gap: 10px; z-index: 1; flex-wrap: wrap; justify-content: flex-end; }
+  .hero-actions a {
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.28);
+    color: #fff; text-decoration: none; border-radius: 10px; padding: 12px 16px;
+    font-size: 12.5px; font-weight: 700; text-align: center; min-width: 108px;
+    transition: background .15s;
+  }
+  .hero-actions a:hover { background: rgba(255,255,255,.22); }
+  .hero-actions a.primary { background: #fff; color: var(--telia-purple); border-color: #fff; }
+  .hero-actions a small { display: block; font-weight: 400; font-size: 10.5px; opacity: .75; margin-top: 3px; }
+  .hero-actions a.primary small { opacity: .65; }
+
+  /* ---------- Journey stepper ---------- */
+  .journey {
+    display: flex; align-items: center; gap: 0;
+    background: #fff; border: 1px solid var(--grey-200); border-radius: var(--radius);
+    margin-top: 18px; padding: 14px 22px;
+  }
+  .step { display: flex; align-items: center; gap: 10px; flex: 1; }
+  .step .num {
+    width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 12px; font-weight: 700; background: var(--telia-light); color: var(--telia-purple);
+    border: 2px solid transparent; flex-shrink: 0;
+  }
+  .step.done .num { background: var(--telia-purple); color: #fff; }
+  .step.current .num { border-color: var(--telia-purple); background: #fff; }
+  .step .lbl strong { display: block; font-size: 12.5px; }
+  .step .lbl span { font-size: 11px; color: var(--grey-500); }
+  .step .arrow { flex: 1; height: 2px; background: var(--grey-200); margin: 0 14px; border-radius: 2px; }
+  .step.done .arrow { background: var(--telia-purple); }
+  .step:last-child .arrow { display: none; }
+
+  /* ---------- Layout grid ---------- */
+  .grid { display: grid; grid-template-columns: 1fr 340px; gap: 22px; margin-top: 22px; align-items: start; }
+  .section-title { display: flex; align-items: center; gap: 8px; font-size: 15.5px; font-weight: 700; color: var(--telia-deep); margin-bottom: 12px; }
+  .section-title .mark { width: 8px; height: 20px; border-radius: 4px; background: var(--telia-purple); }
+  .section-title a { margin-left: auto; font-size: 12px; color: var(--telia-purple); text-decoration: none; font-weight: 500; }
+
+  /* ---------- Capability cards (the four modules) ---------- */
+  .caps { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cap {
+    background: #fff; border: 1px solid var(--grey-200); border-radius: var(--radius);
+    padding: 18px; position: relative; transition: box-shadow .15s, border-color .15s;
+  }
+  .cap:hover { border-color: var(--telia-purple); box-shadow: 0 4px 18px rgba(153,10,227,.10); }
+  .cap .module { position: absolute; top: 14px; right: 16px; font-size: 10px; font-weight: 700; letter-spacing: .06em; color: var(--grey-500); text-transform: uppercase; }
+  .cap h3 { font-size: 14.5px; margin: 0 0 3px; color: var(--telia-deep); }
+  .cap .sub { font-size: 12px; color: var(--grey-500); margin-bottom: 10px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag {
+    font-size: 10.5px; font-weight: 500; padding: 3px 8px; border-radius: 10px;
+    background: var(--telia-lighter); color: var(--telia-hover); border: 1px solid #ECD1FA;
+  }
+  .cap-icon {
+    width: 38px; height: 38px; border-radius: 46% 54% 55% 45% / 50% 44% 56% 50%;
+    display: grid; place-items: center; font-size: 17px; margin-bottom: 10px;
+  }
+  .ci-1 { background: var(--telia-light); }
+  .ci-2 { background: var(--blue-bg); }
+  .ci-3 { background: var(--green-bg); }
+  .ci-4 { background: var(--amber-bg); }
+
+  /* ---------- API table ---------- */
+  .panel { background: #fff; border: 1px solid var(--grey-200); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--grey-500); background: var(--grey-50); padding: 10px 16px; border-bottom: 1px solid var(--grey-200);
+  }
+  tbody td { padding: 12px 16px; border-bottom: 1px solid var(--grey-100); font-size: 13px; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--telia-lighter); }
+  td .api-name { font-weight: 700; color: var(--telia-deep); }
+  td .api-desc { font-size: 11px; color: var(--grey-500); margin-top: 1px; }
+  .pill { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 10px; }
+  .pill.camara { background: var(--telia-light); color: var(--telia-hover); }
+  .pill.threegpp { background: var(--blue-bg); color: var(--blue); }
+  .pill.stable { background: var(--green-bg); color: var(--green); }
+  .pill.beta { background: var(--amber-bg); color: var(--amber); }
+  .pill.ver { background: var(--grey-100); color: var(--grey-500); font-weight: 500; }
+  .try-btn {
+    font-size: 11.5px; font-weight: 700; color: var(--telia-purple); border: 1px solid var(--telia-purple);
+    border-radius: 8px; padding: 5px 12px; background: #fff; cursor: pointer; white-space: nowrap;
+  }
+  .try-btn:hover { background: var(--telia-light); }
+
+  /* ---------- Golden paths ---------- */
+  .paths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .path {
+    background: #fff; border: 1px solid var(--grey-200); border-radius: var(--radius); padding: 16px;
+    border-top: 4px solid var(--telia-purple);
+  }
+  .path h4 { font-size: 13.5px; color: var(--telia-deep); margin-bottom: 5px; }
+  .path p { font-size: 12px; color: var(--grey-500); line-height: 1.5; margin-bottom: 10px; }
+  .path .meta { font-size: 11px; color: var(--telia-purple); font-weight: 700; }
+
+  /* ---------- Right rail ---------- */
+  .rail { display: flex; flex-direction: column; gap: 18px; }
+  .card { background: #fff; border: 1px solid var(--grey-200); border-radius: var(--radius); padding: 18px; }
+  .card h3 { font-size: 14px; color: var(--telia-deep); display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .card h3 .mark { width: 8px; height: 18px; border-radius: 4px; background: var(--telia-purple); }
+  .project-box { background: var(--telia-lighter); border: 1px solid #ECD1FA; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+  .project-box strong { color: var(--telia-purple); font-size: 13.5px; display: block; }
+  .project-box span { font-size: 11.5px; color: var(--grey-500); }
+  .accounts { display: flex; gap: 6px; margin-top: 8px; }
+  .acct { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 8px; background: #fff; border: 1px solid var(--grey-200); color: var(--grey-500); }
+  .acct.linked { border-color: var(--green); color: var(--green); }
+  .quota-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+  .quota-row strong { color: var(--telia-purple); }
+  .bar { height: 8px; background: var(--grey-100); border-radius: 6px; overflow: hidden; margin-bottom: 14px; }
+  .bar i { display: block; height: 100%; width: 67%; background: linear-gradient(90deg, var(--telia-purple), var(--telia-hover)); border-radius: 6px; }
+  .stats { display: flex; text-align: center; }
+  .stats div { flex: 1; }
+  .stats b { display: block; font-size: 19px; color: var(--telia-purple); }
+  .stats span { font-size: 10.5px; color: var(--grey-500); }
+
+  .slot { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--grey-100); align-items: flex-start; }
+  .slot:last-child { border-bottom: none; padding-bottom: 0; }
+  .slot .date { background: var(--telia-light); border-radius: 8px; padding: 5px 9px; text-align: center; min-width: 46px; }
+  .slot .date b { display: block; font-size: 14px; color: var(--telia-purple); }
+  .slot .date span { font-size: 9.5px; color: var(--telia-hover); font-weight: 700; text-transform: uppercase; }
+  .slot .info strong { font-size: 12.5px; display: block; color: var(--grey-900); }
+  .slot .info span { font-size: 11px; color: var(--grey-500); }
+  .slot .mode { margin-left: auto; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 8px; align-self: center; white-space: nowrap; }
+  .mode.remote { background: var(--blue-bg); color: var(--blue); }
+  .mode.onsite { background: var(--amber-bg); color: var(--amber); }
+
+  .act { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--grey-100); align-items: flex-start; font-size: 12px; }
+  .act:last-child { border-bottom: none; padding-bottom: 0; }
+  .act .led { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .led.g { background: var(--green); } .led.b { background: var(--blue); } .led.p { background: var(--telia-purple); }
+  .act strong { display: block; font-size: 12.5px; }
+  .act span { color: var(--grey-500); font-size: 11px; }
+  .act time { margin-left: auto; color: var(--grey-500); font-size: 10.5px; white-space: nowrap; }
+
+  .support-levels { display: flex; gap: 6px; }
+  .support-levels span { flex: 1; text-align: center; font-size: 10.5px; font-weight: 700; padding: 7px 4px; border-radius: 8px; background: var(--grey-100); color: var(--grey-500); }
+  .support-levels span.on { background: var(--telia-purple); color: #fff; }
+  .card .hint { font-size: 11px; color: var(--grey-500); margin-top: 8px; line-height: 1.45; }
+
+  /* ---------- Footer ---------- */
+  footer {
+    display: flex; align-items: center; gap: 18px; padding: 12px 28px;
+    background: var(--telia-deep); color: rgba(255,255,255,.75); font-size: 11.5px; margin-top: 26px;
+  }
+  footer .ok { display: flex; align-items: center; gap: 7px; color: #7BE3B4; font-weight: 700; }
+  footer .ok::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #7BE3B4; }
+  footer .right { margin-left: auto; display: flex; gap: 16px; }
+  footer .sep { opacity: .35; }
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="pebble">T</div>
+      <div class="brand-name">
+        <strong>Digital Arena</strong>
+        <span>Developer Experience Hub · Sweden</span>
+      </div>
+    </div>
+    <div class="search">🔍 Search APIs, docs, test kits, sites… <kbd>⌘K</kbd></div>
+    <div class="lang-toggle"><span class="on">EN</span><span>SV</span></div>
+    <div class="tier-chip">Partner · NDA</div>
+    <div class="avatar">
+      <div class="dot">JD</div>
+      <div>John Doe<small>Developer · Smart City IoT</small></div>
+    </div>
+  </header>
+
+  <!-- Core navigation — Section 3 of the DX Hub document -->
+  <nav>
+    <a class="active" href="#">Discover</a>
+    <a href="#">Build</a>
+    <a href="#">Test</a>
+    <a href="#">Validate</a>
+    <a href="#">Devices &amp; SIMs</a>
+    <a href="#">Edge &amp; AI</a>
+    <a href="#">Knowledge Hub</a>
+    <a href="#">Support</a>
+  </nav>
+
+  <main>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div>
+        <h1>Welcome back, John 👋</h1>
+        <p>One account, four platforms: NorthStar 5G SA connectivity, telia.ai, the Telia IoT Platform and API Garden. Your handover test kit completed successfully — the run report is ready in Validate.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="primary" href="#">Try sandbox<small>No radio required</small></a>
+        <a href="#">Get API keys<small>OAuth2 · OpenAPI</small></a>
+        <a href="#">Book test slot<small>Labs · tracks · GPU pools</small></a>
+        <a href="#">Golden paths<small>Concept → production</small></a>
+      </div>
+    </section>
+
+    <!-- Developer journey — Section 1 of the DX Hub document -->
+    <div class="journey">
+      <div class="step done"><div class="num">✓</div><div class="lbl"><strong>Discover</strong><span>Browse APIs</span></div><div class="arrow"></div></div>
+      <div class="step done"><div class="num">✓</div><div class="lbl"><strong>Register</strong><span>Unified account</span></div><div class="arrow"></div></div>
+      <div class="step done"><div class="num">✓</div><div class="lbl"><strong>Build</strong><span>SDKs &amp; templates</span></div><div class="arrow"></div></div>
+      <div class="step current"><div class="num">4</div><div class="lbl"><strong>Test</strong><span>Book resources</span></div><div class="arrow"></div></div>
+      <div class="step"><div class="num">5</div><div class="lbl"><strong>Validate</strong><span>Analyze data</span></div></div>
+    </div>
+
+    <div class="grid">
+      <!-- Left column -->
+      <div>
+
+        <div class="section-title"><span class="mark"></span>Platform capabilities <a href="#">Full capability catalogue →</a></div>
+        <div class="caps">
+          <div class="cap">
+            <span class="module">Module 1</span>
+            <div class="cap-icon ci-1">📡</div>
+            <h3>NorthStar — 5G SA Dual Core</h3>
+            <div class="sub">Cloud-native innovation core on Telia's public 5G radio network</div>
+            <div class="tags">
+              <span class="tag">Network slicing</span><span class="tag">5QI QoS</span><span class="tag">NEF exposure</span>
+              <span class="tag">Positioning (ENL)</span><span class="tag">Edge breakout</span><span class="tag">L4S</span>
+              <span class="tag">RedCap</span><span class="tag">URSP</span>
+            </div>
+          </div>
+          <div class="cap">
+            <span class="module">Module 2</span>
+            <div class="cap-icon ci-2">🧠</div>
+            <h3>telia.ai — AI Platform</h3>
+            <div class="sub">Training &amp; inference on Telia Arcus sovereign cloud and edge GPU</div>
+            <div class="tags">
+              <span class="tag">LLM Gateway</span><span class="tag">MLOps</span><span class="tag">Agentic framework</span>
+              <span class="tag">Model registry</span><span class="tag">NVIDIA Omniverse</span><span class="tag">Confidential compute</span>
+            </div>
+          </div>
+          <div class="cap">
+            <span class="module">Module 3</span>
+            <div class="cap-icon ci-3">🔗</div>
+            <h3>Telia IoT Platform</h3>
+            <div class="sub">Ingestion-to-application with a low/no-code service flow designer</div>
+            <div class="tags">
+              <span class="tag">Digital twins</span><span class="tag">Device lifecycle</span><span class="tag">Flow designer</span>
+              <span class="tag">Dashboards</span><span class="tag">Vision on streams</span><span class="tag">Alarms &amp; events</span>
+            </div>
+          </div>
+          <div class="cap">
+            <span class="module">Module 4</span>
+            <div class="cap-icon ci-4">🌐</div>
+            <h3>API Garden</h3>
+            <div class="sub">CAMARA / Open Gateway exposure with enterprise-grade security</div>
+            <div class="tags">
+              <span class="tag">CAMARA APIs</span><span class="tag">OAuth2 · JWT</span><span class="tag">Rate limiting</span>
+              <span class="tag">Mediation</span><span class="tag">Usage analytics</span><span class="tag">Monetization</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="height:24px"></div>
+
+        <div class="section-title"><span class="mark"></span>Featured network &amp; AI APIs <a href="#">All APIs in API Garden →</a></div>
+        <div class="panel">
+          <table>
+            <thead>
+              <tr><th>API</th><th>Standard</th><th>Version</th><th>Status</th><th>Monthly calls</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="api-name">Quality on Demand (QoD)</span><div class="api-desc">Dynamic latency &amp; throughput, e.g. for AI video analysis</div></td>
+                <td><span class="pill camara">CAMARA</span></td>
+                <td><span class="pill ver">v2.1</span></td>
+                <td><span class="pill stable">Stable</span></td>
+                <td>2.3M</td>
+                <td><button class="try-btn">Try it now</button></td>
+              </tr>
+              <tr>
+                <td><span class="api-name">Device Location</span><div class="api-desc">Meter to sub-meter positioning with geofencing</div></td>
+                <td><span class="pill camara">CAMARA</span></td>
+                <td><span class="pill ver">v1.8</span></td>
+                <td><span class="pill stable">Stable</span></td>
+                <td>1.8M</td>
+                <td><button class="try-btn">Try it now</button></td>
+              </tr>
+              <tr>
+                <td><span class="api-name">Network Slicing</span><div class="api-desc">Slice provisioning with multiple isolation levels</div></td>
+                <td><span class="pill threegpp">3GPP / NEF</span></td>
+                <td><span class="pill ver">v1.2</span></td>
+                <td><span class="pill beta">Beta</span></td>
+                <td>450K</td>
+                <td><button class="try-btn">Try it now</button></td>
+              </tr>
+              <tr>
+                <td><span class="api-name">Edge AI Discovery</span><div class="api-desc">Select edge nodes by GPU / software availability</div></td>
+                <td><span class="pill camara">CAMARA</span></td>
+                <td><span class="pill ver">v2.0</span></td>
+                <td><span class="pill stable">Stable</span></td>
+                <td>890K</td>
+                <td><button class="try-btn">Try it now</button></td>
+              </tr>
+              <tr>
+                <td><span class="api-name">LLM Gateway</span><div class="api-desc">Unified access to multiple model providers via LiteLLM</div></td>
+                <td><span class="pill threegpp">telia.ai</span></td>
+                <td><span class="pill ver">v1.4</span></td>
+                <td><span class="pill beta">Beta</span></td>
+                <td>310K</td>
+                <td><button class="try-btn">Try it now</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="height:24px"></div>
+
+        <div class="section-title"><span class="mark"></span>Golden path templates <a href="#">All templates →</a></div>
+        <div class="paths">
+          <div class="path">
+            <h4>Remote control over 5G</h4>
+            <p>QoS-managed low-latency links with real-time sensor dashboards and strict jitter budgets.</p>
+            <div class="meta">Slice + QoD + IoT flow → 4 steps</div>
+          </div>
+          <div class="path">
+            <h4>AI edge analytics</h4>
+            <p>Deploy inference to a breakout node, discovered via Edge AI Discovery, orchestrated from the IoT Platform.</p>
+            <div class="meta">Edge deploy + model registry → 5 steps</div>
+          </div>
+          <div class="path">
+            <h4>Emergency response (QoD trigger)</h4>
+            <p>IoT flow triggers Quality on Demand and Device Location when a vehicle departs — the ambulance scenario.</p>
+            <div class="meta">IoT trigger + QoD + Location → 3 steps</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right rail -->
+      <aside class="rail">
+
+        <div class="card">
+          <h3><span class="mark"></span>Your project</h3>
+          <div class="project-box">
+            <strong>Smart City IoT Demo</strong>
+            <span>Partner (NDA) · WP2 developer APIs</span>
+            <div class="accounts">
+              <span class="acct linked">NorthStar ✓</span>
+              <span class="acct linked">AI ✓</span>
+              <span class="acct linked">IoT ✓</span>
+            </div>
+          </div>
+          <div class="quota-row"><span>API quota used</span><strong>67%</strong></div>
+          <div class="bar"><i></i></div>
+          <div class="stats">
+            <div><b>12</b><span>Active APIs</span></div>
+            <div><b>3</b><span>Booked slots</span></div>
+            <div><b>8</b><span>Team members</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3><span class="mark"></span>Upcoming test slots</h3>
+          <div class="slot">
+            <div class="date"><b>07</b><span>Jul</span></div>
+            <div class="info"><strong>Mobility handover kit</strong><span>Kista lab · slice S-NSSAI 2 · WP4 method</span></div>
+            <span class="mode remote">Remote</span>
+          </div>
+          <div class="slot">
+            <div class="date"><b>10</b><span>Jul</span></div>
+            <div class="info"><strong>GNSS-denied positioning</strong><span>Indoor track · ENL sub-meter · safety checklist ✓</span></div>
+            <span class="mode onsite">On-site</span>
+          </div>
+          <div class="slot">
+            <div class="date"><b>15</b><span>Jul</span></div>
+            <div class="info"><strong>Edge GPU pool — inference</strong><span>Regional breakout node · MIG partition</span></div>
+            <span class="mode remote">Remote</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3><span class="mark"></span>Recent activity</h3>
+          <div class="act"><span class="led g"></span><div><strong>Run report generated</strong><span>Handover test · KPIs mapped to WP4</span></div><time>2 min</time></div>
+          <div class="act"><span class="led b"></span><div><strong>QoD session activated</strong><span>Slice S-NSSAI 2 · 5QI 82</span></div><time>15 min</time></div>
+          <div class="act"><span class="led p"></span><div><strong>New SDK available</strong><span>Python SDK v3.2 · Postman collection</span></div><time>1 h</time></div>
+          <div class="act"><span class="led b"></span><div><strong>eSIM profile assigned</strong><span>DNN: edge-breakout-01</span></div><time>3 h</time></div>
+        </div>
+
+        <div class="card">
+          <h3><span class="mark"></span>Support level</h3>
+          <div class="support-levels">
+            <span>Self-service</span>
+            <span class="on">Guided</span>
+            <span>Fully managed</span>
+          </div>
+          <div class="hint">Engineer-assisted execution with expert consultation. Upgrade to a co-development slot for dedicated support.</div>
+        </div>
+
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    <span class="ok">All systems operational</span>
+    <span class="sep">|</span>
+    <span>API latency: 23 ms</span>
+    <span class="sep">|</span>
+    <span>WCAG 2.1 AA</span>
+    <div class="right">
+      <span>Telia Company © 2026</span>
+      <span class="sep">|</span>
+      <span>Digital Arena Sweden</span>
+      <span class="sep">|</span>
+      <span>v2.1.0</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

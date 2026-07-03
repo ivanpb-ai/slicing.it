@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NorthStar content add-in for PowerPoint.
+
+  Embeds the interactive NorthStar architecture pages from
+  northstar-program.com directly on a slide, live and clickable.
+
+  By default it loads https://slicing.it/digital-arena-sweden.html. To embed a different
+  NorthStar page, copy this file, change the <Id> to a new GUID and point
+  <SourceLocation> at the page you want.
+
+  Sideloading instructions: see README.md next to this file, or
+  https://learn.microsoft.com/office/dev/add-ins/testing/test-debug-office-add-ins
+-->
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:type="ContentApp">
+
+  <Id>beff6260-b4dc-4319-8f8b-4b67a9c27335</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Telia NorthStar</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+
+  <DisplayName DefaultValue="NorthStar Interactive Slides"/>
+  <Description DefaultValue="Embed interactive NorthStar architecture pages from northstar-program.com directly on a PowerPoint slide. Click any component for a corpus-sourced explanation."/>
+
+  <IconUrl DefaultValue="https://slicing.it/addin/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://slicing.it/addin/icon-64.png"/>
+  <SupportUrl DefaultValue="https://slicing.it"/>
+
+  <AppDomains>
+    <AppDomain>https://slicing.it</AppDomain>
+  </AppDomains>
+
+  <Hosts>
+    <Host Name="Presentation"/>
+  </Hosts>
+
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://slicing.it/digital-arena-sweden.html"/>
+    <RequestedWidth>960</RequestedWidth>
+    <RequestedHeight>540</RequestedHeight>
+  </DefaultSettings>
+
+  <Permissions>ReadDocument</Permissions>
+</OfficeApp>

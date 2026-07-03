@@ -26,3 +26,12 @@
 [[edge_functions]]
   path = "/digital-arena-sweden"
   function = "editor-auth"
+
+# NorthStar 2.0 viewer embeds the gated Digital Arena page — gate it too.
+[[edge_functions]]
+  path = "/northstar-2.html"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/northstar-2"
+  function = "editor-auth"

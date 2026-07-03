@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NorthStar 2.0 Overview (Detailed)</title>
+  <meta name="description" content="NorthStar 2.0 overview — switch between the detailed Digital Arena Sweden view and the basic overview.">
+  <link rel="icon" type="image/png" href="assets/images/favicon.png">
+  <style>
+    @font-face {
+      font-family: "Telia Sans Heading";
+      src: url("assets/fonts/TeliaSansHeading-Heading.woff2") format("woff2");
+      font-weight: 300; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: "Telia Sans";
+      src: url("assets/fonts/TeliaSans-Regular.woff2") format("woff2");
+      font-weight: 400; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: "Telia Sans";
+      src: url("assets/fonts/TeliaSans-Bold.woff2") format("woff2");
+      font-weight: 700; font-style: normal; font-display: swap;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      display: flex; flex-direction: column;
+      background: #1a0029; color: #F4E0FF;
+      font-family: "Telia Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .topbar {
+      display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+      padding: 12px 20px;
+      background: linear-gradient(180deg, #29003E, #1e0030);
+      border-bottom: 1px solid rgba(153,10,227,0.35);
+    }
+    .back-link {
+      color: #F4E0FF; opacity: .7; font-size: 14px; font-weight: 500;
+      text-decoration: underline; text-decoration-color: #990AE3;
+      text-decoration-thickness: 2px; text-underline-offset: 4px;
+      transition: opacity .15s, color .15s; white-space: nowrap;
+    }
+    .back-link:hover { opacity: 1; color: #fff; }
+    .page-title {
+      font-family: "Telia Sans Heading", "Telia Sans", sans-serif;
+      font-weight: 300; font-size: 20px; color: #fff; letter-spacing: -0.3px;
+      margin-right: auto; white-space: nowrap;
+    }
+    .tabs {
+      display: flex; gap: 6px; padding: 4px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(153,10,227,0.4); border-radius: 999px;
+    }
+    .tab {
+      border: 0; cursor: pointer; border-radius: 999px;
+      padding: 8px 18px; font: inherit; font-size: 13px; font-weight: 700;
+      color: rgba(244,224,255,0.65); background: transparent;
+      transition: background .15s, color .15s;
+      white-space: nowrap;
+    }
+    .tab:hover { color: #fff; }
+    .tab.active { background: #990AE3; color: #fff; }
+    .views { flex: 1; position: relative; min-height: 0; }
+    .views iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      border: 0; display: none; background: #1a0029;
+    }
+    .views iframe.active { display: block; }
+    @media (max-width: 720px) {
+      .topbar { gap: 10px; padding: 10px 12px; }
+      .page-title { font-size: 17px; }
+      .tab { padding: 7px 12px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="page-title">NorthStar 2.0</div>
+    <div class="tabs" role="tablist" aria-label="NorthStar 2.0 views">
+      <button class="tab active" type="button" role="tab" aria-selected="true" data-view="detailed">
+        NorthStar 2.0 Overview (Detailed)
+      </button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-view="basic">
+        NorthStar 2.0 Overview (Basic)
+      </button>
+    </div>
+    <a class="back-link" href="index.html">← Back to NorthStar main page</a>
+  </div>
+
+  <div class="views">
+    <iframe id="view-detailed" class="active" src="digital-arena-sweden.html" title="NorthStar 2.0 Overview (Detailed)"></iframe>
+    <iframe id="view-basic" data-src="ns2.0.html" title="NorthStar 2.0 Overview (Basic)"></iframe>
+  </div>
+
+  <script>
+    const TITLES = {
+      detailed: "NorthStar 2.0 Overview (Detailed)",
+      basic: "NorthStar 2.0 Overview (Basic)",
+    };
+    const tabs = document.querySelectorAll(".tab");
+
+    function show(view) {
+      if (!TITLES[view]) view = "detailed";
+      tabs.forEach((tab) => {
+        const active = tab.dataset.view === view;
+        tab.classList.toggle("active", active);
+        tab.setAttribute("aria-selected", String(active));
+      });
+      document.querySelectorAll(".views iframe").forEach((frame) => {
+        const active = frame.id === "view-" + view;
+        // The hidden view loads on first visit, then stays warm so switching is instant.
+        if (active && frame.dataset.src) {
+          frame.src = frame.dataset.src;
+          delete frame.dataset.src;
+        }
+        frame.classList.toggle("active", active);
+      });
+      document.title = TITLES[view];
+      history.replaceState(null, "", view === "detailed" ? location.pathname : "#" + view);
+    }
+
+    tabs.forEach((tab) => tab.addEventListener("click", () => show(tab.dataset.view)));
+    if (location.hash === "#basic") show("basic");
+  </script>
+</body>
+</html>

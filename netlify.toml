@@ -45,6 +45,15 @@
   path = "/ns2.0-basic"
   function = "editor-auth"
 
+# The NorthStar roadmap — gated the same way.
+[[edge_functions]]
+  path = "/roadmap.html"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/roadmap"
+  function = "editor-auth"
+
 # The Slide Converter is an authoring tool — gate it the same way.
 [[edge_functions]]
   path = "/slide-converter.html"

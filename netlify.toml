@@ -35,3 +35,12 @@
 [[edge_functions]]
   path = "/northstar-2"
   function = "editor-auth"
+
+# The Slide Converter is an authoring tool — gate it the same way.
+[[edge_functions]]
+  path = "/slide-converter.html"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/slide-converter"
+  function = "editor-auth"

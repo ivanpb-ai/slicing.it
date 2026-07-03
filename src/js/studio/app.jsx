@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { STAGE_W, STAGE_H, P, cloneDeep, uid, createElement, createSlide, createPresentation, starterDeck, loadManifest, listDecks, loadDeckById, saveDeckToLib, deleteDeckFromLib, setCurrentDeckId, duplicateDeckObj, validateDeck, downloadDeck } from "./model";
 import { KEYFRAMES } from "./effects";
+import { downloadDeckHtml } from "./export-html";
 import { SlideStage, SlideView } from "./stage";
 import { Navigator, Inspector, Toolbar } from "./panels";
 
@@ -301,6 +302,7 @@ export default function StudioApp() {
     e.target.value = "";
   };
   const exportDeck = () => downloadDeck(deck);
+  const exportHtml = () => downloadDeckHtml(deck);
 
   // keyboard shortcuts (editor only)
   useEffect(() => {
@@ -338,7 +340,7 @@ export default function StudioApp() {
         onInsert={insertElement} onUndo={doUndo} onRedo={doRedo} canUndo={undo.length > 0} canRedo={redo.length > 0}
         onPresent={() => { setStartAt(current); setPresenting(true); }}
         library={library} currentId={deck.id} onOpenDeck={openDeck} onNewDeck={newPresentation} onDuplicateDeck={duplicateCurrentDeck} onDeleteDeck={deleteDeck}
-        onImport={importDeck} onExport={exportDeck} saved={saved}
+        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} saved={saved}
       />
 
       <div className="st-body">
@@ -417,6 +419,14 @@ const STUDIO_CSS = `
 .st-deckrow:hover .st-deck-del,.st-deckrow.on .st-deck-del{opacity:1;}
 .st-decks-foot{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line);background:rgba(0,0,0,0.2);}
 .st-decks-foot .st-btn{flex:1;justify-content:center;}
+
+/* export menu */
+.st-export{position:relative;}
+.st-export-menu{position:absolute;top:110%;right:0;z-index:20;width:280px;background:#22093b;border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;box-shadow:0 20px 50px rgba(0,0,0,.5);}
+.st-export-item{display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;background:var(--panel);border:1px solid var(--line);color:#F4E0FF;border-radius:8px;padding:9px 11px;}
+.st-export-item:hover{border-color:${P.cyan};background:rgba(0,212,255,0.08);}
+.st-export-item b{font-size:13px;}
+.st-export-item span{font-size:11px;color:${P.muted};line-height:1.4;}
 
 /* body */
 .st-body{flex:1;display:grid;grid-template-columns:248px 1fr 332px;min-height:0;}

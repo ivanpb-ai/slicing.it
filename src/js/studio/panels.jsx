@@ -467,7 +467,7 @@ function relTime(ts) {
   return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, saved }) {
+export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onCopyEditor, saved }) {
   return (
     <div className="st-toolbar">
       <div className="st-tb-left">
@@ -520,7 +520,8 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
             </button>
           </>
         )} />
-        <a className="st-btn" href="copy-editor.html" title="Edit the live NorthStar deck copy">Copy editor</a>
+        <a className="st-btn" href={`copy-editor.html?deck=${encodeURIComponent(currentId)}`} onClick={onCopyEditor}
+          title="Edit this presentation's text & colours in the Copy editor">Copy editor</a>
         <button className="st-btn primary" onClick={onPresent}>▶ Present</button>
       </div>
     </div>

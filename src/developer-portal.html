@@ -414,6 +414,42 @@
   .toast.show { opacity: 1; transform: translateX(-50%); }
 
   .lang-toggle span, .support-levels span { cursor: pointer; }
+
+  /* ---------- Live insights (NorthStar knowledge API) ---------- */
+  .tag { cursor: pointer; transition: background .12s, color .12s, border-color .12s; }
+  .tag:hover { background: var(--telia-purple); color: #fff; border-color: var(--telia-purple); }
+  .cap h3 { cursor: pointer; }
+  .cap h3:hover { text-decoration: underline; text-decoration-color: var(--telia-purple); text-underline-offset: 3px; }
+  .ask-link {
+    display: inline-block; margin-top: 12px; font-size: 11.5px; font-weight: 700;
+    color: var(--telia-purple); background: none; border: none; cursor: pointer;
+    font-family: inherit; padding: 0;
+  }
+  .ask-link:hover { text-decoration: underline; }
+  .insight-body { font-size: 13px; line-height: 1.65; color: var(--grey-900); min-height: 64px; }
+  .insight-body p { margin: 0 0 9px; }
+  .insight-body ol, .insight-body ul { margin: 0 0 9px 20px; }
+  .insight-body li { margin-bottom: 5px; }
+  .insight-body > :last-child { margin-bottom: 0; }
+  .stream-cursor {
+    display: inline-block; width: 8px; height: 14px; background: var(--telia-purple);
+    vertical-align: -2px; margin-left: 3px; border-radius: 2px;
+    animation: blink 1s steps(2) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .sources { margin-top: 14px; border-top: 1px solid var(--grey-100); padding-top: 4px; }
+  .sources a {
+    display: block; font-size: 11px; color: var(--telia-purple); text-decoration: none;
+    margin: 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sources a:hover { text-decoration: underline; }
+  .related-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .related-chips button {
+    font-size: 11px; font-weight: 500; padding: 5px 10px; border-radius: 12px;
+    background: var(--telia-lighter); color: var(--telia-hover); border: 1px solid #ECD1FA;
+    cursor: pointer; font-family: inherit; text-align: left;
+  }
+  .related-chips button:hover { background: var(--telia-purple); color: #fff; border-color: var(--telia-purple); }
 </style>
 </head>
 <body>
@@ -768,6 +804,29 @@
   <div class="modal search-modal">
     <input class="search-input" id="search-input" placeholder="Search APIs, capabilities, golden paths…" autocomplete="off">
     <div class="search-results" id="search-results"></div>
+  </div>
+</div>
+
+<!-- Live insight (NorthStar knowledge API) -->
+<div class="overlay" id="insight-overlay">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-head">
+      <h2 id="insight-title"></h2>
+      <span class="pill camara" id="insight-ctx"></span>
+      <button class="x" data-close aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="io-label">Answer <span class="resp-meta" id="insight-meta"></span></div>
+      <div class="insight-body" id="insight-body"></div>
+      <div class="sources" id="insight-sources" hidden>
+        <div class="io-label">Sources</div>
+        <div id="insight-source-links"></div>
+      </div>
+      <div class="sources" id="insight-related" hidden>
+        <div class="io-label">Related questions</div>
+        <div class="related-chips" id="insight-related-chips"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1211,6 +1270,209 @@
       });
       toast(sv ? "Gränssnittsspråk: svenska (delvis, mockup)" : "Interface language: English");
     });
+  });
+
+  /* ---------- Live insights from the NorthStar knowledge API ----------
+     Real calls to the Perplexity-backed Netlify function that powers
+     northstar-program.com — SSE stream with citations. */
+  var NS_API = "https://northstar-program.com/.netlify/functions/perplexity-api";
+  var insightCache = new Map();
+  var insightSeq = 0;
+  var insightCtrl = null;
+
+  function mdToHtml(text) {
+    var esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    esc = esc.replace(/\s*\[\d+\]/g, "");                     // strip [n] citation markers
+    esc = esc.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    var html = "", list = null;
+    function closeList() { if (list) { html += "</" + list + ">"; list = null; } }
+    esc.split("\n").forEach(function (line) {
+      var t = line.trim();
+      if (!t) { closeList(); return; }
+      var mOl = t.match(/^\d+[.)]\s+(.*)/);
+      var mUl = t.match(/^[-•*]\s+(.*)/);
+      var mH = t.match(/^#{1,6}\s+(.*)/);
+      if (mOl) { if (list !== "ol") { closeList(); html += "<ol>"; list = "ol"; } html += "<li>" + mOl[1] + "</li>"; }
+      else if (mUl) { if (list !== "ul") { closeList(); html += "<ul>"; list = "ul"; } html += "<li>" + mUl[1] + "</li>"; }
+      else if (mH) { closeList(); html += "<p><strong>" + mH[1] + "</strong></p>"; }
+      else { closeList(); html += "<p>" + t + "</p>"; }
+    });
+    closeList();
+    return html;
+  }
+
+  function streamInsight(query, ctrl, onChunk) {
+    return fetch(NS_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: query, history: [] }),
+      signal: ctrl ? ctrl.signal : undefined
+    }).then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      var reader = res.body.getReader();
+      var dec = new TextDecoder();
+      var buf = "", out = "", cites = [], related = [];
+      function pump() {
+        return reader.read().then(function (r) {
+          if (r.done) return { text: out, citations: cites, related: related };
+          buf += dec.decode(r.value, { stream: true });
+          var lines = buf.split("\n");
+          buf = lines.pop();
+          lines.forEach(function (line) {
+            var t = line.trim();
+            if (t.indexOf("data:") !== 0) return;
+            var payload = t.slice(5).trim();
+            if (!payload || payload === "[DONE]") return;
+            try {
+              var j = JSON.parse(payload);
+              if (!cites.length && j.citations) cites = j.citations;
+              if (!related.length && j.related_questions) related = j.related_questions;
+              var ch = j.choices && j.choices[0];
+              // delta.content wins when present (even ""), else fall back to
+              // message.content — the final chunk repeats the full text there
+              var c = "";
+              if (ch && ch.delta && ch.delta.content != null) c = ch.delta.content;
+              else if (ch && ch.message && ch.message.content != null && !out) c = ch.message.content;
+              if (c) { out += c; onChunk(out); }
+            } catch (e) { /* ignore malformed SSE line */ }
+          });
+          return pump();
+        });
+      }
+      return pump();
+    });
+  }
+
+  function showSources(cites) {
+    var links = $("#insight-source-links");
+    links.innerHTML = "";
+    (cites || []).slice(0, 5).forEach(function (url) {
+      var a = document.createElement("a");
+      a.href = url; a.target = "_blank"; a.rel = "noopener";
+      a.textContent = "↗ " + url.replace(/^https?:\/\/(www\.)?/, "");
+      links.appendChild(a);
+    });
+    $("#insight-sources").hidden = !links.childNodes.length;
+  }
+
+  function showRelated(questions) {
+    var chips = $("#insight-related-chips");
+    chips.innerHTML = "";
+    (questions || []).slice(0, 4).forEach(function (q) {
+      var b = document.createElement("button");
+      b.textContent = q;
+      b.addEventListener("click", function () {
+        openInsight({
+          title: q.length > 60 ? q.slice(0, 57) + "…" : q,
+          ctx: "Follow-up",
+          query: "In the NorthStar / Telia 5G SA developer program, answer briefly (one short paragraph or short list, no headings): " + q,
+          fallback: "Live API unreachable — try again once you have a connection to northstar-program.com."
+        });
+      });
+      chips.appendChild(b);
+    });
+    $("#insight-related").hidden = !chips.childNodes.length;
+  }
+
+  function openInsight(opts) {
+    $("#insight-title").textContent = opts.title;
+    var ctx = $("#insight-ctx");
+    ctx.textContent = opts.ctx;
+    ctx.className = "pill " + (opts.ctxClass || "camara");
+    var body = $("#insight-body");
+    var meta = $("#insight-meta");
+    $("#insight-sources").hidden = true;
+    $("#insight-related").hidden = true;
+    open("#insight-overlay");
+
+    var my = ++insightSeq;
+    if (insightCtrl) insightCtrl.abort();
+
+    var cached = insightCache.get(opts.query);
+    if (cached) {
+      body.innerHTML = mdToHtml(cached.text);
+      meta.textContent = "Cached · NorthStar knowledge API";
+      showSources(cached.citations);
+      showRelated(cached.related);
+      return;
+    }
+
+    body.innerHTML = '<em style="color:var(--grey-500)">Asking the NorthStar knowledge base…</em><span class="stream-cursor"></span>';
+    meta.innerHTML = '<span class="spinner"></span> Streaming · northstar-program.com';
+    insightCtrl = ("AbortController" in window) ? new AbortController() : null;
+
+    streamInsight(opts.query, insightCtrl, function (textSoFar) {
+      if (my !== insightSeq) return;
+      body.innerHTML = mdToHtml(textSoFar) + '<span class="stream-cursor"></span>';
+    }).then(function (result) {
+      if (!result.text) throw new Error("empty response");
+      insightCache.set(opts.query, result);
+      if (my !== insightSeq) return;
+      body.innerHTML = mdToHtml(result.text);
+      meta.textContent = "Live · NorthStar knowledge API" + (result.citations.length ? " · " + result.citations.length + " sources" : "");
+      showSources(result.citations);
+      showRelated(result.related);
+      addActivity("p", "Knowledge query answered", opts.title + " · NorthStar API");
+    }).catch(function (err) {
+      if (my !== insightSeq || (err && err.name === "AbortError")) return;
+      body.innerHTML = mdToHtml(opts.fallback);
+      meta.innerHTML = '<span class="code-err">Live API unreachable</span> · built-in summary';
+    });
+  }
+
+  /* Platform capabilities — every tag and module title asks the live API */
+  $$(".cap").forEach(function (cap) {
+    var module = $("h3", cap).textContent;
+    var sub = $(".sub", cap).textContent;
+    var modNum = $(".module", cap).textContent;
+    function askModule() {
+      openInsight({
+        title: module,
+        ctx: modNum,
+        query: 'In the NorthStar / Telia 5G SA developer program, explain briefly for a developer (one short paragraph, no headings) what the platform module "' + module + '" (' + sub + ') offers.',
+        fallback: "**" + module + "** — " + sub + "."
+      });
+    }
+    $("h3", cap).title = "Ask the NorthStar knowledge API about this module";
+    $("h3", cap).addEventListener("click", askModule);
+    $$(".tag", cap).forEach(function (tag) {
+      tag.title = "Ask the NorthStar knowledge API about “" + tag.textContent + "”";
+      tag.addEventListener("click", function () {
+        openInsight({
+          title: tag.textContent,
+          ctx: modNum,
+          query: 'In the NorthStar / Telia 5G SA architecture ("' + module + '" module), explain briefly for a developer (one short paragraph, no headings) the capability: ' + tag.textContent,
+          fallback: "**" + tag.textContent + "** is a capability of the **" + module + "** module — " + sub + "."
+        });
+      });
+    });
+    var ask = document.createElement("button");
+    ask.className = "ask-link";
+    ask.textContent = "Ask NorthStar about this module →";
+    ask.addEventListener("click", askModule);
+    cap.appendChild(ask);
+  });
+
+  /* Golden paths — generate a live step-by-step plan */
+  $$(".path").forEach(function (p) {
+    var title = $("h4", p).textContent;
+    var desc = $("p", p).textContent;
+    var metaTxt = $(".meta", p).textContent;
+    var mSteps = metaTxt.match(/(\d+)\s*steps/);
+    var n = mSteps ? mSteps[1] : "5";
+    var btn = document.createElement("button");
+    btn.className = "ask-link";
+    btn.textContent = "Generate step plan (live) →";
+    btn.addEventListener("click", function () {
+      openInsight({
+        title: title,
+        ctx: "Golden path",
+        ctxClass: "threegpp",
+        query: 'In the NorthStar / Telia 5G SA developer program, describe the golden path "' + title + '" (' + desc + ') as a numbered list of exactly ' + n + ' short implementation steps for a developer, naming the Telia APIs or platform modules used in each step (' + metaTxt + '). No intro text, no headings.',
+        fallback: "**" + title + "** — " + desc + " (" + metaTxt + ")."
+      });
+    });
+    p.appendChild(btn);
   });
 })();
 </script>

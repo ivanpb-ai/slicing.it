@@ -276,6 +276,144 @@
   footer .ok::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #7BE3B4; }
   footer .right { margin-left: auto; display: flex; gap: 16px; }
   footer .sep { opacity: .35; }
+
+  /* ---------- Interactive: modals, console, search, toast ---------- */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(41,0,62,.55);
+    display: none; align-items: flex-start; justify-content: center;
+    padding: 60px 20px; z-index: 100;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: var(--radius); width: 100%; max-width: 700px;
+    box-shadow: 0 20px 60px rgba(41,0,62,.35); overflow: hidden;
+    max-height: calc(100vh - 100px); display: flex; flex-direction: column;
+    animation: pop .18s ease;
+  }
+  @keyframes pop { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .modal-head { background: var(--telia-deep); color: #fff; padding: 14px 20px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .modal-head h2 { font-size: 15px; font-weight: 700; }
+  .modal-head .pill { flex-shrink: 0; }
+  .modal-head .x {
+    margin-left: auto; cursor: pointer; background: rgba(255,255,255,.15); border: none;
+    color: #fff; width: 26px; height: 26px; border-radius: 50%; font-size: 13px; line-height: 1;
+    font-family: inherit;
+  }
+  .modal-head .x:hover { background: rgba(255,255,255,.3); }
+  .modal-body { padding: 18px 20px; overflow: auto; }
+  .endpoint {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px;
+    background: var(--grey-100); border-radius: 8px; padding: 8px 12px;
+    display: flex; gap: 10px; align-items: center; margin-bottom: 4px; overflow-x: auto;
+  }
+  .endpoint .method { font-weight: 700; color: #fff; background: var(--telia-purple); border-radius: 6px; padding: 2px 8px; font-size: 10.5px; flex-shrink: 0; }
+  .io-label { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--grey-500); margin: 12px 0 6px; display: flex; align-items: center; gap: 10px; }
+  .io-label .resp-meta { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .resp-meta .code-ok { color: var(--green); font-weight: 700; }
+  .resp-meta .code-err { color: #C4001A; font-weight: 700; }
+  textarea.req {
+    width: 100%; min-height: 130px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px; line-height: 1.55; border: 1px solid var(--grey-200); border-radius: 10px;
+    padding: 10px 12px; resize: vertical; color: var(--grey-900); background: var(--grey-50);
+  }
+  textarea.req:focus { outline: 2px solid var(--telia-purple); border-color: transparent; }
+  .send-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+  .btn-primary {
+    background: var(--telia-purple); color: #fff; border: none; border-radius: 10px;
+    padding: 10px 18px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit;
+  }
+  .btn-primary:hover { background: var(--telia-hover); }
+  .btn-primary:disabled { opacity: .5; cursor: default; }
+  .btn-ghost {
+    background: #fff; color: var(--telia-purple); border: 1px solid var(--telia-purple);
+    border-radius: 10px; padding: 9px 16px; font-weight: 700; font-size: 12.5px; cursor: pointer; font-family: inherit;
+  }
+  .btn-ghost:hover { background: var(--telia-light); }
+  pre.resp {
+    background: var(--telia-deep); color: #E9D8F7;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; line-height: 1.55;
+    border-radius: 10px; padding: 12px 14px; overflow: auto; min-height: 90px; max-height: 320px;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  pre.resp .muted { color: rgba(233,216,247,.55); }
+  .spinner {
+    display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(153,10,227,.25);
+    border-top-color: var(--telia-purple); border-radius: 50%; animation: spin .7s linear infinite;
+    vertical-align: -2px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .delta { font-size: 10px; font-weight: 700; color: var(--telia-purple); background: var(--telia-light); border-radius: 8px; padding: 1px 6px; margin-left: 6px; }
+
+  /* Forms in modals */
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 11.5px; font-weight: 700; color: var(--grey-500); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+  .field select, .field input[type="date"], .field input[type="text"] {
+    width: 100%; border: 1px solid var(--grey-200); border-radius: 10px; padding: 9px 12px;
+    font-size: 13px; font-family: inherit; background: #fff; color: var(--grey-900);
+  }
+  .field select:focus, .field input:focus { outline: 2px solid var(--telia-purple); border-color: transparent; }
+  .radio-row { display: flex; gap: 8px; }
+  .radio-row label {
+    flex: 1; border: 1px solid var(--grey-200); border-radius: 10px; padding: 9px 12px;
+    font-size: 12.5px; font-weight: 500; cursor: pointer; text-align: center; color: var(--grey-500);
+    text-transform: none; letter-spacing: 0; margin: 0;
+  }
+  .radio-row input { display: none; }
+  .radio-row input:checked + span { color: var(--telia-purple); font-weight: 700; }
+  .radio-row label:has(input:checked) { border-color: var(--telia-purple); background: var(--telia-lighter); }
+
+  /* API key output */
+  .key-box {
+    display: flex; align-items: center; gap: 10px; background: var(--grey-50);
+    border: 1px dashed var(--telia-purple); border-radius: 10px; padding: 12px 14px; margin-top: 12px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; word-break: break-all;
+  }
+  .key-box button { flex-shrink: 0; }
+
+  /* Search overlay */
+  .search { cursor: pointer; }
+  .search-modal { max-width: 560px; }
+  .search-input {
+    width: 100%; border: none; border-bottom: 1px solid var(--grey-200); padding: 16px 20px;
+    font-size: 15px; font-family: inherit; outline: none; color: var(--grey-900);
+  }
+  .search-results { max-height: 340px; overflow: auto; padding: 8px; }
+  .search-hit {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; cursor: pointer;
+  }
+  .search-hit:hover, .search-hit.sel { background: var(--telia-lighter); }
+  .search-hit .cat {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    background: var(--telia-light); color: var(--telia-hover); border-radius: 8px; padding: 3px 8px; flex-shrink: 0; min-width: 72px; text-align: center;
+  }
+  .search-hit strong { font-size: 13px; color: var(--telia-deep); display: block; }
+  .search-hit span { font-size: 11px; color: var(--grey-500); }
+  .search-empty { padding: 22px; text-align: center; font-size: 12.5px; color: var(--grey-500); }
+
+  /* Flash highlight after search jump */
+  .flash { animation: flash 1.8s ease; }
+  @keyframes flash {
+    0%, 55% { box-shadow: 0 0 0 3px var(--telia-purple); }
+    100% { box-shadow: 0 0 0 0 rgba(153,10,227,0); }
+  }
+  /* box-shadow doesn't render on collapsed table rows — flash the cells instead */
+  tr.flash { animation: none; }
+  tr.flash td { animation: flash-bg 1.8s ease; }
+  @keyframes flash-bg {
+    0%, 55% { background: var(--telia-light); }
+    100% { background: transparent; }
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(16px);
+    background: var(--telia-deep); color: #fff; padding: 11px 20px; border-radius: 24px;
+    font-size: 12.5px; font-weight: 500; opacity: 0; transition: opacity .25s, transform .25s;
+    z-index: 300; pointer-events: none; box-shadow: 0 8px 30px rgba(41,0,62,.35); max-width: 90vw;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%); }
+
+  .lang-toggle span, .support-levels span { cursor: pointer; }
 </style>
 </head>
 <body>
@@ -320,10 +458,10 @@
         <p>One account, four platforms: NorthStar 5G SA connectivity, telia.ai, the Telia IoT Platform and API Garden. Your handover test kit completed successfully — the run report is ready in Validate.</p>
       </div>
       <div class="hero-actions">
-        <a class="primary" href="#">Try sandbox<small>No radio required</small></a>
-        <a href="#">Get API keys<small>OAuth2 · OpenAPI</small></a>
-        <a href="#">Book test slot<small>Labs · tracks · GPU pools</small></a>
-        <a href="#">Golden paths<small>Concept → production</small></a>
+        <a class="primary" href="#" id="act-sandbox">Try sandbox<small>No radio required</small></a>
+        <a href="#" id="act-keys">Get API keys<small>OAuth2 · OpenAPI</small></a>
+        <a href="#" id="act-book">Book test slot<small>Labs · tracks · GPU pools</small></a>
+        <a href="#" id="act-paths">Golden paths<small>Concept → production</small></a>
       </div>
     </section>
 
@@ -541,5 +679,540 @@
   </footer>
 
 </div>
+
+<!-- ============ Interactive overlays (simulated input / output) ============ -->
+
+<!-- API console -->
+<div class="overlay" id="console-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="console-title">API console</h2>
+      <span class="pill camara" id="console-std">CAMARA</span>
+      <button class="x" data-close aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="endpoint"><span class="method" id="console-method">POST</span><span id="console-path"></span></div>
+      <div class="io-label">Request body <span style="font-weight:400;text-transform:none;letter-spacing:0">— editable</span></div>
+      <textarea class="req" id="console-req" spellcheck="false"></textarea>
+      <div class="send-row">
+        <button class="btn-primary" id="console-send">Send request</button>
+        <span class="resp-meta" id="console-status"></span>
+      </div>
+      <div class="io-label">Response <span class="resp-meta" id="console-meta"></span></div>
+      <pre class="resp" id="console-resp"><span class="muted">// Press “Send request” to simulate a call against the sandbox</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- API keys -->
+<div class="overlay" id="keys-overlay">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head"><h2>Get API keys</h2><button class="x" data-close aria-label="Close">✕</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Project</label>
+        <select><option>Smart City IoT Demo (Partner · NDA)</option></select>
+      </div>
+      <div class="field">
+        <label>Scope</label>
+        <select id="key-scope">
+          <option>qod:sessions device-location:read</option>
+          <option>slicing:provision nef:exposure</option>
+          <option>edge-ai:discovery llm:invoke</option>
+        </select>
+      </div>
+      <button class="btn-primary" id="key-generate">Generate key</button>
+      <div class="key-box" id="key-box" hidden>
+        <span id="key-value"></span>
+        <button class="btn-ghost" id="key-copy">Copy</button>
+      </div>
+      <div class="hint" id="key-hint" hidden>Shown once — store it securely. OAuth2 client-credentials flow; rotate via Build → Credentials.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Book test slot -->
+<div class="overlay" id="book-overlay">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head"><h2>Book a test slot</h2><button class="x" data-close aria-label="Close">✕</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Test kit / resource</label>
+        <select id="book-kit">
+          <option data-detail="Kista lab · slice S-NSSAI 2 · WP4 method">Mobility handover kit</option>
+          <option data-detail="Indoor track · ENL sub-meter · safety checklist">GNSS-denied positioning</option>
+          <option data-detail="Regional breakout node · MIG partition">Edge GPU pool — inference</option>
+          <option data-detail="Kista lab · 5QI 82 · jitter budget 4 ms">L4S low-latency track</option>
+          <option data-detail="Anechoic chamber · RedCap module bench">RedCap device certification</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="book-date">
+      </div>
+      <div class="field">
+        <label>Execution mode</label>
+        <div class="radio-row">
+          <label><input type="radio" name="book-mode" value="Remote" checked><span>Remote</span></label>
+          <label><input type="radio" name="book-mode" value="On-site"><span>On-site</span></label>
+        </div>
+      </div>
+      <button class="btn-primary" id="book-submit">Check availability &amp; book</button>
+      <span class="resp-meta" id="book-status" style="margin-left:10px"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Search -->
+<div class="overlay" id="search-overlay">
+  <div class="modal search-modal">
+    <input class="search-input" id="search-input" placeholder="Search APIs, capabilities, golden paths…" autocomplete="off">
+    <div class="search-results" id="search-results"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var $ = function (sel, root) { return (root || document).querySelector(sel); };
+  var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+
+  /* ---------- Toast ---------- */
+  var toastTimer;
+  function toast(msg) {
+    var el = $("#toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 2600);
+  }
+
+  /* ---------- Overlays ---------- */
+  function open(id) { $(id).classList.add("open"); }
+  function closeAll() { $$(".overlay.open").forEach(function (o) { o.classList.remove("open"); }); }
+  $$(".overlay").forEach(function (ov) {
+    ov.addEventListener("click", function (e) { if (e.target === ov) closeAll(); });
+  });
+  $$("[data-close]").forEach(function (btn) { btn.addEventListener("click", closeAll); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeAll();
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openSearch(); }
+  });
+
+  /* ---------- Shared live state ---------- */
+  var quota = 67;
+  function bumpQuota() {
+    quota = Math.min(quota + 1, 99);
+    $(".quota-row strong").textContent = quota + "%";
+    $(".bar i").style.width = quota + "%";
+  }
+  function addActivity(ledClass, title, detail) {
+    var card = $$(".card").filter(function (c) { return /Recent activity|Senaste aktivitet/.test($("h3", c).textContent); })[0];
+    var act = document.createElement("div");
+    act.className = "act";
+    act.innerHTML = '<span class="led ' + ledClass + '"></span><div><strong></strong><span></span></div><time>just now</time>';
+    $("strong", act).textContent = title;
+    $("span:not(.led)", act).textContent = detail;
+    card.insertBefore(act, $(".act", card));
+    var acts = $$(".act", card);
+    if (acts.length > 5) card.removeChild(acts[acts.length - 1]);
+  }
+  function rnd(min, max) { return Math.floor(min + Math.random() * (max - min)); }
+  function hex(n) { var s = ""; while (s.length < n) s += Math.floor(Math.random() * 16).toString(16); return s; }
+  function uuid() { return [hex(8), hex(4), "4" + hex(3), "a" + hex(3), hex(12)].join("-"); }
+
+  /* ---------- API console ---------- */
+  var APIS = {
+    "Quality on Demand (QoD)": {
+      std: "CAMARA", method: "POST", path: "/qod/v2.1/sessions",
+      request: {
+        device: { phoneNumber: "+46701234567" },
+        applicationServer: { ipv4Address: "203.0.113.45" },
+        qosProfile: "QOS_E",
+        duration: 3600
+      },
+      respond: function (req) {
+        return { status: "201 Created", body: {
+          sessionId: uuid(),
+          qosProfile: req.qosProfile || "QOS_E",
+          qosStatus: "AVAILABLE",
+          device: req.device || {},
+          duration: req.duration || 3600,
+          startedAt: "2026-07-08T09:41:00Z",
+          expiresAt: "2026-07-08T10:41:00Z",
+          slice: "S-NSSAI 2 (5QI 82)"
+        }};
+      },
+      onSuccess: function () { addActivity("b", "QoD session activated", "Sandbox · " + this.request.qosProfile + " · 60 min"); }
+    },
+    "Device Location": {
+      std: "CAMARA", method: "POST", path: "/location-retrieval/v1.8/retrieve",
+      request: { device: { phoneNumber: "+46701234567" }, maxAge: 60 },
+      respond: function () {
+        return { status: "200 OK", body: {
+          lastLocationTime: "2026-07-08T09:40:5" + rnd(0, 9) + "Z",
+          area: {
+            areaType: "CIRCLE",
+            center: { latitude: 59.40452 + Math.random() * 0.001, longitude: 17.94838 + Math.random() * 0.001 },
+            radius: rnd(4, 18)
+          },
+          method: "ENL sub-meter positioning",
+          venue: "Kista Science City"
+        }};
+      },
+      onSuccess: function () { addActivity("g", "Location retrieved", "ENL · Kista Science City · sandbox"); }
+    },
+    "Network Slicing": {
+      std: "3GPP / NEF", method: "POST", path: "/3gpp-slice-mgmt/v1.2/slices",
+      request: {
+        sNssai: { sst: 1, sd: "0000A2" },
+        isolationLevel: "LOGICAL",
+        qosProfile: "5QI_82",
+        coverageArea: "SE-Stockholm-Kista",
+        maxDevices: 50
+      },
+      respond: function (req) {
+        return { status: "201 Created", body: {
+          sliceId: "slice-" + hex(6),
+          sNssai: req.sNssai || { sst: 1, sd: "0000A2" },
+          state: "PROVISIONING",
+          estimatedReadySeconds: rnd(30, 120),
+          isolationLevel: req.isolationLevel || "LOGICAL",
+          notificationUrl: "https://api.digitalarena.telia.se/callbacks/slice-events"
+        }};
+      },
+      onSuccess: function () { addActivity("p", "Slice provisioning started", "S-NSSAI 1/0000A2 · logical isolation"); }
+    },
+    "Edge AI Discovery": {
+      std: "CAMARA", method: "POST", path: "/edge-ai-discovery/v2.0/nodes:query",
+      request: { gpuModel: "NVIDIA L40S", minVramGb: 24, maxLatencyMs: 10, region: "SE" },
+      respond: function (req) {
+        return { status: "200 OK", body: {
+          matches: [
+            { nodeId: "edge-kista-01", site: "Kista breakout", gpu: req.gpuModel || "NVIDIA L40S", vramGb: 48, migAvailable: true, estLatencyMs: rnd(3, 7) },
+            { nodeId: "edge-sthlm-04", site: "Stockholm south", gpu: req.gpuModel || "NVIDIA L40S", vramGb: 24, migAvailable: false, estLatencyMs: rnd(6, 10) }
+          ],
+          recommended: "edge-kista-01"
+        }};
+      },
+      onSuccess: function () { addActivity("b", "Edge nodes discovered", "2 matches · recommended edge-kista-01"); }
+    },
+    "LLM Gateway": {
+      std: "telia.ai", method: "POST", path: "/llm/v1.4/chat/completions",
+      stream: true,
+      request: {
+        model: "telia-arcus-70b",
+        messages: [{ role: "user", content: "Summarize the sensor anomalies from the smart city feed." }],
+        stream: true
+      },
+      streamText: "Between 08:00 and 09:30, 3 anomalies were detected: air-quality sensor KST-114 reported PM2.5 spikes above 40 µg/m³ near Kistagången, traffic-flow node TRF-032 dropped heartbeat for 6 minutes, and noise sensor NSE-207 exceeded its night-time threshold twice. Recommended action: dispatch maintenance for TRF-032 and correlate KST-114 with the roadworks permit registry.",
+      onSuccess: function () { addActivity("p", "LLM Gateway invocation", "telia-arcus-70b · streamed · sovereign cloud"); }
+    }
+  };
+
+  var currentApi = null;
+  var callDeltas = {};
+
+  function openConsole(name) {
+    var api = APIS[name];
+    if (!api) return;
+    currentApi = name;
+    $("#console-title").textContent = name;
+    var std = $("#console-std");
+    std.textContent = api.std;
+    std.className = "pill " + (api.std === "CAMARA" ? "camara" : "threegpp");
+    $("#console-method").textContent = api.method;
+    $("#console-path").textContent = "https://api.digitalarena.telia.se" + api.path;
+    $("#console-req").value = JSON.stringify(api.request, null, 2);
+    $("#console-status").textContent = "";
+    $("#console-meta").textContent = "";
+    $("#console-resp").innerHTML = '<span class="muted">// Press “Send request” to simulate a call against the sandbox</span>';
+    open("#console-overlay");
+  }
+
+  function bumpCallCount(name) {
+    callDeltas[name] = (callDeltas[name] || 0) + 1;
+    $$("tbody tr").forEach(function (tr) {
+      if ($(".api-name", tr).textContent !== name) return;
+      var cell = tr.cells[4];
+      var delta = $(".delta", cell);
+      if (!delta) {
+        delta = document.createElement("span");
+        delta.className = "delta";
+        cell.appendChild(delta);
+      }
+      delta.textContent = "+" + callDeltas[name] + " now";
+    });
+  }
+
+  $("#console-send").addEventListener("click", function () {
+    var api = APIS[currentApi];
+    var btn = this;
+    var resp = $("#console-resp");
+    var status = $("#console-status");
+    var meta = $("#console-meta");
+
+    var parsed;
+    try {
+      parsed = JSON.parse($("#console-req").value);
+    } catch (err) {
+      meta.innerHTML = '<span class="code-err">400 Bad Request</span>';
+      resp.textContent = JSON.stringify({ error: "INVALID_ARGUMENT", message: "Request body is not valid JSON: " + err.message }, null, 2);
+      return;
+    }
+
+    btn.disabled = true;
+    status.innerHTML = '<span class="spinner"></span> Sending…';
+    meta.textContent = "";
+    resp.innerHTML = '<span class="muted">// Waiting for response…</span>';
+
+    var latency = rnd(280, 900);
+    setTimeout(function () {
+      btn.disabled = false;
+      status.textContent = "";
+
+      if (api.stream) {
+        meta.innerHTML = '<span class="code-ok">200 OK</span> · ' + latency + " ms TTFT · text/event-stream";
+        var head = { id: "chatcmpl-" + hex(10), model: parsed.model || api.request.model, provider: "telia.ai / LiteLLM" };
+        var words = api.streamText.split(" ");
+        var i = 0;
+        resp.textContent = JSON.stringify(head, null, 2) + "\n\n";
+        var iv = setInterval(function () {
+          if (i >= words.length) {
+            clearInterval(iv);
+            resp.textContent += "\n\n[DONE] · " + words.length + " tokens";
+            finishCall(api);
+            return;
+          }
+          resp.textContent += words[i++] + " ";
+          resp.scrollTop = resp.scrollHeight;
+        }, 45);
+      } else {
+        var out = api.respond(parsed);
+        meta.innerHTML = '<span class="code-ok">' + out.status + "</span> · " + latency + " ms · application/json";
+        resp.textContent = JSON.stringify(out.body, null, 2);
+        finishCall(api);
+      }
+    }, latency);
+  });
+
+  function finishCall(api) {
+    bumpQuota();
+    bumpCallCount(currentApi);
+    if (api.onSuccess) api.onSuccess();
+    toast("Sandbox call succeeded — logged under Recent activity");
+  }
+
+  $$(".try-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      openConsole($(".api-name", btn.closest("tr")).textContent);
+    });
+  });
+  $("#act-sandbox").addEventListener("click", function (e) { e.preventDefault(); openConsole("Quality on Demand (QoD)"); });
+
+  /* ---------- API keys ---------- */
+  $("#act-keys").addEventListener("click", function (e) {
+    e.preventDefault();
+    $("#key-box").hidden = true;
+    $("#key-hint").hidden = true;
+    open("#keys-overlay");
+  });
+  $("#key-generate").addEventListener("click", function () {
+    var btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="border-top-color:#fff"></span> Generating…';
+    setTimeout(function () {
+      btn.disabled = false;
+      btn.textContent = "Regenerate key";
+      $("#key-value").textContent = "da_live_" + hex(32);
+      $("#key-box").hidden = false;
+      $("#key-hint").hidden = false;
+      addActivity("g", "API key issued", $("#key-scope").value);
+      toast("API key generated (simulated)");
+    }, rnd(500, 1100));
+  });
+  $("#key-copy").addEventListener("click", function () {
+    var key = $("#key-value").textContent;
+    var done = function () { toast("Key copied to clipboard"); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(key).then(done, done);
+    } else { done(); }
+  });
+
+  /* ---------- Book test slot ---------- */
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  $("#act-book").addEventListener("click", function (e) {
+    e.preventDefault();
+    var d = new Date();
+    d.setDate(d.getDate() + 14);
+    $("#book-date").value = d.toISOString().slice(0, 10);
+    $("#book-status").textContent = "";
+    open("#book-overlay");
+  });
+  $("#book-submit").addEventListener("click", function () {
+    var btn = this;
+    var kitSel = $("#book-kit");
+    var kit = kitSel.options[kitSel.selectedIndex];
+    var dateVal = $("#book-date").value;
+    if (!dateVal) { $("#book-status").innerHTML = '<span class="code-err">Pick a date first</span>'; return; }
+    var date = new Date(dateVal + "T12:00:00");
+    var mode = $('input[name="book-mode"]:checked').value;
+
+    btn.disabled = true;
+    $("#book-status").innerHTML = '<span class="spinner"></span> Checking lab availability…';
+    setTimeout(function () {
+      btn.disabled = false;
+      $("#book-status").innerHTML = '<span class="code-ok">Confirmed</span> · ref LAB-' + hex(4).toUpperCase();
+
+      var card = $$(".card").filter(function (c) { return /Upcoming test slots|Kommande testtider/.test($("h3", c).textContent); })[0];
+      var slot = document.createElement("div");
+      slot.className = "slot";
+      slot.innerHTML = '<div class="date"><b></b><span></span></div>' +
+        '<div class="info"><strong></strong><span></span></div>' +
+        '<span class="mode ' + (mode === "Remote" ? "remote" : "onsite") + '"></span>';
+      $(".date b", slot).textContent = ("0" + date.getDate()).slice(-2);
+      $(".date span", slot).textContent = MONTHS[date.getMonth()];
+      $(".info strong", slot).textContent = kit.textContent;
+      $(".info span", slot).textContent = kit.getAttribute("data-detail");
+      $(".mode", slot).textContent = mode;
+      card.appendChild(slot);
+      slot.classList.add("flash");
+
+      var booked = $("b", $$(".stats div")[1]);
+      booked.textContent = String(parseInt(booked.textContent, 10) + 1);
+      addActivity("b", "Test slot booked", kit.textContent + " · " + mode.toLowerCase());
+      toast("Slot confirmed — added to Upcoming test slots");
+      setTimeout(closeAll, 900);
+    }, rnd(600, 1300));
+  });
+
+  /* ---------- Search (⌘K) ---------- */
+  var searchIndex = [];
+  $$("tbody tr").forEach(function (tr) {
+    searchIndex.push({ cat: "API", title: $(".api-name", tr).textContent, desc: $(".api-desc", tr).textContent, el: tr });
+  });
+  $$(".cap").forEach(function (cap) {
+    var tags = $$(".tag", cap).map(function (t) { return t.textContent; }).join(" ");
+    searchIndex.push({ cat: "Platform", title: $("h3", cap).textContent, desc: $(".sub", cap).textContent, extra: tags, el: cap });
+  });
+  $$(".path").forEach(function (p) {
+    searchIndex.push({ cat: "Golden path", title: $("h4", p).textContent, desc: $("p", p).textContent, el: p });
+  });
+
+  function openSearch() {
+    open("#search-overlay");
+    var input = $("#search-input");
+    input.value = "";
+    renderResults("");
+    setTimeout(function () { input.focus(); }, 30);
+  }
+  function renderResults(q) {
+    var box = $("#search-results");
+    box.innerHTML = "";
+    var query = q.trim().toLowerCase();
+    var hits = searchIndex.filter(function (item) {
+      return !query || (item.title + " " + item.desc + " " + (item.extra || "")).toLowerCase().indexOf(query) !== -1;
+    });
+    if (!hits.length) {
+      box.innerHTML = '<div class="search-empty">No matches — try “QoD”, “slicing”, “edge” or “LLM”.</div>';
+      return;
+    }
+    hits.forEach(function (item, i) {
+      var hit = document.createElement("div");
+      hit.className = "search-hit" + (i === 0 ? " sel" : "");
+      hit.innerHTML = '<span class="cat"></span><div><strong></strong><span></span></div>';
+      $(".cat", hit).textContent = item.cat;
+      $("strong", hit).textContent = item.title;
+      $("strong + span", hit).textContent = item.desc;
+      hit.addEventListener("click", function () { jumpTo(item); });
+      box.appendChild(hit);
+    });
+  }
+  function jumpTo(item) {
+    closeAll();
+    item.el.scrollIntoView({ behavior: "smooth", block: "center" });
+    item.el.classList.remove("flash");
+    void item.el.offsetWidth;
+    item.el.classList.add("flash");
+  }
+  $(".topbar .search").addEventListener("click", openSearch);
+  $("#search-input").addEventListener("input", function () { renderResults(this.value); });
+  $("#search-input").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      var first = $(".search-hit.sel") || $(".search-hit");
+      if (first) first.click();
+    }
+  });
+
+  /* ---------- Golden paths hero shortcut ---------- */
+  $("#act-paths").addEventListener("click", function (e) {
+    e.preventDefault();
+    $(".paths").scrollIntoView({ behavior: "smooth", block: "center" });
+    $$(".path").forEach(function (p) { p.classList.remove("flash"); void p.offsetWidth; p.classList.add("flash"); });
+  });
+
+  /* ---------- Support level selector ---------- */
+  var SUPPORT_HINTS = {
+    "Self-service": "Docs, sandbox and community forum. Everything is available 24/7 — no engineer in the loop.",
+    "Guided": "Engineer-assisted execution with expert consultation. Upgrade to a co-development slot for dedicated support.",
+    "Fully managed": "A dedicated Telia team runs the test campaign end-to-end and delivers the validated run report."
+  };
+  $$(".support-levels span").forEach(function (lvl) {
+    lvl.addEventListener("click", function () {
+      $$(".support-levels span").forEach(function (s) { s.classList.remove("on"); });
+      lvl.classList.add("on");
+      var card = lvl.closest(".card");
+      $(".hint", card).textContent = SUPPORT_HINTS[lvl.textContent] || "";
+      toast("Support level set to " + lvl.textContent + " (simulated)");
+    });
+  });
+
+  /* ---------- EN / SV language toggle ---------- */
+  var SV = {
+    "Discover": "Upptäck", "Build": "Bygg", "Test": "Testa", "Validate": "Validera",
+    "Devices & SIMs": "Enheter & SIM", "Edge & AI": "Edge & AI",
+    "Knowledge Hub": "Kunskapsnav", "Support": "Support",
+    "Welcome back, John 👋": "Välkommen tillbaka, John 👋",
+    "Platform capabilities": "Plattformsfunktioner",
+    "Featured network & AI APIs": "Utvalda nätverks- & AI-API:er",
+    "Golden path templates": "Golden path-mallar",
+    "Your project": "Ditt projekt",
+    "Upcoming test slots": "Kommande testtider",
+    "Recent activity": "Senaste aktivitet",
+    "Support level": "Supportnivå"
+  };
+  var i18nNodes = [];
+  function collectTextNode(el) {
+    for (var i = 0; i < el.childNodes.length; i++) {
+      var n = el.childNodes[i];
+      if (n.nodeType === 3 && n.textContent.trim()) {
+        var en = n.textContent.trim();
+        if (SV[en]) i18nNodes.push({ node: n, en: en, sv: SV[en] });
+        return;
+      }
+    }
+  }
+  $$("nav a").forEach(collectTextNode);
+  collectTextNode($(".hero h1"));
+  $$(".section-title").forEach(collectTextNode);
+  $$(".card h3").forEach(collectTextNode);
+
+  $$(".lang-toggle span").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (btn.classList.contains("on")) return;
+      $$(".lang-toggle span").forEach(function (s) { s.classList.remove("on"); });
+      btn.classList.add("on");
+      var sv = btn.textContent === "SV";
+      i18nNodes.forEach(function (item) {
+        item.node.textContent = sv ? item.sv : item.en;
+      });
+      toast(sv ? "Gränssnittsspråk: svenska (delvis, mockup)" : "Interface language: English");
+    });
+  });
+})();
+</script>
 </body>
 </html>

@@ -360,9 +360,10 @@
             <div class="preview-frame" id="previewFrame"></div>
             <div class="btn-row" id="downloadBtns" style="margin-top: 16px;"></div>
             <div style="margin-top: 14px; font-size: 13px; color: rgba(244,224,255,0.55);">
-                Want to rearrange or restyle these slides? Import the downloaded .html pages into the
-                <a href="presentation-studio.html" style="color: var(--core-purple);">Presentation Studio</a>
-                (Decks &rarr; Import…) — it can also export them back to PowerPoint.
+                <strong style="color: var(--light-purple);">Edit in Presentation Studio</strong> transfers the slides
+                straight into the <a href="presentation-studio.html" style="color: var(--core-purple);">Presentation Studio</a>
+                as an editable deck (it can also export them back to PowerPoint). The downloaded .html pages can
+                always be imported there manually via Decks &rarr; Import….
             </div>
         </div>
 
@@ -615,6 +616,29 @@
             allBtn.addEventListener("click", downloadAllZip);
             downloadBtns.appendChild(allBtn);
         }
+
+        // Automatic hand-over to the Presentation Studio: the pages go through
+        // localStorage (same origin) and the Studio turns them into an editable
+        // deck on load — see takeTransferredSlides() in js/studio/canvas-interop.js.
+        const studioBtn = document.createElement("button");
+        studioBtn.className = "btn btn-primary";
+        studioBtn.textContent = "Edit in Presentation Studio →";
+        studioBtn.title = "Open these slides in the Presentation Studio as an editable deck";
+        studioBtn.addEventListener("click", () => {
+            const title = (generatedPages[0] && generatedPages[0].title) || "Converted slides";
+            try {
+                localStorage.setItem("northstar.studio.transfer.v1", JSON.stringify({
+                    ts: Date.now(), title,
+                    pages: generatedPages.map(p => p.html),
+                }));
+            } catch (err) {
+                alert("These slides are too large to hand over automatically (browser storage limit). "
+                    + "Download the .html pages instead and use Decks → Import… in the Studio.");
+                return;
+            }
+            location.href = "presentation-studio.html";
+        });
+        downloadBtns.prepend(studioBtn);
 
         markDone(4);
     }

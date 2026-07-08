@@ -309,3 +309,27 @@ export function canvasHtmlToSlide(htmlText) {
     elements,
   });
 }
+
+// ── Automatic hand-over from slide-converter.html ───────────────────────────
+// The converter's "Edit in Presentation Studio" button stores its generated
+// pages under this key and navigates here; the Studio consumes them on load.
+const TRANSFER_KEY = "northstar.studio.transfer.v1";
+const TRANSFER_MAX_AGE = 10 * 60 * 1000; // ignore stale hand-overs
+
+export function takeTransferredSlides() {
+  let raw;
+  try {
+    raw = localStorage.getItem(TRANSFER_KEY);
+    if (raw) localStorage.removeItem(TRANSFER_KEY); // consume once
+  } catch { return null; }
+  if (!raw) return null;
+  try {
+    const t = JSON.parse(raw);
+    if (!Array.isArray(t.pages) || (t.ts && Date.now() - t.ts > TRANSFER_MAX_AGE)) return null;
+    const slides = t.pages.map((p) => { try { return canvasHtmlToSlide(p); } catch { return null; } }).filter(Boolean);
+    if (!slides.length) return null;
+    return { title: t.title || slides[0].name || "Converted slides", slides };
+  } catch {
+    return null;
+  }
+}

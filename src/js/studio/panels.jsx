@@ -520,8 +520,8 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
             </button>
           </>
         )} />
-        <a className="st-btn" href={`copy-editor.html?deck=${encodeURIComponent(currentId)}`} onClick={onCopyEditor}
-          title="Edit this presentation's text & colours in the Copy editor">Copy editor</a>
+        <button className="st-btn" onClick={onCopyEditor}
+          title="Edit this presentation's text & colours in the Copy editor">✎ Copy editor</button>
         <button className="st-btn primary" onClick={onPresent}>▶ Present</button>
       </div>
     </div>

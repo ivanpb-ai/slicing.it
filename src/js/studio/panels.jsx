@@ -467,7 +467,7 @@ function relTime(ts) {
   return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onSiteCopy, saved }) {
+export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onSiteCopy, saved }) {
   return (
     <div className="st-toolbar">
       <div className="st-tb-left">
@@ -522,6 +522,10 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
             <button className="st-export-item" onClick={() => { onExportPptx(); close(); }}>
               <b>PowerPoint (.pptx)</b>
               <span>Native slides — built with the Slide Converter's HTML→PPT engine</span>
+            </button>
+            <button className="st-export-item" onClick={() => { onGeneratePages(); close(); }}>
+              <b>Interactive pages (click-to-explain)</b>
+              <span>One page per slide with API-enriched explanations — the Slide Converter's Generate step</span>
             </button>
             <button className="st-export-item" onClick={() => { onExport(); close(); }}>
               <b>Studio JSON</b>

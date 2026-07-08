@@ -40,9 +40,23 @@ function hexToRgba(hex, alpha) {
 }
 
 // ── Studio slide → canvas HTML ──────────────────────────────────────────────
-export function slideToCanvasHtml(slide) {
+// Returns the building blocks of a converter-format page: positioned shape
+// markup, the connector SVG, the background, and the click-to-explain label
+// entries ({key, title} per text-bearing shape — the same labels the Slide
+// Converter's Generate step enriches via the description APIs).
+export function slideToCanvasParts(slide) {
   let shapesHtml = "";
   let linesSvg = "";
+  const entries = [];
+  const seenKeys = new Set();
+  const toKey = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "item";
+  const addEntry = (text) => {
+    const t = String(text || "").replace(/\s+/g, " ").trim();
+    if (!t || /^\d{1,3}$/.test(t)) return null; // bare numbers make useless labels
+    const key = toKey(t);
+    if (!seenKeys.has(key)) { seenKeys.add(key); entries.push({ key, title: t }); }
+    return key;
+  };
 
   const span = (text, { px = 22, color = P.light, bold = false, family = null } = {}) =>
     `<span data-pt="${(px * PT_PER_PX).toFixed(2)}" style="font-size:${cqw(px)}cqw;color:${color};` +
@@ -50,14 +64,16 @@ export function slideToCanvasHtml(slide) {
 
   const para = (align, spans) => `<div class="para" style="text-align:${align};">${spans}</div>`;
 
-  const shp = (el, { cls = "shp", fill = null, border = null, radiusPx = 0, anchor = "center", inner = "" } = {}) => {
+  const shp = (el, { cls = "shp", fill = null, border = null, radiusPx = 0, anchor = "center", inner = "", info = null } = {}) => {
     let style = `left:${pctX(el.x)}%;top:${pctY(el.y)}%;width:${pctX(el.w)}%;height:${pctY(el.h)}%;`;
     if (el.rotation) style += `transform:rotate(${el.rotation.toFixed(2)}deg);`;
     if (fill) style += `background:${fill};`;
     if (border) style += `border:${cqw(border.w)}cqw solid ${border.color};`;
     if (radiusPx) style += `border-radius:${cqw(radiusPx)}cqw;`;
     style += `justify-content:${anchor};`;
-    shapesHtml += `<div class="${cls}" style="${style}">${inner}</div>\n`;
+    const key = info != null ? addEntry(info) : null;
+    if (key && !/\btxt\b/.test(cls)) cls += " txt";
+    shapesHtml += `<div class="${cls}"${key ? ` data-info="${esc(key)}"` : ""} style="${style}">${inner}</div>\n`;
   };
 
   const line = (x1, y1, x2, y2, color, widthPx) => {
@@ -69,23 +85,23 @@ export function slideToCanvasHtml(slide) {
     const align = s.align || "center";
     switch (el.type) {
       case "heading":
-        shp(el, { cls: "shp txt title", inner: para(align, span(p.text || "", { px: s.fontSize || 60, color: solidOf(p.gradient, s.color, P.white), family: HEAD_FAMILY })) });
+        shp(el, { cls: "shp txt title", info: p.text, inner: para(align, span(p.text || "", { px: s.fontSize || 60, color: solidOf(p.gradient, s.color, P.white), family: HEAD_FAMILY })) });
         break;
       case "text":
-        shp(el, { inner: (p.text || "").split("\n").map((t) => para(align, span(t, { px: s.fontSize || 22, color: s.color || P.dim, bold: s.fontWeight >= 700 }))).join("") });
+        shp(el, { info: p.text, inner: (p.text || "").split("\n").map((t) => para(align, span(t, { px: s.fontSize || 22, color: s.color || P.dim, bold: s.fontWeight >= 700 }))).join("") });
         break;
       case "kicker":
-        shp(el, { inner: para(align, span(String(p.text || "").toUpperCase(), { px: s.fontSize || 13, color: s.color || P.cyan })) });
+        shp(el, { info: p.text, inner: para(align, span(String(p.text || "").toUpperCase(), { px: s.fontSize || 13, color: s.color || P.cyan })) });
         break;
       case "quote":
-        shp(el, { inner:
+        shp(el, { info: p.text, inner:
           para(align, span("“" + (p.text || "") + "”", { px: s.fontSize || 40, color: s.color || P.white, family: HEAD_FAMILY })) +
           (p.author ? para(align, span(p.author, { px: Math.max(16, (s.fontSize || 40) * 0.34), color: s.accent || P.cyan })) : "") });
         break;
       case "counter": {
         const d = p.decimals || 0;
         const val = d > 0 ? Number(p.value || 0).toFixed(d) : Math.round(p.value || 0).toLocaleString();
-        shp(el, { inner:
+        shp(el, { info: p.label, inner:
           para("center", span(`${p.prefix || ""}${val}${p.suffix || ""}`, { px: s.fontSize || 64, color: s.color || P.light, family: HEAD_FAMILY })) +
           (p.label ? para("center", span(p.label, { px: Math.max(15, (s.fontSize || 64) * 0.2), color: P.muted })) : "") });
         break;
@@ -106,7 +122,7 @@ export function slideToCanvasHtml(slide) {
       case "card": {
         const c = s.accent || P.cyan;
         shp(el, {
-          fill: hexToRgba(c, 0.1), border: { w: 1.5, color: c }, radiusPx: 18, anchor: "flex-start",
+          fill: hexToRgba(c, 0.1), border: { w: 1.5, color: c }, radiusPx: 18, anchor: "flex-start", info: p.title,
           inner:
             para("left", span(`${p.icon || ""}  ${String(p.tag || "").toUpperCase()}`, { px: 15, color: c })) +
             para("left", span(p.title || "", { px: 30, color: s.color || P.white, family: HEAD_FAMILY })) +
@@ -134,7 +150,7 @@ export function slideToCanvasHtml(slide) {
         break;
       }
       case "ring":
-        shp(el, { inner:
+        shp(el, { info: p.label, inner:
           para("center", span(`${Math.round(p.value || 0)}${p.suffix || ""}`, { px: s.fontSize || 44, color: P.white, family: HEAD_FAMILY })) +
           (p.label ? para("center", span(p.label, { px: 16, color: P.muted })) : "") });
         break;
@@ -143,13 +159,13 @@ export function slideToCanvasHtml(slide) {
         shapesHtml += `<div class="shp" data-chart="${esc(JSON.stringify({ kind: p.kind, xLabels: p.xLabels, axisMax: p.axisMax, series: p.series }))}" style="left:${pctX(el.x)}%;top:${pctY(el.y)}%;width:${pctX(el.w)}%;height:${pctY(el.h)}%;justify-content:center;"></div>\n`;
         break;
       case "orbit":
-        shp(el, { inner: para("center", span(p.label || "Orbit", { px: 18, color: s.accent || P.cyan })) });
+        shp(el, { info: p.label, inner: para("center", span(p.label || "Orbit", { px: 18, color: s.accent || P.cyan })) });
         break;
       case "radar":
-        shp(el, { border: { w: 1.5, color: s.accent || P.cyan }, radiusPx: 16, inner: para("center", span(p.label || "Radar", { px: 16, color: s.accent || P.cyan })) });
+        shp(el, { border: { w: 1.5, color: s.accent || P.cyan }, radiusPx: 16, info: p.label, inner: para("center", span(p.label || "Radar", { px: 16, color: s.accent || P.cyan })) });
         break;
       case "loop":
-        shp(el, { inner:
+        shp(el, { info: p.title, inner:
           para("center", span(p.title || "", { px: 28, color: P.white, family: HEAD_FAMILY })) +
           (p.stages ? para("center", span(p.stages.map((st) => st.label).join(" → "), { px: 14, color: P.light })) : "") });
         break;
@@ -160,11 +176,16 @@ export function slideToCanvasHtml(slide) {
 
   const bg = slide.background?.type === "solid" ? (slide.background.colors?.[0] || P.deep) : P.deep;
 
-  // Same skeleton slide-converter.html generates (sans the click-to-explain
-  // chrome) so its HTML→PowerPoint function — and this module's importer —
-  // read it unchanged.
+  return { shapesHtml, linesSvg, entries, bg, name: slide.name || "Slide", W: CANVAS_W, H: CANVAS_H };
+}
+
+// Plain converter-format page (no click-to-explain chrome) — the input to the
+// PowerPoint exporter. Same skeleton slide-converter.html generates, so its
+// HTML→PowerPoint function — and this module's importer — read it unchanged.
+export function slideToCanvasHtml(slide) {
+  const { shapesHtml, linesSvg, bg, name } = slideToCanvasParts(slide);
   return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n'
-    + `<title>${esc(slide.name || "Slide")}</title>\n`
+    + `<title>${esc(name)}</title>\n`
     + "<style>\n"
     + '* { margin: 0; padding: 0; box-sizing: border-box; }\n'
     + 'html, body { width: 100%; min-height: 100vh; font-family: "Telia Sans", system-ui, sans-serif; background: #1a0029; }\n'

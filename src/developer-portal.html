@@ -451,6 +451,31 @@
     cursor: pointer; font-family: inherit; text-align: left;
   }
   .related-chips button:hover { background: var(--telia-purple); color: #fff; border-color: var(--telia-purple); }
+
+  /* ---------- Live state: sessions, webhooks, telemetry, stepper ---------- */
+  .sess { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--grey-100); }
+  .sess:last-child { border-bottom: none; padding-bottom: 0; }
+  .sess strong { display: block; font-size: 12px; color: var(--telia-deep); font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .sess .sub2 { font-size: 10.5px; color: var(--grey-500); }
+  .sess .countdown {
+    margin-left: auto; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12.5px; font-weight: 700; color: var(--telia-purple); min-width: 48px; text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .sess .end-btn {
+    font-size: 10.5px; font-weight: 700; color: #C4001A; border: 1px solid #C4001A;
+    background: #fff; border-radius: 8px; padding: 3px 9px; cursor: pointer; font-family: inherit;
+  }
+  .sess .end-btn:hover { background: #FDECEC; }
+  .sess .end-btn:disabled { opacity: .5; cursor: default; }
+  .sandbox-note {
+    margin-left: auto; font-size: 9.5px; font-weight: 500; color: var(--grey-500);
+    background: var(--grey-100); border-radius: 8px; padding: 2px 8px; white-space: nowrap;
+  }
+  footer .ok.warn { color: #FFC94D; }
+  footer .ok.warn::before { background: #FFC94D; }
+  .step { cursor: pointer; }
+  .step:hover .lbl strong { color: var(--telia-purple); }
 </style>
 </head>
 <body>
@@ -659,6 +684,11 @@
           </div>
         </div>
 
+        <div class="card" id="sessions-card" hidden>
+          <h3><span class="mark"></span>Active QoD sessions <span class="sandbox-note">sandbox clock ×60</span></h3>
+          <div id="sessions-list"></div>
+        </div>
+
         <div class="card">
           <h3><span class="mark"></span>Upcoming test slots</h3>
           <div class="slot">
@@ -701,9 +731,9 @@
   </main>
 
   <footer>
-    <span class="ok">All systems operational</span>
+    <span class="ok" id="sys-status">All systems operational</span>
     <span class="sep">|</span>
-    <span>API latency: 23 ms</span>
+    <span id="api-latency">API latency: 23 ms</span>
     <span class="sep">|</span>
     <span>WCAG 2.1 AA</span>
     <div class="right">
@@ -906,10 +936,15 @@
           slice: "S-NSSAI 2 (5QI 82)"
         }};
       },
-      onSuccess: function () { addActivity("b", "QoD session activated", "Sandbox · " + this.request.qosProfile + " · 60 min"); }
+      onSuccess: function (body) {
+        var dur = (body && body.duration) || 3600;
+        addActivity("b", "QoD session activated", "Sandbox · " + ((body && body.qosProfile) || "QOS_E") + " · " + Math.round(dur / 60) + " min");
+        if (body) addSession(body.sessionId, body.qosProfile, dur);
+      }
     },
     "Device Location": {
       std: "CAMARA", method: "POST", path: "/location-retrieval/v1.8/retrieve",
+      consentRequired: true,
       request: { device: { phoneNumber: "+46701234567" }, maxAge: 60 },
       respond: function () {
         return { status: "200 OK", body: {
@@ -944,7 +979,15 @@
           notificationUrl: "https://api.digitalarena.telia.se/callbacks/slice-events"
         }};
       },
-      onSuccess: function () { addActivity("p", "Slice provisioning started", "S-NSSAI 1/0000A2 · logical isolation"); }
+      onSuccess: function (body) {
+        addActivity("p", "Slice provisioning started", (body ? body.sliceId : "slice") + " · logical isolation");
+        // async NEF notification once provisioning completes (÷10 sandbox time)
+        if (body) {
+          setTimeout(function () {
+            fireWebhook("slice-status-changed", body.sliceId + " → ACTIVE · notified /callbacks/slice-events", "g");
+          }, (body.estimatedReadySeconds || 60) * 100);
+        }
+      }
     },
     "Edge AI Discovery": {
       std: "CAMARA", method: "POST", path: "/edge-ai-discovery/v2.0/nodes:query",
@@ -1024,45 +1067,92 @@
       return;
     }
 
+    // API Garden gateway rate limit (simulated): RL_MAX calls per RL_WINDOW
+    var nowT = Date.now();
+    sendTimes = sendTimes.filter(function (t) { return nowT - t < RL_WINDOW; });
+    if (sendTimes.length >= RL_MAX) {
+      rateLimit(btn, meta, resp, RL_WINDOW - (nowT - sendTimes[0]));
+      return;
+    }
+    sendTimes.push(nowT);
+
     btn.disabled = true;
-    status.innerHTML = '<span class="spinner"></span> Sending…';
     meta.textContent = "";
     resp.innerHTML = '<span class="muted">// Waiting for response…</span>';
 
-    var latency = rnd(280, 900);
-    setTimeout(function () {
-      btn.disabled = false;
-      status.textContent = "";
+    function transmit() {
+      status.innerHTML = '<span class="spinner"></span> Sending…';
+      var latency = rnd(280, 900);
+      setTimeout(function () {
+        btn.disabled = false;
+        status.textContent = "";
 
-      if (api.stream) {
-        meta.innerHTML = '<span class="code-ok">200 OK</span> · ' + latency + " ms TTFT · text/event-stream";
-        var head = { id: "chatcmpl-" + hex(10), model: parsed.model || api.request.model, provider: "telia.ai / LiteLLM" };
-        var words = api.streamText.split(" ");
-        var i = 0;
-        resp.textContent = JSON.stringify(head, null, 2) + "\n\n";
-        var iv = setInterval(function () {
-          if (i >= words.length) {
-            clearInterval(iv);
-            resp.textContent += "\n\n[DONE] · " + words.length + " tokens";
-            finishCall(api);
-            return;
-          }
-          resp.textContent += words[i++] + " ";
-          resp.scrollTop = resp.scrollHeight;
-        }, 45);
-      } else {
-        var out = api.respond(parsed);
-        meta.innerHTML = '<span class="code-ok">' + out.status + "</span> · " + latency + " ms · application/json";
-        resp.textContent = JSON.stringify(out.body, null, 2);
-        finishCall(api);
-      }
-    }, latency);
+        if (api.stream) {
+          meta.innerHTML = '<span class="code-ok">200 OK</span> · ' + latency + " ms TTFT · text/event-stream";
+          var head = { id: "chatcmpl-" + hex(10), model: parsed.model || api.request.model, provider: "telia.ai / LiteLLM" };
+          var words = api.streamText.split(" ");
+          var i = 0;
+          resp.textContent = JSON.stringify(head, null, 2) + "\n\n";
+          var iv = setInterval(function () {
+            if (i >= words.length) {
+              clearInterval(iv);
+              resp.textContent += "\n\n[DONE] · " + words.length + " tokens";
+              finishCall(api, null);
+              return;
+            }
+            resp.textContent += words[i++] + " ";
+            resp.scrollTop = resp.scrollHeight;
+          }, 45);
+        } else {
+          var out = api.respond(parsed);
+          meta.innerHTML = '<span class="code-ok">' + out.status + "</span> · " + latency + " ms · application/json";
+          resp.textContent = JSON.stringify(out.body, null, 2);
+          finishCall(api, out.body);
+        }
+      }, latency);
+    }
+
+    if (api.consentRequired) {
+      // CAMARA location APIs require a subscriber consent check first
+      status.innerHTML = '<span class="spinner"></span> Checking subscriber consent…';
+      setTimeout(function () {
+        status.innerHTML = '<span class="code-ok">✓ Consent granted</span> · CAMARA consent record';
+        setTimeout(transmit, 550);
+      }, rnd(500, 900));
+    } else {
+      transmit();
+    }
   });
 
-  function finishCall(api) {
+  var RL_MAX = 5, RL_WINDOW = 10000;
+  var sendTimes = [];
+  function rateLimit(btn, meta, resp, retryMs) {
+    var secs = Math.ceil(retryMs / 1000);
+    meta.innerHTML = '<span class="code-err">429 Too Many Requests</span> · Retry-After: ' + secs + " s";
+    resp.textContent = JSON.stringify({
+      status: 429,
+      code: "TOO_MANY_REQUESTS",
+      message: "API Garden gateway limit: " + RL_MAX + " requests per " + (RL_WINDOW / 1000) + " s per client credential. Retry after " + secs + " s."
+    }, null, 2);
+    btn.disabled = true;
+    btn.textContent = "Rate limited · " + secs + " s";
+    var iv = setInterval(function () {
+      secs--;
+      if (secs <= 0) {
+        clearInterval(iv);
+        btn.disabled = false;
+        btn.textContent = "Send request";
+      } else {
+        btn.textContent = "Rate limited · " + secs + " s";
+      }
+    }, 1000);
+    toast("Gateway rate limit hit — simulated 429");
+  }
+
+  function finishCall(api, body) {
     bumpQuota();
     bumpCallCount(currentApi);
-    if (api.onSuccess) api.onSuccess();
+    if (api.onSuccess) api.onSuccess(body);
     toast("Sandbox call succeeded — logged under Recent activity");
   }
 
@@ -1144,6 +1234,7 @@
       var booked = $("b", $$(".stats div")[1]);
       booked.textContent = String(parseInt(booked.textContent, 10) + 1);
       addActivity("b", "Test slot booked", kit.textContent + " · " + mode.toLowerCase());
+      advanceJourney();
       toast("Slot confirmed — added to Upcoming test slots");
       setTimeout(closeAll, 900);
     }, rnd(600, 1300));
@@ -1453,6 +1544,97 @@
     ask.addEventListener("click", askModule);
     cap.appendChild(ask);
   });
+
+  /* ---------- Webhook simulator ---------- */
+  function fireWebhook(evt, detail, led) {
+    addActivity(led || "b", "Webhook · " + evt, detail);
+    toast("⚡ Webhook received: " + evt);
+  }
+
+  /* ---------- QoD session lifecycle (×60 sandbox clock) ---------- */
+  function addSession(id, profile, duration) {
+    var card = $("#sessions-card");
+    card.hidden = false;
+    var row = document.createElement("div");
+    row.className = "sess";
+    row.innerHTML = '<div><strong></strong><span class="sub2"></span></div><span class="countdown"></span><button class="end-btn">Terminate</button>';
+    $("strong", row).textContent = id.slice(0, 8) + "…";
+    $(".sub2", row).textContent = (profile || "QOS_E") + " · slice S-NSSAI 2";
+    var cd = $(".countdown", row);
+    var remaining = duration;
+    function renderCd() {
+      var m = Math.floor(remaining / 60), s = Math.floor(remaining % 60);
+      cd.textContent = m + ":" + ("0" + s).slice(-2);
+    }
+    renderCd();
+    function endSession() {
+      clearInterval(timer);
+      row.remove();
+      if (!$(".sess")) card.hidden = true;
+    }
+    var timer = setInterval(function () {
+      remaining -= 60; // 1 real second = 60 session-seconds
+      if (remaining <= 0) {
+        endSession();
+        fireWebhook("qod-status-changed", "Session " + id.slice(0, 8) + "… → UNAVAILABLE · duration reached", "b");
+      } else {
+        renderCd();
+      }
+    }, 1000);
+    $(".end-btn", row).addEventListener("click", function () {
+      var b = this;
+      b.disabled = true;
+      b.textContent = "…";
+      setTimeout(function () {
+        endSession();
+        fireWebhook("session-deleted", "DELETE /qod/v2.1/sessions/" + id.slice(0, 8) + "… · 204 No Content", "p");
+      }, rnd(300, 700));
+    });
+    $("#sessions-list").appendChild(row);
+  }
+
+  /* ---------- Journey stepper ---------- */
+  var journeyAdvanced = false;
+  function advanceJourney() {
+    if (journeyAdvanced) return;
+    journeyAdvanced = true;
+    var steps = $$(".step");
+    var test = steps[3], validate = steps[4];
+    test.classList.remove("current");
+    test.classList.add("done");
+    $(".num", test).textContent = "✓";
+    validate.classList.add("current");
+  }
+  $$(".step").forEach(function (step) {
+    step.addEventListener("click", function () {
+      var state = step.classList.contains("done") ? "completed"
+        : step.classList.contains("current") ? "in progress" : "upcoming";
+      toast($(".lbl strong", step).textContent + " — " + $(".lbl span", step).textContent + " · " + state);
+    });
+  });
+
+  /* ---------- Footer telemetry ---------- */
+  var latency = 23, degradeTicks = 0;
+  setInterval(function () {
+    var statusEl = $("#sys-status");
+    if (degradeTicks > 0) {
+      degradeTicks--;
+      latency = rnd(80, 140);
+      if (degradeTicks === 0) {
+        statusEl.classList.remove("warn");
+        statusEl.textContent = "All systems operational";
+        latency = rnd(20, 30);
+      }
+    } else if (Math.random() < 0.03) {
+      degradeTicks = rnd(3, 6);
+      statusEl.classList.add("warn");
+      statusEl.textContent = "Elevated API latency";
+      latency = rnd(80, 140);
+    } else {
+      latency = Math.min(45, Math.max(15, latency + rnd(-3, 4)));
+    }
+    $("#api-latency").textContent = "API latency: " + latency + " ms";
+  }, 2500);
 
   /* Golden paths — generate a live step-by-step plan */
   $$(".path").forEach(function (p) {

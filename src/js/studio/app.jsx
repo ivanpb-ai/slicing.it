@@ -12,7 +12,7 @@ import { SlideStage, SlideView } from "./stage";
 import { Navigator, Inspector, Toolbar } from "./panels";
 import { mountCopyEditor } from "../copy-editor-core";
 import { COPY } from "../copy";
-import { canvasHtmlToSlide } from "./canvas-interop";
+import { canvasHtmlToSlide, takeTransferredSlides } from "./canvas-interop";
 import { exportDeckPptx } from "./export-pptx";
 
 const cloneSlide = (s) => ({ ...cloneDeep(s), id: uid("slide"), elements: s.elements.map((e) => ({ ...cloneDeep(e), id: uid("el") })) });
@@ -169,9 +169,16 @@ function SiteCopyOverlay({ onClose }) {
   );
 }
 
-// Pick the deck to open on launch: last-edited, else first in the library, else
-// seed the starter deck (and persist it so it joins the library).
+// Pick the deck to open on launch: slides handed over by the Slide Converter
+// take priority (they become a new deck in the library); otherwise last-edited,
+// else first in the library, else seed the starter deck.
 function initialDeck() {
+  const transfer = takeTransferredSlides();
+  if (transfer) {
+    const deck = createPresentation({ title: transfer.title, slides: transfer.slides });
+    saveDeckToLib(deck);
+    return deck;
+  }
   const m = loadManifest();
   for (const id of [m.currentId, m.items[0]?.id].filter(Boolean)) {
     const d = loadDeckById(id);

@@ -62,3 +62,12 @@
 [[edge_functions]]
   path = "/slide-converter"
   function = "editor-auth"
+
+# The Digital Arena developer portal mockup — gated the same way.
+[[edge_functions]]
+  path = "/developer-portal.html"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/developer-portal"
+  function = "editor-auth"

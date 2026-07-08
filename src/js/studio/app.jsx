@@ -134,25 +134,17 @@ function Present({ deck, startIndex = 0, onClose }) {
   );
 }
 
-// ── Copy editor overlay ────────────────────────────────────────────────────
-// Hosts the mountable copy editor (copy-editor-core.js) over the Studio.
-// source "deck" edits the presentation open in the Studio; "site" edits the
-// live NorthStar deck copy (copy.js) with the usual export-and-commit flow.
-function CopyEditorHost({ source, deck, onApply }) {
+// ── Site copy editor overlay ───────────────────────────────────────────────
+// Hosts the mountable copy.js editor (copy-editor-core.js) over the Studio.
+// Studio presentations are edited on the canvas itself; this overlay exists
+// only for the live NorthStar deck's copy, which the canvas can't reach —
+// it exports an updated copy.js to commit.
+function SiteCopyOverlay({ onClose }) {
   const ref = useRef(null);
   useEffect(() => {
-    const inst = mountCopyEditor(ref.current, source === "deck"
-      ? { mode: "deck", data: deck, onApply }
-      : { mode: "copy", data: COPY });
+    const inst = mountCopyEditor(ref.current, { data: COPY });
     return () => inst.destroy();
-    // Mount once per source (the host is keyed on it); `deck` is the snapshot
-    // being edited — applying must not remount and wipe in-progress edits.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return <div className="st-copyed-scroll" ref={ref} />;
-}
-
-function CopyEditorOverlay({ source, onSource, deck, onApply, onClose }) {
   useEffect(() => {
     const onKey = (e) => {
       const ae = document.activeElement;
@@ -166,19 +158,11 @@ function CopyEditorOverlay({ source, onSource, deck, onApply, onClose }) {
   return (
     <div className="st-copyed">
       <div className="st-copyed-head">
-        <span className="st-brand">✎ Copy editor</span>
-        <div className="st-seg st-copyed-seg">
-          <button className={source === "deck" ? "on" : ""} onClick={() => onSource("deck")} title="Edit the presentation open in the Studio">
-            This presentation
-          </button>
-          <button className={source === "site" ? "on" : ""} onClick={() => onSource("site")} title="Edit the live NorthStar deck copy (copy.js)">
-            Live NorthStar deck
-          </button>
-        </div>
-        <span className="st-copyed-name">{source === "deck" ? deck.title || "Untitled" : "copy.js — export & commit"}</span>
+        <span className="st-brand">🌐 NorthStar site copy</span>
+        <span className="st-copyed-name">the live deck's text & colours (copy.js) — export & commit to deploy</span>
         <button className="st-btn" onClick={onClose}>✕ Close</button>
       </div>
-      <CopyEditorHost key={source} source={source} deck={deck} onApply={onApply} />
+      <div className="st-copyed-scroll" ref={ref} />
     </div>
   );
 }
@@ -205,11 +189,11 @@ export default function StudioApp() {
   const [editingId, setEditingId] = useState(null);
   const [presenting, setPresenting] = useState(false);
   const [startAt, setStartAt] = useState(0);
-  // Copy editor overlay: null (closed) | "deck" | "site". The old /copy-editor
-  // URL redirects here (netlify.toml) with #copy, opening the live-site editor.
-  const [copyEd, setCopyEd] = useState(() => (window.location.hash === "#copy" ? "site" : null));
+  // Site copy (copy.js) editor overlay. The old /copy-editor URL redirects
+  // here (netlify.toml) with #copy, which opens it directly.
+  const [siteCopy, setSiteCopy] = useState(() => window.location.hash === "#copy");
   useEffect(() => {
-    const onHash = () => { if (window.location.hash === "#copy") setCopyEd("site"); };
+    const onHash = () => { if (window.location.hash === "#copy") setSiteCopy(true); };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
@@ -363,26 +347,16 @@ export default function StudioApp() {
   const exportDeck = () => downloadDeck(deck);
   const exportHtml = () => downloadDeckHtml(deck);
 
-  // copy editor overlay ------------------------------------------------------
-  const closeCopyEd = useCallback(() => {
-    setCopyEd(null);
+  // site copy editor overlay -------------------------------------------------
+  const closeSiteCopy = useCallback(() => {
+    setSiteCopy(false);
     if (window.location.hash === "#copy") history.replaceState(null, "", window.location.pathname + window.location.search);
   }, []);
-  // The editor hands back an edited clone; validate it, keep the deck's
-  // identity, and go through checkpoint/setDeck so undo and autosave work.
-  const applyCopyEdits = useCallback((edited) => {
-    const valid = validateDeck(edited);
-    if (!valid) return false;
-    checkpoint();
-    setDeck({ ...valid, id: deckRef.current.id });
-    setSelectedId(null); setEditingId(null);
-    return true;
-  }, [checkpoint]);
 
   // keyboard shortcuts (editor only)
   useEffect(() => {
     const onKey = (e) => {
-      if (presenting || copyEd) return;
+      if (presenting || siteCopy) return;
       const ae = document.activeElement;
       const editable = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable);
       const meta = e.metaKey || e.ctrlKey;
@@ -404,7 +378,7 @@ export default function StudioApp() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [presenting, copyEd, selectedId, slide, checkpoint, changeElement, doUndo, doRedo]);
+  }, [presenting, siteCopy, selectedId, slide, checkpoint, changeElement, doUndo, doRedo]);
 
   return (
     <div className="st-root">
@@ -415,7 +389,7 @@ export default function StudioApp() {
         onInsert={insertElement} onUndo={doUndo} onRedo={doRedo} canUndo={undo.length > 0} canRedo={redo.length > 0}
         onPresent={() => { setStartAt(current); setPresenting(true); }}
         library={library} currentId={deck.id} onOpenDeck={openDeck} onNewDeck={newPresentation} onDuplicateDeck={duplicateCurrentDeck} onDeleteDeck={deleteDeck}
-        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onCopyEditor={() => setCopyEd("deck")} saved={saved}
+        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onSiteCopy={() => setSiteCopy(true)} saved={saved}
       />
 
       <div className="st-body">
@@ -442,7 +416,7 @@ export default function StudioApp() {
       </div>
 
       <input ref={fileRef} type="file" accept="application/json,.json" style={{ display: "none" }} onChange={onFile} />
-      {copyEd && <CopyEditorOverlay source={copyEd} onSource={setCopyEd} deck={deck} onApply={applyCopyEdits} onClose={closeCopyEd} />}
+      {siteCopy && <SiteCopyOverlay onClose={closeSiteCopy} />}
       {presenting && <Present deck={deck} startIndex={startAt} onClose={() => setPresenting(false)} />}
     </div>
   );
@@ -495,6 +469,9 @@ const STUDIO_CSS = `
 .st-deckrow:hover .st-deck-del,.st-deckrow.on .st-deck-del{opacity:1;}
 .st-decks-foot{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line);background:rgba(0,0,0,0.2);}
 .st-decks-foot .st-btn{flex:1;justify-content:center;}
+.st-sitecopy{display:flex;flex-direction:column;gap:2px;align-items:flex-start;width:100%;background:rgba(0,212,255,0.05);border:0;border-top:1px solid var(--line);color:#F4E0FF;padding:9px 12px;text-align:left;}
+.st-sitecopy:hover{background:rgba(0,212,255,0.12);}
+.st-sitecopy .st-deckname{color:${P.cyan};}
 
 /* export menu */
 .st-export{position:relative;}
@@ -565,11 +542,9 @@ const STUDIO_CSS = `
 .st-grad-stops{display:flex;flex-direction:column;gap:6px;}
 .st-hint{padding:14px 14px;color:${P.muted};font-size:12px;line-height:1.6;}
 
-/* copy editor overlay */
+/* site copy (copy.js) editor overlay */
 .st-copyed{position:fixed;inset:0;z-index:900;display:flex;flex-direction:column;background:#29003E;}
 .st-copyed-head{flex:none;height:52px;display:flex;align-items:center;gap:12px;padding:0 14px;background:rgba(20,5,40,0.97);border-bottom:1px solid var(--line);}
-.st-copyed-seg{flex:none;width:340px;}
-.st-copyed-seg button{padding:7px 4px;}
 .st-copyed-name{flex:1;min-width:0;font-size:12px;color:${P.muted};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .st-copyed-scroll{flex:1;min-height:0;overflow-y:auto;}
 

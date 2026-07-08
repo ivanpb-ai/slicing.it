@@ -467,7 +467,7 @@ function relTime(ts) {
   return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onCopyEditor, saved }) {
+export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onSiteCopy, saved }) {
   return (
     <div className="st-toolbar">
       <div className="st-tb-left">
@@ -491,6 +491,11 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
               <button className="st-btn sm" onClick={() => { onDuplicateDeck(); close(); }}>Duplicate</button>
               <button className="st-btn sm" onClick={() => { onImport(); close(); }}>Import…</button>
             </div>
+            <button className="st-sitecopy" onClick={() => { onSiteCopy(); close(); }}
+              title="Edit the live NorthStar deck's text & colours, then export copy.js to commit">
+              <span className="st-deckname">🌐 NorthStar site copy</span>
+              <span className="st-deckdate">the live deck (copy.js) — edit & export</span>
+            </button>
           </>
         )} />
         <input className="st-title" value={title} onFocus={onCheckpoint} onChange={(e) => onTitle(e.target.value)} title="Rename this presentation" />
@@ -520,8 +525,6 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
             </button>
           </>
         )} />
-        <button className="st-btn" onClick={onCopyEditor}
-          title="Edit this presentation's text & colours in the Copy editor">✎ Copy editor</button>
         <button className="st-btn primary" onClick={onPresent}>▶ Present</button>
       </div>
     </div>

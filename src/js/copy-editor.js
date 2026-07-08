@@ -7,10 +7,26 @@
 import { COPY } from "./copy";
 import { P } from "./palette";
 import { serializeCopy, isColorValue } from "./copy-serialize";
+import { loadDeckById, loadManifest, saveDeckToLib, downloadDeck, uid } from "./studio/model";
+
+// ── Studio hand-off ────────────────────────────────────────────────────────
+// The Presentation Studio's "Copy editor" button links here with ?deck=<id>.
+// When that presentation exists in the shared localStorage library, we edit it
+// instead of the live NorthStar COPY, and "Save to Studio" writes it straight
+// back so the Studio picks the changes up.
+const requestedDeckId = new URLSearchParams(location.search).get("deck");
+let studioDeck = requestedDeckId ? loadDeckById(requestedDeckId) : null;
+if (requestedDeckId && !studioDeck) {
+  // Stale link (deck deleted / renamed id) — fall back to the last-edited deck.
+  const currentId = loadManifest().currentId;
+  studioDeck = currentId ? loadDeckById(currentId) : null;
+}
+const studioMode = !!studioDeck;
 
 // Working copy. At runtime COPY's colours are resolved hex/rgba strings; the
-// serialiser maps them back to P.<name> on export.
-const data = JSON.parse(JSON.stringify(COPY));
+// serialiser maps them back to P.<name> on export. A Studio deck arrives as a
+// fresh validated object from localStorage, so it's already a working copy.
+const data = studioMode ? studioDeck : JSON.parse(JSON.stringify(COPY));
 const clone = (v) => JSON.parse(JSON.stringify(v));
 
 const paletteNames = Object.keys(P);
@@ -44,8 +60,12 @@ const LABELS = {
   rel: "Release", axisMax: "Axis max", sub: "Subtitle",
 };
 
-// Structural identifiers used by rendering logic — kept in the data, hidden from the UI.
-const SKIP_KEYS = new Set(["id"]);
+// Structural identifiers used by rendering logic — kept in the data, hidden from
+// the UI. Studio decks also carry geometry & animation, which belong to the
+// Studio canvas, not a copy editor.
+const SKIP_KEYS = studioMode
+  ? new Set(["id", "type", "x", "y", "w", "h", "rotation", "anim", "variant"])
+  : new Set(["id"]);
 
 function pretty(key) {
   if (LABELS[key]) return LABELS[key];
@@ -246,9 +266,13 @@ function makeNew(arr) {
 }
 
 function cardTitle(item, i) {
-  const pick = item.title || item.label || item.era || item.tag || item.rel || item.what || item.year || item.t || "";
+  const own = item.title || item.label || item.era || item.tag || item.rel || item.what || item.year || item.t || "";
+  // Studio elements keep their copy under props.
+  const fromProps = item.props ? item.props.text || item.props.title || item.props.label || "" : "";
+  const pick = own || fromProps;
   const txt = typeof pick === "string" ? pick : "";
-  return `#${i + 1}` + (txt ? " · " + (txt.length > 46 ? txt.slice(0, 45) + "…" : txt) : "");
+  const kind = studioMode && typeof item.type === "string" ? " · " + item.type : "";
+  return `#${i + 1}${kind}` + (txt ? " · " + (txt.length > 46 ? txt.slice(0, 45) + "…" : txt) : "");
 }
 
 function renderCollection(obj, key, container, label, path) {
@@ -296,11 +320,15 @@ function objectCard(arr, i, path, allowEdit) {
 
 function scalarRow(arr, i, path, allowEdit) {
   const val = arr[i];
+  const isColor = typeof val === "string" && isColorValue(val);
   let input;
   if (typeof val === "number") {
     input = h("input", { type: "number", step: "any" });
     input.value = val;
     input.addEventListener("input", () => { if (input.value !== "") { const n = Number(input.value); if (!Number.isNaN(n)) arr[i] = n; } });
+  } else if (isColor) {
+    input = colorSelect(val, (v) => { arr[i] = v; });
+    input.style.flex = "1";
   } else {
     const long = String(val).length > 58;
     input = long ? h("textarea", {}) : h("input", { type: "text" });
@@ -308,7 +336,7 @@ function scalarRow(arr, i, path, allowEdit) {
     input.value = val;
     input.addEventListener("input", () => { arr[i] = input.value; });
   }
-  input.classList.add("grow");
+  if (!isColor) input.classList.add("grow");
   return h("div", { class: "scalar-row" }, input,
     allowEdit ? iconBtn("↑", "Move up", () => { if (i > 0) { [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]]; rerender(); } }, i === 0) : null,
     allowEdit ? iconBtn("↓", "Move down", () => { if (i < arr.length - 1) { [arr[i + 1], arr[i]] = [arr[i], arr[i + 1]]; rerender(); } }, i === arr.length - 1) : null,
@@ -320,13 +348,8 @@ function scalarRow(arr, i, path, allowEdit) {
 const form = document.getElementById("form");
 const openState = new Set();
 
-function addSection(key, title) {
-  const body = h("div", { class: "group-body" });
-  const value = data[key];
-  if (value && typeof value === "object" && !Array.isArray(value)) renderObjectFields(value, body, key);
-  else renderValue(data, key, body, title, key);
+function sectionShell(key, title, body) {
   if (!body.children.length) return;
-
   const det = h("details", { "data-key": key });
   det.appendChild(h("summary", {},
     h("span", { class: "sec-title", text: title }),
@@ -338,12 +361,39 @@ function addSection(key, title) {
   form.appendChild(det);
 }
 
+function addSection(key, title) {
+  const body = h("div", { class: "group-body" });
+  const value = data[key];
+  if (value && typeof value === "object" && !Array.isArray(value)) renderObjectFields(value, body, key);
+  else renderValue(data, key, body, title, key);
+  sectionShell(key, title, body);
+}
+
+// Studio mode: one section for the deck itself, then one per slide, in order.
+function addDeckSection() {
+  const body = h("div", { class: "group-body" });
+  renderValue(data, "title", body, "Presentation title", "title");
+  renderValue(data, "theme", body, "Theme", "theme");
+  sectionShell("deck", "Presentation", body);
+}
+
+function addSlideSection(slide, i) {
+  const body = h("div", { class: "group-body" });
+  renderObjectFields(slide, body, `slides[${i}]`);
+  sectionShell(`slide-${slide.id}`, `${i} · ${slide.name || "Slide"}`, body);
+}
+
 function buildForm() {
   form.textContent = "";
-  DECK.forEach(([key, title], idx) => { if (key in data) addSection(key, `${idx} · ${title}`); });
-  for (const key of Object.keys(META)) if (key in data) addSection(key, META[key]);
-  for (const key of Object.keys(data))
-    if (!DECK.some(([k]) => k === key) && !(key in META)) addSection(key, pretty(key));
+  if (studioMode) {
+    addDeckSection();
+    data.slides.forEach(addSlideSection);
+  } else {
+    DECK.forEach(([key, title], idx) => { if (key in data) addSection(key, `${idx} · ${title}`); });
+    for (const key of Object.keys(META)) if (key in data) addSection(key, META[key]);
+    for (const key of Object.keys(data))
+      if (!DECK.some(([k]) => k === key) && !(key in META)) addSection(key, pretty(key));
+  }
   applyFilter();
 }
 
@@ -359,9 +409,28 @@ const out = document.getElementById("out");
 const output = document.getElementById("output");
 const filter = document.getElementById("filter");
 
-function regen() { output.value = serializeCopy(data); out.hidden = false; }
+function regen() {
+  output.value = studioMode ? JSON.stringify(data, null, 2) : serializeCopy(data);
+  out.hidden = false;
+}
+
+// A cloned block keeps its source's id; give the Studio back unique ones so
+// React keys (and future edits) don't collide.
+function freshIds(deck) {
+  const seen = new Set();
+  const fix = (o, prefix) => { if (!o.id || seen.has(o.id)) o.id = uid(prefix); seen.add(o.id); };
+  deck.slides.forEach((s) => { fix(s, "slide"); (s.elements || []).forEach((e) => fix(e, "el")); });
+}
+
+function saveToStudio() {
+  freshIds(data);
+  saveDeckToLib(data);
+  if (!out.hidden) regen();
+  toast("Saved to Studio ✓");
+}
 
 document.getElementById("generate").addEventListener("click", () => {
+  if (studioMode) { saveToStudio(); return; }
   regen();
   out.scrollIntoView({ behavior: "smooth", block: "start" });
 });
@@ -381,6 +450,12 @@ document.getElementById("copy").addEventListener("click", async () => {
 });
 
 document.getElementById("download").addEventListener("click", () => {
+  if (studioMode) {
+    freshIds(data);
+    downloadDeck(data);
+    toast("Downloaded .studio.json");
+    return;
+  }
   if (!output.value) regen();
   const blob = new Blob([output.value], { type: "text/javascript" });
   const url = URL.createObjectURL(blob);
@@ -428,9 +503,45 @@ function toast(msg) {
   toastTimer = setTimeout(() => t.classList.remove("show"), 1500);
 }
 
-document.getElementById("intro").textContent =
-  "Grouped by presentation section, in deck order. Edit any text, number or colour; " +
-  "use + Add / ⧉ / ✕ / ↑ ↓ to add, duplicate, delete or reorder the repeating blocks in a section. " +
-  "Nothing saves automatically — click “Generate copy.js”, then copy or download the result and commit it.";
+// ── Page chrome per mode ───────────────────────────────────────────────────
+const cyanLink = (href, text) => h("a", { href, style: "color:var(--cyan);", text });
+
+if (studioMode) {
+  document.title = `Copy Editor — ${data.title || "Studio presentation"}`;
+  document.getElementById("generate").textContent = "Save to Studio ✓";
+  document.getElementById("copy").textContent = "Copy JSON";
+  document.getElementById("download").textContent = "Download .studio.json";
+
+  const sub = document.querySelector(".sub");
+  sub.textContent = "";
+  sub.append(
+    "Editing the Studio presentation “", h("strong", { text: data.title || "Untitled" }), "”. ",
+    "Changes apply when you click Save to Studio. ",
+    cyanLink("presentation-studio.html", "← Back to Studio"),
+  );
+
+  const deploy = document.querySelector(".deploy");
+  deploy.textContent = "";
+  deploy.append(
+    h("h2", { text: "Saving your changes" }),
+    h("ol", {},
+      h("li", {}, "Edit the text, numbers & colours below. ", h("strong", { text: "Nothing here saves on its own." })),
+      h("li", {}, "Click ", h("strong", { text: "Save to Studio" }), " — the presentation updates in the Studio's library on this browser."),
+      h("li", {}, "Back in the ", cyanLink("presentation-studio.html", "Presentation Studio"), ", present it or export it (HTML / .studio.json) as usual."),
+    ),
+  );
+
+  const note = out.querySelector(".note");
+  note.textContent = "The presentation as Studio JSON — “Save to Studio” already persists it; use Download to keep a backup or share it.";
+}
+
+document.getElementById("intro").textContent = studioMode
+  ? "One section per slide, in deck order. Edit any text, number or colour; " +
+    "use + Add / ⧉ / ✕ / ↑ ↓ to add, duplicate, delete or reorder repeating blocks (list items, bullets, chart series…). " +
+    "Layout, animation and slide structure stay in the Studio. Click “Save to Studio” when you're done."
+  : "Grouped by presentation section, in deck order. Edit any text, number or colour; " +
+    "use + Add / ⧉ / ✕ / ↑ ↓ to add, duplicate, delete or reorder the repeating blocks in a section. " +
+    "Nothing saves automatically — click “Generate copy.js”, then copy or download the result and commit it." +
+    (requestedDeckId ? " (Couldn't find the requested Studio presentation in this browser, so you're editing the live NorthStar deck copy instead.)" : "");
 
 buildForm();

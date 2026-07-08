@@ -121,7 +121,7 @@ function PLAYER(DECK, P) {
     },
     text: function (el) {
       var s = el.style;
-      var box = div({ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: justify(s.align), textAlign: s.align, color: s.color, fontFamily: s.fontFamily || FONTS.body, fontWeight: s.fontWeight, fontSize: s.fontSize, lineHeight: s.lineHeight, letterSpacing: s.letterSpacing, fontStyle: s.italic ? "italic" : "normal" });
+      var box = div({ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: justify(s.align), textAlign: s.align, color: s.color, fontFamily: s.fontFamily || FONTS.body, fontWeight: s.fontWeight, fontSize: s.fontSize, lineHeight: s.lineHeight, letterSpacing: s.letterSpacing, fontStyle: s.italic ? "italic" : "normal", whiteSpace: "pre-line" });
       var span = document.createElement("span");
       span.textContent = el.props.text || "";
       box.appendChild(span);

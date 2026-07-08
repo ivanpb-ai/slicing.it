@@ -74,7 +74,7 @@ function Heading({ el, mode }) {
 function Text({ el }) {
   const s = el.style;
   return (
-    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: justify(s.align), textAlign: s.align, color: s.color, fontFamily: s.fontFamily || FONTS.body, fontWeight: s.fontWeight, fontSize: s.fontSize, lineHeight: s.lineHeight, letterSpacing: s.letterSpacing, fontStyle: s.italic ? "italic" : "normal" }}>
+    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: justify(s.align), textAlign: s.align, color: s.color, fontFamily: s.fontFamily || FONTS.body, fontWeight: s.fontWeight, fontSize: s.fontSize, lineHeight: s.lineHeight, letterSpacing: s.letterSpacing, fontStyle: s.italic ? "italic" : "normal", whiteSpace: "pre-line" }}>
       <span>{el.props.text}</span>
     </div>
   );

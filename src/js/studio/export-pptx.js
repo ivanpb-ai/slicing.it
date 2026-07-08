@@ -1,0 +1,185 @@
+// ─────────────────────────────────────────────────────────────────────────
+// PowerPoint export — converts a Studio presentation to .pptx using the
+// HTML→PowerPoint conversion function from slide-converter.html: each slide
+// is first serialised to the converter's canvas HTML format
+// (canvas-interop.js), then addCanvasPageToPptx — the same parser the
+// converter's "Reverse: HTML → PowerPoint" step runs — rebuilds it as native
+// PowerPoint shapes, text runs, images and connector lines. Studio charts
+// travel as data and become native PowerPoint charts.
+//
+// pptxgenjs is loaded on demand (dynamic import) so the Studio bundle stays
+// lean until the first export.
+// ─────────────────────────────────────────────────────────────────────────
+import { STAGE_W, STAGE_H } from "./model";
+import { slideToCanvasHtml } from "./canvas-interop";
+
+const EMU_PER_IN = 914400;
+
+function cssLen(v) { const m = /(-?[\d.]+)/.exec(v || ""); return m ? parseFloat(m[1]) : 0; }
+
+function cssColor(c) {
+  if (!c) return null;
+  c = c.trim();
+  let m = /^#([0-9a-f]{6})$/i.exec(c);
+  if (m) return { color: m[1].toUpperCase() };
+  m = /^#([0-9a-f]{3})$/i.exec(c);
+  if (m) return { color: m[1].split("").map((x) => x + x).join("").toUpperCase() };
+  m = /^rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s/]+([\d.]+))?\)$/i.exec(c);
+  if (m) {
+    const hex = [m[1], m[2], m[3]].map((n) => (+n).toString(16).padStart(2, "0")).join("").toUpperCase();
+    const out = { color: hex };
+    if (m[4] !== undefined) out.transparency = Math.round((1 - parseFloat(m[4])) * 100);
+    return out;
+  }
+  return null;
+}
+
+// Mirrors htmlToPptx in slide-converter.html, generalised to add ONE slide to
+// an existing presentation (the converter writes one file per page; a Studio
+// deck is many slides in one file) and extended with native chart support.
+export function addCanvasPageToPptx(pptx, htmlText) {
+  const doc = new DOMParser().parseFromString(htmlText, "text/html");
+  const canvas = doc.querySelector(".canvas");
+  if (!canvas) throw new Error("No slide canvas found in the generated page.");
+
+  // Slide geometry + background live in the page's stylesheet
+  const css = [...doc.querySelectorAll("style")].map((s) => s.textContent).join("\n");
+  const cm = css.match(/\.canvas\s*\{[^}]*aspect-ratio:\s*(\d+)\s*\/\s*(\d+)[^}]*\}/);
+  if (!cm) throw new Error("Slide dimensions not found in the page.");
+  const W = +cm[1], H = +cm[2];
+  const WIn = W / EMU_PER_IN, HIn = H / EMU_PER_IN;
+  const bgm = cm[0].match(/background:\s*(#[0-9a-fA-F]{6}|rgba?\([^)]*\))/);
+  const bg = bgm ? cssColor(bgm[1]) : null;
+
+  const slide = pptx.addSlide();
+  if (bg) slide.background = { color: bg.color };
+
+  const pctX = (v) => v / 100 * WIn;
+  const pctY = (v) => v / 100 * HIn;
+  const cqwIn = (v) => v / 100 * WIn;
+
+  // Connector lines (SVG overlay, coordinates in EMU)
+  doc.querySelectorAll(".connectors line").forEach((ln) => {
+    const x1 = +ln.getAttribute("x1") / EMU_PER_IN, y1 = +ln.getAttribute("y1") / EMU_PER_IN;
+    const x2 = +ln.getAttribute("x2") / EMU_PER_IN, y2 = +ln.getAttribute("y2") / EMU_PER_IN;
+    const col = cssColor(ln.getAttribute("stroke")) || { color: "000000" };
+    const wpt = (+ln.getAttribute("stroke-width") || 9525) / EMU_PER_IN * 72;
+    slide.addShape(pptx.shapes.LINE, {
+      x: Math.min(x1, x2), y: Math.min(y1, y2),
+      w: Math.abs(x2 - x1), h: Math.abs(y2 - y1),
+      flipV: (x2 - x1) * (y2 - y1) < 0,
+      line: { color: col.color, width: Math.max(wpt, 0.75) },
+    });
+  });
+
+  // Shapes, text, images and charts
+  doc.querySelectorAll(".canvas > .shp").forEach((shp) => {
+    const st = shp.style;
+    const x = pctX(cssLen(st.left)), y = pctY(cssLen(st.top));
+    const w = pctX(cssLen(st.width)), h = pctY(cssLen(st.height));
+    if (!w || !h) return;
+
+    const rotM = /rotate\((-?[\d.]+)deg\)/.exec(st.transform || "");
+    const rotate = rotM ? ((parseFloat(rotM[1]) % 360) + 360) % 360 : 0;
+
+    const img = shp.querySelector("img");
+    if (img) {
+      const src = img.getAttribute("src") || "";
+      // The converter's pages inline images as data URIs; Studio images may
+      // also reference an external URL.
+      slide.addImage(src.startsWith("data:") ? { data: src, x, y, w, h, rotate } : { path: src, x, y, w, h, rotate });
+      return;
+    }
+
+    // Studio charts travel as structured data → native PowerPoint chart.
+    const chartAttr = shp.getAttribute("data-chart");
+    if (chartAttr) {
+      try {
+        const c = JSON.parse(chartAttr);
+        const type = c.kind === "bar" ? pptx.charts.BAR : c.kind === "line" ? pptx.charts.LINE : pptx.charts.AREA;
+        slide.addChart(type,
+          (c.series || []).map((s) => ({ name: s.label, labels: c.xLabels || [], values: s.values || [] })),
+          {
+            x, y, w, h,
+            chartColors: (c.series || []).map((s) => (cssColor(s.color) || { color: "990AE3" }).color),
+            valAxisMaxVal: c.axisMax || undefined,
+            showLegend: true, legendPos: "t", legendColor: "F4E0FF",
+            catAxisLabelColor: "F4E0FF", valAxisLabelColor: "F4E0FF",
+            catGridLine: { style: "none" }, valGridLine: { color: "3D1556", style: "dash" },
+            plotArea: { fill: { color: "29003E", transparency: 100 } },
+          });
+        return;
+      } catch { /* fall through to generic handling */ }
+    }
+
+    const fill = cssColor(st.background || st.backgroundColor);
+    const radius = cssLen(st.borderRadius);
+    const borderM = /solid\s+(#[0-9a-fA-F]{6}|rgba?\([^)]*\))/.exec(st.border || "");
+    const line = borderM
+      ? { color: cssColor(borderM[1]).color, width: Math.max(cqwIn(cssLen(st.border)) * 72, 0.5) }
+      : undefined;
+
+    const paras = [...shp.querySelectorAll(".para")];
+    const isHeading = shp.classList.contains("title");
+    const valign = { "flex-start": "top", center: "middle", "flex-end": "bottom" }[st.justifyContent] || "top";
+
+    const runs = [];
+    for (const p of paras) {
+      // Per-run styling lives on <span>s; fall back to the paragraph itself
+      // for pages generated before run-level fidelity.
+      const spans = [...p.querySelectorAll("span")];
+      const parts = spans.length ? spans : [p];
+      parts.forEach((el, j) => {
+        const es = el.style;
+        const famRaw = ((es.fontFamily || p.style.fontFamily) || "").split(",")[0].trim().replace(/^["']|["']$/g, "");
+        let runFace = null;
+        if (/telia sans heading/i.test(famRaw)) runFace = "Telia Sans Heading Heading";
+        else if (famRaw && !/^telia sans$/i.test(famRaw)) runFace = famRaw;
+        const weight = es.fontWeight || p.style.fontWeight;
+        // Exact point size from data-pt when present; otherwise reconstruct
+        // from cqw and snap to the nearest half point.
+        const dataPt = el.getAttribute && el.getAttribute("data-pt");
+        const fontSize = dataPt
+          ? parseFloat(dataPt)
+          : Math.max(Math.round(cqwIn(cssLen(es.fontSize || p.style.fontSize)) * 72 * 2) / 2, 6);
+        const options = {
+          fontSize,
+          color: (cssColor(es.color || p.style.color) || { color: "121214" }).color,
+          bold: weight === "700" || weight === "bold",
+          align: p.style.textAlign || "left",
+          breakLine: j === parts.length - 1,
+        };
+        if (runFace) options.fontFace = runFace;
+        runs.push({ text: el.textContent, options });
+      });
+    }
+
+    const opts = {
+      x, y, w, h, rotate, valign,
+      // PowerPoint resolves fonts by their GDI name (nameID 1):
+      // the heading cut is literally "Telia Sans Heading Heading".
+      fontFace: isHeading ? "Telia Sans Heading Heading" : "Telia Sans",
+      shape: radius > 0 ? pptx.shapes.ROUNDED_RECTANGLE : pptx.shapes.RECTANGLE,
+    };
+    if (radius > 0) opts.rectRadius = Math.min(cqwIn(radius), Math.min(w, h) / 2);
+    if (fill) opts.fill = fill;
+    if (line) opts.line = line;
+
+    if (runs.length) slide.addText(runs, opts);
+    else if (fill || line) slide.addShape(opts.shape, opts);
+  });
+}
+
+// ── Deck → .pptx download ───────────────────────────────────────────────────
+export async function exportDeckPptx(deck) {
+  const { default: PptxGenJS } = await import("pptxgenjs");
+  const pptx = new PptxGenJS();
+  pptx.defineLayout({ name: "STAGE", width: STAGE_W / 96, height: STAGE_H / 96 }); // 1280×720 px @96dpi = 13.33"×7.5"
+  pptx.layout = "STAGE";
+  pptx.title = deck.title || "Presentation";
+
+  for (const slide of deck.slides) addCanvasPageToPptx(pptx, slideToCanvasHtml(slide));
+
+  const safe = (deck.title || "presentation").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "presentation";
+  await pptx.writeFile({ fileName: `${safe}.pptx` });
+}

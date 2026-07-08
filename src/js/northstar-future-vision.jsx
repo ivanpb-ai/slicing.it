@@ -8,8 +8,9 @@ import { COPY } from "./copy";
 
    HOW TO EDIT THE TEXT
    All on-screen copy lives in  src/js/copy.js  (colours in  src/js/palette.js).
-     - Visual editor: open  /copy-editor.html , edit text + colours, then
-       export an updated copy.js and commit it.
+     - Visual editor: open  /presentation-studio.html#copy  (the Studio's
+       Copy editor overlay, "Live NorthStar deck" tab), edit text + colours,
+       then export an updated copy.js and commit it.
      - Or edit copy.js directly. Headline-array formatting:
          "plain text"                       -> normal words
          { t: "word", c: P.cyan }           -> a coloured word

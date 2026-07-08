@@ -1,15 +1,21 @@
 # Gate the editor tools behind a password (form + cookie login; see
 # netlify/edge-functions/editor-auth.js). The rest of the site stays public.
 # Build command and publish directory remain as configured in the Netlify dashboard.
-[[edge_functions]]
-  path = "/copy-editor.html"
-  function = "editor-auth"
 
-[[edge_functions]]
-  path = "/copy-editor"
-  function = "editor-auth"
+# The copy editor now lives inside the Presentation Studio (its "Copy editor"
+# overlay; #copy opens straight onto the live-deck editor). Redirect the old
+# URLs so bookmarks keep working — the Studio itself is gated below.
+[[redirects]]
+  from = "/copy-editor.html"
+  to = "/presentation-studio.html#copy"
+  status = 301
 
-# The Presentation Studio is an authoring tool too — gate it the same way.
+[[redirects]]
+  from = "/copy-editor"
+  to = "/presentation-studio.html#copy"
+  status = 301
+
+# The Presentation Studio is an authoring tool — gate it behind the password.
 [[edge_functions]]
   path = "/presentation-studio.html"
   function = "editor-auth"

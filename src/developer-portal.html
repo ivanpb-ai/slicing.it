@@ -1380,11 +1380,14 @@
     function closeList() { if (list) { html += "</" + list + ">"; list = null; } }
     esc.split("\n").forEach(function (line) {
       var t = line.trim();
-      if (!t) { closeList(); return; }
-      var mOl = t.match(/^\d+[.)]\s+(.*)/);
+      // blank lines must NOT close an open list — the API often separates
+      // numbered items with empty lines, and closing would restart each
+      // item in its own <ol> (rendering every bullet as "1.")
+      if (!t) { return; }
+      var mOl = t.match(/^(\d+)[.)]\s+(.*)/);
       var mUl = t.match(/^[-•*]\s+(.*)/);
       var mH = t.match(/^#{1,6}\s+(.*)/);
-      if (mOl) { if (list !== "ol") { closeList(); html += "<ol>"; list = "ol"; } html += "<li>" + mOl[1] + "</li>"; }
+      if (mOl) { if (list !== "ol") { closeList(); html += '<ol start="' + mOl[1] + '">'; list = "ol"; } html += "<li>" + mOl[2] + "</li>"; }
       else if (mUl) { if (list !== "ul") { closeList(); html += "<ul>"; list = "ul"; } html += "<li>" + mUl[1] + "</li>"; }
       else if (mH) { closeList(); html += "<p><strong>" + mH[1] + "</strong></p>"; }
       else { closeList(); html += "<p>" + t + "</p>"; }

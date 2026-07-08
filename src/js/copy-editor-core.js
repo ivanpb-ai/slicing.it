@@ -1,20 +1,18 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Copy editor core — the form-based text & colour editor, packaged as a
-// mountable component so the Presentation Studio can host it as an overlay.
+// Site copy editor — the form-based editor for the live NorthStar deck's
+// COPY object (copy.js), packaged as a mountable component so the
+// Presentation Studio can host it as an overlay.
 //
-//   mountCopyEditor(root, { mode, data, onApply }) → { destroy }
+//   mountCopyEditor(root, { data }) → { destroy }
 //
-//   mode: "deck"  edit a Studio presentation (plain JSON deck). "Apply to
-//                 presentation" hands a validated clone back via onApply.
-//   mode: "copy"  edit the live NorthStar COPY object; exports an updated
-//                 copy.js to copy/download and commit (the site is static).
-//
-// The editor always works on a deep clone of `data`; nothing mutates the
-// caller's object until onApply.
+// The site is static, so the editor can't write to the repo: it generates an
+// updated copy.js to copy/download and commit. It works on a deep clone of
+// `data`; the caller's object is never mutated. (Studio presentations are
+// edited on the Studio canvas itself — this editor is only for copy.js.)
 // ─────────────────────────────────────────────────────────────────────────
 import { P } from "./palette";
 import { serializeCopy, isColorValue } from "./copy-serialize";
-import { uid, cloneDeep, downloadDeck } from "./studio/model";
+import { cloneDeep } from "./studio/model";
 
 const paletteNames = Object.keys(P);
 
@@ -83,26 +81,13 @@ function h(tag, attrs = {}, ...kids) {
 const iconBtn = (glyph, title, onClick, disabled) =>
   h("button", { class: "icon-btn", title, type: "button", text: glyph, onclick: onClick, disabled: disabled ? "" : null });
 
-// A cloned block keeps its source's id; regenerate duplicates so the Studio's
-// React keys (and future edits) don't collide.
-function freshIds(deck) {
-  const seen = new Set();
-  const fix = (o, prefix) => { if (!o.id || seen.has(o.id)) o.id = uid(prefix); seen.add(o.id); };
-  (deck.slides || []).forEach((s) => { fix(s, "slide"); (s.elements || []).forEach((e) => fix(e, "el")); });
-}
-
 // ── Mount ──────────────────────────────────────────────────────────────────
 export function mountCopyEditor(root, opts = {}) {
   ensureStyles();
-  const deckMode = opts.mode === "deck";
   const data = cloneDeep(opts.data);
 
-  // Structural identifiers used by rendering logic — kept in the data, hidden
-  // from the UI. Studio decks also carry geometry & animation, which belong to
-  // the Studio canvas, not a copy editor.
-  const SKIP_KEYS = deckMode
-    ? new Set(["id", "type", "x", "y", "w", "h", "rotation", "anim", "variant"])
-    : new Set(["id"]);
+  // Structural identifiers used by rendering logic — kept in the data, hidden from the UI.
+  const SKIP_KEYS = new Set(["id"]);
 
   // ── Field builders ───────────────────────────────────────────────────────
   function labelEl(label, path, badge) {
@@ -267,13 +252,9 @@ export function mountCopyEditor(root, opts = {}) {
   }
 
   function cardTitle(item, i) {
-    const own = item.title || item.label || item.era || item.tag || item.rel || item.what || item.year || item.t || "";
-    // Studio elements keep their copy under props.
-    const fromProps = item.props ? item.props.text || item.props.title || item.props.label || "" : "";
-    const pick = own || fromProps;
+    const pick = item.title || item.label || item.era || item.tag || item.rel || item.what || item.year || item.t || "";
     const txt = typeof pick === "string" ? pick : "";
-    const kind = deckMode && typeof item.type === "string" ? " · " + item.type : "";
-    return `#${i + 1}${kind}` + (txt ? " · " + (txt.length > 46 ? txt.slice(0, 45) + "…" : txt) : "");
+    return `#${i + 1}` + (txt ? " · " + (txt.length > 46 ? txt.slice(0, 45) + "…" : txt) : "");
   }
 
   function renderCollection(obj, key, container, label, path) {
@@ -349,43 +330,31 @@ export function mountCopyEditor(root, opts = {}) {
   const filter = h("input", { type: "text", placeholder: "Filter fields…" });
   const btnExpand = h("button", { type: "button", text: "Expand all" });
   const btnCollapse = h("button", { type: "button", text: "Collapse all" });
-  const btnPrimary = h("button", { type: "button", class: "primary", text: deckMode ? "Apply to presentation ✓" : "Generate copy.js ↓" });
-  const btnCopy = deckMode ? null : h("button", { type: "button", text: "Copy" });
-  const btnDownload = h("button", { type: "button", text: deckMode ? "Download .studio.json" : "Download copy.js" });
+  const btnPrimary = h("button", { type: "button", class: "primary", text: "Generate copy.js ↓" });
+  const btnCopy = h("button", { type: "button", text: "Copy" });
+  const btnDownload = h("button", { type: "button", text: "Download copy.js" });
 
   const bar = h("div", { class: "ce-bar" },
     btnExpand, btnCollapse, btnPrimary, btnCopy, btnDownload,
     h("span", { class: "filter" }, filter),
   );
 
-  const deploy = deckMode
-    ? h("section", { class: "deploy" },
-        h("h2", { text: "Applying your changes" }),
-        h("ol", {},
-          h("li", {}, "Edit the text, numbers & colours below. ", h("strong", { text: "Nothing here applies on its own." })),
-          h("li", {}, "Click ", h("strong", { text: "Apply to presentation" }), " — the deck updates in the Studio right away (and autosaves to your library)."),
-          h("li", {}, "Close this panel to keep designing, present, or export the deck as usual."),
-        ),
-      )
-    : h("section", { class: "deploy" },
-        h("h2", { text: "Deploying your changes" }),
-        h("ol", {},
-          h("li", {}, "Edit the text, numbers & colours below. ", h("strong", { text: "Nothing here saves on its own." })),
-          h("li", {}, "Click ", h("strong", { text: "Generate copy.js" }), ", then ", h("strong", { text: "Copy" }), " or ", h("strong", { text: "Download copy.js" }), "."),
-          h("li", {}, "Replace ", h("code", { text: "src/js/copy.js" }), " in the repository with the generated file."),
-          h("li", {}, "Commit and push it — directly to ", h("code", { text: "main" }), ", or via a pull request that you merge into ", h("code", { text: "main" }), "."),
-          h("li", {}, "Netlify rebuilds and redeploys automatically; the live deck updates within a minute or two. No manual build step needed."),
-        ),
-      );
+  const deploy = h("section", { class: "deploy" },
+    h("h2", { text: "Deploying your changes" }),
+    h("ol", {},
+      h("li", {}, "Edit the text, numbers & colours below. ", h("strong", { text: "Nothing here saves on its own." })),
+      h("li", {}, "Click ", h("strong", { text: "Generate copy.js" }), ", then ", h("strong", { text: "Copy" }), " or ", h("strong", { text: "Download copy.js" }), "."),
+      h("li", {}, "Replace ", h("code", { text: "src/js/copy.js" }), " in the repository with the generated file."),
+      h("li", {}, "Commit and push it — directly to ", h("code", { text: "main" }), ", or via a pull request that you merge into ", h("code", { text: "main" }), "."),
+      h("li", {}, "Netlify rebuilds and redeploys automatically; the live deck updates within a minute or two. No manual build step needed."),
+    ),
+  );
 
   const intro = h("p", { class: "note" });
-  intro.textContent = deckMode
-    ? "One section per slide, in deck order. Edit any text, number or colour; " +
-      "use + Add / ⧉ / ✕ / ↑ ↓ to add, duplicate, delete or reorder repeating blocks (list items, bullets, chart series…). " +
-      "Layout, animation and slide structure stay on the Studio canvas. Click “Apply to presentation” when you're done."
-    : "Grouped by presentation section, in deck order. Edit any text, number or colour; " +
-      "use + Add / ⧉ / ✕ / ↑ ↓ to add, duplicate, delete or reorder the repeating blocks in a section. " +
-      "Nothing saves automatically — click “Generate copy.js”, then copy or download the result and commit it.";
+  intro.textContent =
+    "Grouped by presentation section, in deck order. Edit any text, number or colour; " +
+    "use + Add / ⧉ / ✕ / ↑ ↓ to add, duplicate, delete or reorder the repeating blocks in a section. " +
+    "Nothing saves automatically — click “Generate copy.js”, then copy or download the result and commit it.";
 
   const form = h("div", { class: "ce-form" });
   const output = h("textarea", { spellcheck: "false", readonly: "" });
@@ -397,7 +366,7 @@ export function mountCopyEditor(root, opts = {}) {
   const toastEl = h("div", { class: "toast" });
 
   root.classList.add("ce-root");
-  root.append(bar, h("div", { class: "ce-main" }, deploy, intro, form, deckMode ? null : out, toastEl));
+  root.append(bar, h("div", { class: "ce-main" }, deploy, intro, form, out, toastEl));
 
   // ── Build / rebuild the form ─────────────────────────────────────────────
   const openState = new Set();
@@ -423,31 +392,12 @@ export function mountCopyEditor(root, opts = {}) {
     sectionShell(key, title, body);
   }
 
-  // Deck mode: one section for the presentation itself, then one per slide.
-  function addDeckSection() {
-    const body = h("div", { class: "group-body" });
-    renderValue(data, "title", body, "Presentation title", "title");
-    renderValue(data, "theme", body, "Theme", "theme");
-    sectionShell("deck", "Presentation", body);
-  }
-
-  function addSlideSection(slide, i) {
-    const body = h("div", { class: "group-body" });
-    renderObjectFields(slide, body, `slides[${i}]`);
-    sectionShell(`slide-${slide.id}`, `${i} · ${slide.name || "Slide"}`, body);
-  }
-
   function buildForm() {
     form.textContent = "";
-    if (deckMode) {
-      addDeckSection();
-      data.slides.forEach(addSlideSection);
-    } else {
-      DECK.forEach(([key, title], idx) => { if (key in data) addSection(key, `${idx} · ${title}`); });
-      for (const key of Object.keys(META)) if (key in data) addSection(key, META[key]);
-      for (const key of Object.keys(data))
-        if (!DECK.some(([k]) => k === key) && !(key in META)) addSection(key, pretty(key));
-    }
+    DECK.forEach(([key, title], idx) => { if (key in data) addSection(key, `${idx} · ${title}`); });
+    for (const key of Object.keys(META)) if (key in data) addSection(key, META[key]);
+    for (const key of Object.keys(data))
+      if (!DECK.some(([k]) => k === key) && !(key in META)) addSection(key, pretty(key));
     applyFilter();
   }
 
@@ -455,24 +405,18 @@ export function mountCopyEditor(root, opts = {}) {
     const y = root.scrollTop;
     buildForm();
     root.scrollTop = y;
-    if (!deckMode && !out.hidden) regen();
+    if (!out.hidden) regen();
   }
 
   // ── Output / toolbar ─────────────────────────────────────────────────────
   function regen() { output.value = serializeCopy(data); out.hidden = false; }
 
   btnPrimary.addEventListener("click", () => {
-    if (deckMode) {
-      freshIds(data);
-      const ok = opts.onApply ? opts.onApply(cloneDeep(data)) !== false : false;
-      toast(ok ? "Applied to presentation ✓" : "Couldn't apply — invalid presentation");
-      return;
-    }
     regen();
     out.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  btnCopy?.addEventListener("click", async () => {
+  btnCopy.addEventListener("click", async () => {
     if (!output.value) regen();
     try {
       await navigator.clipboard.writeText(output.value);
@@ -487,12 +431,6 @@ export function mountCopyEditor(root, opts = {}) {
   });
 
   btnDownload.addEventListener("click", () => {
-    if (deckMode) {
-      freshIds(data);
-      downloadDeck(data);
-      toast("Downloaded .studio.json");
-      return;
-    }
     if (!output.value) regen();
     const blob = new Blob([output.value], { type: "text/javascript" });
     const url = URL.createObjectURL(blob);

@@ -14,6 +14,7 @@ import { mountCopyEditor } from "../copy-editor-core";
 import { COPY } from "../copy";
 import { canvasHtmlToSlide, takeTransferredSlides } from "./canvas-interop";
 import { exportDeckPptx } from "./export-pptx";
+import { API_MODES, generateDeckPages, downloadPage, downloadPagesZip } from "./generate-pages";
 
 const cloneSlide = (s) => ({ ...cloneDeep(s), id: uid("slide"), elements: s.elements.map((e) => ({ ...cloneDeep(e), id: uid("el") })) });
 
@@ -169,6 +170,62 @@ function SiteCopyOverlay({ onClose }) {
   );
 }
 
+// ── Generate interactive pages (the Slide Converter's step 3, on this deck) ─
+function GeneratePagesDialog({ deck, onClose }) {
+  const [mode, setMode] = useState("northstar");
+  const [busy, setBusy] = useState(false);
+  const [lines, setLines] = useState([]);
+  const [pages, setPages] = useState(null);
+  const log = (m) => setLines((l) => [...l, m]);
+
+  const run = async () => {
+    setBusy(true); setPages(null); setLines([]);
+    try {
+      setPages(await generateDeckPages(deck, mode, log));
+    } catch (err) { log("Error: " + (err?.message || err)); }
+    setBusy(false);
+  };
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="st-gen-backdrop" onClick={(e) => { if (e.target === e.currentTarget && !busy) onClose(); }}>
+      <div className="st-gen">
+        <div className="st-gen-head">
+          <b>Generate interactive pages</b>
+          <button className="st-icon" onClick={onClose}>✕</button>
+        </div>
+        <p className="st-gen-sub">
+          Turns every slide of “{deck.title || "Untitled"}” into a standalone click-to-explain HTML page —
+          the Slide Converter's Generate step, applied to this deck. Text labels can be enriched with
+          one-sentence descriptions:
+        </p>
+        {API_MODES.map((m) => (
+          <label key={m.value} className={"st-gen-opt" + (mode === m.value ? " on" : "")}>
+            <input type="radio" name="st-gen-mode" checked={mode === m.value} disabled={busy} onChange={() => setMode(m.value)} />
+            <span><b>{m.label}</b> — {m.desc}</span>
+          </label>
+        ))}
+        <div className="st-gen-actions">
+          <button className="st-btn primary" disabled={busy} onClick={run}>{busy ? "Generating…" : "Generate"}</button>
+          {pages && pages.map((p, i) => (
+            <button key={i} className="st-btn" onClick={() => downloadPage(p)}>Download: {p.slug}.html</button>
+          ))}
+          {pages && pages.length > 1 && (
+            <button className="st-btn" onClick={() => downloadPagesZip(pages, deck.title)}>Download all as .zip</button>
+          )}
+        </div>
+        {lines.length > 0 && <div className="st-gen-log">{lines.map((l, i) => <div key={i}>{l}</div>)}</div>}
+        {pages && <p className="st-gen-sub">Each page carries its own explanation-source switch (built-in / NorthStar / Perplexity). The pages re-import into the Studio, and the Slide Converter's Reverse step turns them into PowerPoint with the descriptions as speaker notes.</p>}
+      </div>
+    </div>
+  );
+}
+
 // Pick the deck to open on launch: slides handed over by the Slide Converter
 // take priority (they become a new deck in the library); otherwise last-edited,
 // else first in the library, else seed the starter deck.
@@ -201,6 +258,7 @@ export default function StudioApp() {
   // Site copy (copy.js) editor overlay. The old /copy-editor URL redirects
   // here (netlify.toml) with #copy, which opens it directly.
   const [siteCopy, setSiteCopy] = useState(() => window.location.hash === "#copy");
+  const [genPages, setGenPages] = useState(false);
   useEffect(() => {
     const onHash = () => { if (window.location.hash === "#copy") setSiteCopy(true); };
     window.addEventListener("hashchange", onHash);
@@ -390,7 +448,7 @@ export default function StudioApp() {
   // keyboard shortcuts (editor only)
   useEffect(() => {
     const onKey = (e) => {
-      if (presenting || siteCopy) return;
+      if (presenting || siteCopy || genPages) return;
       const ae = document.activeElement;
       const editable = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable);
       const meta = e.metaKey || e.ctrlKey;
@@ -412,7 +470,7 @@ export default function StudioApp() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [presenting, siteCopy, selectedId, slide, checkpoint, changeElement, doUndo, doRedo]);
+  }, [presenting, siteCopy, genPages, selectedId, slide, checkpoint, changeElement, doUndo, doRedo]);
 
   return (
     <div className="st-root">
@@ -423,7 +481,7 @@ export default function StudioApp() {
         onInsert={insertElement} onUndo={doUndo} onRedo={doRedo} canUndo={undo.length > 0} canRedo={redo.length > 0}
         onPresent={() => { setStartAt(current); setPresenting(true); }}
         library={library} currentId={deck.id} onOpenDeck={openDeck} onNewDeck={newPresentation} onDuplicateDeck={duplicateCurrentDeck} onDeleteDeck={deleteDeck}
-        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onSiteCopy={() => setSiteCopy(true)} saved={saved}
+        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onSiteCopy={() => setSiteCopy(true)} saved={saved}
       />
 
       <div className="st-body">
@@ -450,6 +508,7 @@ export default function StudioApp() {
       </div>
 
       <input ref={fileRef} type="file" accept="application/json,.json,.html,.htm" multiple style={{ display: "none" }} onChange={onFile} />
+      {genPages && <GeneratePagesDialog deck={deck} onClose={() => setGenPages(false)} />}
       {siteCopy && <SiteCopyOverlay onClose={closeSiteCopy} />}
       {presenting && <Present deck={deck} startIndex={startAt} onClose={() => setPresenting(false)} />}
     </div>
@@ -575,6 +634,18 @@ const STUDIO_CSS = `
 .st-grad-preset{width:46px;height:18px;border-radius:5px;border:1px solid var(--line);padding:0;}
 .st-grad-stops{display:flex;flex-direction:column;gap:6px;}
 .st-hint{padding:14px 14px;color:${P.muted};font-size:12px;line-height:1.6;}
+
+/* generate interactive pages dialog */
+.st-gen-backdrop{position:fixed;inset:0;z-index:950;background:rgba(10,2,20,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;}
+.st-gen{width:min(600px,92vw);max-height:86vh;overflow-y:auto;background:#22093b;border:1px solid var(--line);border-radius:14px;padding:16px 18px 18px;box-shadow:0 24px 70px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:10px;}
+.st-gen-head{display:flex;align-items:center;justify-content:space-between;font-size:15px;}
+.st-gen-sub{margin:0;font-size:12.5px;color:${P.dim};line-height:1.5;}
+.st-gen-opt{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:rgba(153,10,227,0.06);font-size:13px;line-height:1.4;cursor:pointer;}
+.st-gen-opt:hover{border-color:rgba(153,10,227,0.6);}
+.st-gen-opt.on{border-color:${P.purple};background:rgba(153,10,227,0.16);}
+.st-gen-opt input{accent-color:${P.purple};width:15px;height:15px;margin-top:2px;flex:none;}
+.st-gen-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.st-gen-log{font-family:ui-monospace,monospace;font-size:11.5px;color:${P.dim};background:rgba(0,0,0,0.3);border-radius:8px;padding:8px 10px;max-height:140px;overflow-y:auto;}
 
 /* site copy (copy.js) editor overlay */
 .st-copyed{position:fixed;inset:0;z-index:900;display:flex;flex-direction:column;background:#29003E;}

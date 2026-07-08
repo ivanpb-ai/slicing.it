@@ -205,9 +205,14 @@ export default function StudioApp() {
   const [editingId, setEditingId] = useState(null);
   const [presenting, setPresenting] = useState(false);
   const [startAt, setStartAt] = useState(0);
-  // Copy editor overlay: null (closed) | "deck" | "site". copy-editor.html
-  // redirects here with #copy, which opens straight onto the live-site editor.
+  // Copy editor overlay: null (closed) | "deck" | "site". The old /copy-editor
+  // URL redirects here (netlify.toml) with #copy, opening the live-site editor.
   const [copyEd, setCopyEd] = useState(() => (window.location.hash === "#copy" ? "site" : null));
+  useEffect(() => {
+    const onHash = () => { if (window.location.hash === "#copy") setCopyEd("site"); };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
   const [saved, setSaved] = useState(true);
   const [undo, setUndo] = useState([]);
   const [redo, setRedo] = useState([]);

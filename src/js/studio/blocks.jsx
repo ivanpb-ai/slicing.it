@@ -11,6 +11,7 @@
 import { useEffect, useState } from "react";
 import { P, FONTS } from "./model";
 import { entranceTransition, idleAnimation } from "./effects";
+import { chartMarkup } from "./chart-svg";
 
 const justify = (a) => (a === "left" ? "flex-start" : a === "right" ? "flex-end" : "center");
 
@@ -212,51 +213,20 @@ function Ring({ el, mode, active }) {
   );
 }
 
-function Chart({ el, mode, active }) {
-  const run = mode !== "present" || active;
-  const p = el.props; const W = 800, H = 340, padL = 50, padB = 36, padT = 12, padR = 20;
-  const max = p.axisMax || Math.max(1, ...p.series.flatMap((s) => s.values));
-  const n = p.xLabels.length;
-  const xAt = (i) => padL + (i / Math.max(1, n - 1)) * (W - padL - padR);
-  const yAt = (val) => (H - padB) - (run ? (val / max) * (H - padB - padT) : 0);
-  const lineP = (vals) => vals.map((v, i) => `${i === 0 ? "M" : "L"} ${xAt(i)} ${yAt(v)}`).join(" ");
-  const areaP = (vals) => `${lineP(vals)} L ${xAt(n - 1)} ${H - padB} L ${xAt(0)} ${H - padB} Z`;
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(max * f));
+function Chart({ el }) {
+  // All chart kinds share one SVG renderer (chart-svg.js) — the same drawing
+  // used by the HTML export and the generated converter pages.
+  const { legend, svg } = chartMarkup(el);
   return (
     <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 16, marginBottom: 6, fontFamily: FONTS.mono, fontSize: 11 }}>
-        {p.series.map((s, i) => (
+      <div style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "4px 16px", marginBottom: 6, fontFamily: FONTS.mono, fontSize: 11 }}>
+        {legend.map((it, i) => (
           <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: P.dim }}>
-            <span style={{ width: 10, height: 10, borderRadius: 2, background: s.color }} />{s.label}
+            <span style={{ width: 10, height: 10, borderRadius: 2, background: it.color }} />{it.label}
           </span>
         ))}
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{ width: "100%", flex: 1, minHeight: 0 }}>
-        <defs>
-          {p.series.map((s, i) => (
-            <linearGradient key={i} id={`stcg_${el.id}_${i}`} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor={s.color} stopOpacity="0.8" />
-              <stop offset="100%" stopColor={s.color} stopOpacity="0.12" />
-            </linearGradient>
-          ))}
-        </defs>
-        {ticks.map((t, i) => {
-          const y = yAt(0) - (i / 4) * (H - padB - padT);
-          return <g key={i}><line x1={padL} x2={W - padR} y1={y} y2={y} stroke={el.style.grid || P.faint} strokeDasharray="2 4" /><text x={padL - 8} y={y + 4} textAnchor="end" fontSize="9" fill={el.style.axis || P.muted} fontFamily={FONTS.mono}>{t}</text></g>;
-        })}
-        {p.series.map((s, i) => (
-          <g key={i} style={{ transition: "opacity 1s", opacity: run ? 1 : 0 }}>
-            {p.kind === "bar" ? s.values.map((v, j) => {
-              const bw = (W - padL - padR) / n * 0.5 / p.series.length;
-              return <rect key={j} x={xAt(j) - (p.series.length * bw) / 2 + i * bw} y={yAt(v)} width={bw * 0.85} height={(H - padB) - yAt(v)} fill={s.color} rx="2" opacity="0.85" />;
-            }) : <>
-              {p.kind !== "line" && <path d={areaP(s.values)} fill={`url(#stcg_${el.id}_${i})`} opacity="0.7" />}
-              <path d={lineP(s.values)} fill="none" stroke={s.color} strokeWidth="2.5" />
-            </>}
-          </g>
-        ))}
-        {p.xLabels.map((x, i) => <text key={i} x={xAt(i)} y={H - 10} textAnchor="middle" fontSize="11" fill={P.dim} fontFamily={FONTS.mono}>{x}</text>)}
-      </svg>
+      <div style={{ width: "100%", flex: 1, minHeight: 0, display: "flex" }} dangerouslySetInnerHTML={{ __html: svg }} />
     </div>
   );
 }

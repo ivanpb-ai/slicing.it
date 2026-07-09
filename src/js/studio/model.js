@@ -51,6 +51,57 @@ export const TRANSITIONS = ["fade", "slide-left", "slide-up", "zoom", "flip", "n
 export const BACKGROUNDS = ["nebula", "aurora", "starfield", "grid", "mesh", "gradient", "solid"];
 export const ALIGN = ["left", "center", "right"];
 
+// Chart kinds — the standard PowerPoint chart family. `kind` is stored in
+// props.kind; every kind renders on the canvas (chart-svg.js) and exports as
+// a native PowerPoint chart (export-pptx.js).
+export const CHART_KINDS = [
+  { kind: "bar", label: "Column", icon: "▟" },
+  { kind: "barh", label: "Bar (horizontal)", icon: "▙" },
+  { kind: "line", label: "Line", icon: "⋰" },
+  { kind: "area", label: "Area", icon: "◪" },
+  { kind: "combo", label: "Column + line", icon: "▟⋰" },
+  { kind: "pie", label: "Pie", icon: "◕" },
+  { kind: "doughnut", label: "Doughnut", icon: "◎" },
+  { kind: "radar", label: "Radar (spider)", icon: "✧" },
+  { kind: "bubble", label: "Bubble", icon: "🞄" },
+  { kind: "waterfall", label: "Waterfall", icon: "▜" },
+];
+
+// Sensible seed data per chart kind, applied on insert.
+export function chartDefaults(kind) {
+  const cats = ["Category 1", "Category 2", "Category 3", "Category 4"];
+  const three = (a, b, c) => [
+    { label: "Series 1", color: P.cyan, values: a },
+    { label: "Series 2", color: P.magenta, values: b },
+    { label: "Series 3", color: P.gold, values: c },
+  ];
+  switch (kind) {
+    case "pie":
+    case "doughnut":
+      return { w: 460, h: 360, props: { kind, xLabels: cats, axisMax: 0, series: [{ label: "Series 1", color: P.purple, values: [35, 25, 22, 18] }] } };
+    case "radar":
+      return { w: 480, h: 380, props: { kind, xLabels: ["Coverage", "Latency", "Energy", "Security", "Scale"], axisMax: 100,
+        series: [{ label: "Series 1", color: P.cyan, values: [80, 65, 55, 70, 90] }, { label: "Series 2", color: P.magenta, values: [55, 85, 70, 45, 60] }] } };
+    case "bubble":
+      return { props: { kind, xLabels: ["1", "2", "3", "4"], axisMax: 6, series: three([4.3, 4.5, 3.4, 4.4], [2.4, 2.5, 1.8, 2.8], [2, 2, 3, 5]) } };
+    case "waterfall":
+      return { props: { kind, xLabels: ["Point 1", "Point 2", "Point 3"], axisMax: 0, series: [{ label: "Change", color: P.cyan, values: [500, 200, 100] }] } };
+    case "combo":
+      return { props: { kind, xLabels: cats, axisMax: 6, series: three([4.3, 2.5, 3.5, 4.5], [2.4, 4.4, 1.8, 2.8], [2, 2, 3, 5]) } };
+    case "barh":
+    case "line":
+    case "bar":
+      return { props: { kind, xLabels: cats, axisMax: 6, series: three([4.3, 2.5, 3.5, 4.5], [2.4, 4.4, 1.8, 2.8], [2, 2, 3, 5]) } };
+    default: // area — the long-standing default seed
+      return { props: { kind: "area", xLabels: ["2025", "2027", "2029", "2031", "2033", "2035"], axisMax: 200,
+        series: [
+          { label: "Slices", color: P.cyan, values: [4, 18, 36, 62, 90, 118] },
+          { label: "APIs", color: P.magenta, values: [1, 6, 22, 56, 108, 168] },
+          { label: "Sensing", color: P.gold, values: [0, 1, 5, 18, 44, 84] },
+        ] } };
+  }
+}
+
 // Element palette for the toolbar (label + glyph shown to the user).
 export const ELEMENT_TYPES = [
   { type: "heading", label: "Heading", icon: "H" },

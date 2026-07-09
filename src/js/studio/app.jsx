@@ -5,7 +5,7 @@
 // sheet injected below (KEYFRAMES drives every animation in effects.js).
 // ─────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { STAGE_W, STAGE_H, P, cloneDeep, uid, createElement, createSlide, createPresentation, starterDeck, chartDefaults, loadManifest, listDecks, loadDeckById, saveDeckToLib, deleteDeckFromLib, setCurrentDeckId, duplicateDeckObj, validateDeck, downloadDeck } from "./model";
+import { STAGE_W, STAGE_H, P, STATUS_COLORS, cloneDeep, uid, createElement, createSlide, createPresentation, starterDeck, chartDefaults, loadManifest, listDecks, loadDeckById, saveDeckToLib, deleteDeckFromLib, setCurrentDeckId, duplicateDeckObj, validateDeck, downloadDeck } from "./model";
 import { KEYFRAMES } from "./effects";
 import { downloadDeckHtml } from "./export-html";
 import { SlideStage, SlideView } from "./stage";
@@ -15,6 +15,7 @@ import { COPY } from "../copy";
 import { canvasHtmlToSlide, takeTransferredSlides } from "./canvas-interop";
 import { exportDeckPptx } from "./export-pptx";
 import { API_MODES, generateDeckPages, downloadPage, downloadPagesZip } from "./generate-pages";
+import { lintDeck } from "./lint";
 
 const cloneSlide = (s) => ({ ...cloneDeep(s), id: uid("slide"), elements: s.elements.map((e) => ({ ...cloneDeep(e), id: uid("el") })) });
 
@@ -170,6 +171,57 @@ function SiteCopyOverlay({ onClose }) {
   );
 }
 
+// ── Review (slide lint) dialog ──────────────────────────────────────────────
+// Scores every slide against the consistency checklist: text fit, projector-
+// size fonts, contrast, text density, image alt text and off-brand colours.
+function ReviewDialog({ deck, onClose, onGoto }) {
+  const [results, setResults] = useState(null);
+  useEffect(() => { setResults(lintDeck(deck)); }, [deck]);
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const total = results ? results.reduce((a, r) => a + r.issues.length, 0) : 0;
+  return (
+    <div className="st-gen-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="st-gen st-review">
+        <div className="st-gen-head">
+          <b>✓ Review — {deck.title || "Untitled"}</b>
+          <button className="st-icon" onClick={onClose}>✕</button>
+        </div>
+        <p className="st-gen-sub">
+          Every slide is checked for text that won't fit, fonts too small for a projector, low contrast,
+          text density, missing image alt text and off-brand (non-Telia-palette) colours. Click an issue to jump to it.
+        </p>
+        {results && results.map((r) => (
+          <div key={r.slideIndex} className="st-review-slide">
+            <div className="st-review-head" onClick={() => onGoto(r.slideIndex, null)}>
+              <span className="st-status-dot" style={{ background: STATUS_COLORS[r.status] }} title={r.status} />
+              <b>{r.slideIndex + 1} · {r.name}</b>
+              <span className={"st-review-score" + (r.issues.length ? "" : " ok")}>
+                {r.issues.length ? `${r.score} checks clean` : "all clear ✓"}
+              </span>
+            </div>
+            {r.issues.map((iss, k) => (
+              <button key={k} className="st-review-issue" onClick={() => onGoto(r.slideIndex, iss.elementId)}>
+                {iss.level === "warn" ? "⚠" : "ⓘ"} {iss.msg}
+              </button>
+            ))}
+          </div>
+        ))}
+        {results && (
+          <p className="st-gen-sub">
+            {total === 0
+              ? "No issues — the deck passes every check."
+              : `${total} issue${total === 1 ? "" : "s"} across ${results.filter((r) => r.issues.length).length} slide(s).`}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Generate interactive pages (the Slide Converter's step 3, on this deck) ─
 function GeneratePagesDialog({ deck, onClose }) {
   const [mode, setMode] = useState("northstar");
@@ -259,6 +311,7 @@ export default function StudioApp() {
   // here (netlify.toml) with #copy, which opens it directly.
   const [siteCopy, setSiteCopy] = useState(() => window.location.hash === "#copy");
   const [genPages, setGenPages] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   useEffect(() => {
     const onHash = () => { if (window.location.hash === "#copy") setSiteCopy(true); };
     window.addEventListener("hashchange", onHash);
@@ -448,7 +501,7 @@ export default function StudioApp() {
   // keyboard shortcuts (editor only)
   useEffect(() => {
     const onKey = (e) => {
-      if (presenting || siteCopy || genPages) return;
+      if (presenting || siteCopy || genPages || reviewing) return;
       const ae = document.activeElement;
       const editable = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable);
       const meta = e.metaKey || e.ctrlKey;
@@ -470,7 +523,7 @@ export default function StudioApp() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [presenting, siteCopy, genPages, selectedId, slide, checkpoint, changeElement, doUndo, doRedo]);
+  }, [presenting, siteCopy, genPages, reviewing, selectedId, slide, checkpoint, changeElement, doUndo, doRedo]);
 
   return (
     <div className="st-root">
@@ -481,12 +534,13 @@ export default function StudioApp() {
         onInsert={insertElement} onUndo={doUndo} onRedo={doRedo} canUndo={undo.length > 0} canRedo={redo.length > 0}
         onPresent={() => { setStartAt(current); setPresenting(true); }}
         library={library} currentId={deck.id} onOpenDeck={openDeck} onNewDeck={newPresentation} onDuplicateDeck={duplicateCurrentDeck} onDeleteDeck={deleteDeck}
-        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onSiteCopy={() => setSiteCopy(true)} saved={saved}
+        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onSiteCopy={() => setSiteCopy(true)} onReview={() => setReviewing(true)} saved={saved}
       />
 
       <div className="st-body">
         <Navigator slides={deck.slides} current={current} onSelect={(i) => { setCurrent(i); setSelectedId(null); setEditingId(null); }}
-          onAdd={addSlide} onDuplicate={duplicateSlide} onDelete={deleteSlide} onMove={moveSlide} />
+          onAdd={addSlide} onDuplicate={duplicateSlide} onDelete={deleteSlide} onMove={moveSlide}
+          onStatus={(i, status) => { checkpoint(); patchSlide(i, (s) => ({ ...s, status })); }} />
 
         <div className="st-stagecol">
           <div className="st-stagewrap">
@@ -508,6 +562,8 @@ export default function StudioApp() {
       </div>
 
       <input ref={fileRef} type="file" accept="application/json,.json,.html,.htm" multiple style={{ display: "none" }} onChange={onFile} />
+      {reviewing && <ReviewDialog deck={deck} onClose={() => setReviewing(false)}
+        onGoto={(i, elId) => { setReviewing(false); setCurrent(i); setSelectedId(elId); setEditingId(null); }} />}
       {genPages && <GeneratePagesDialog deck={deck} onClose={() => setGenPages(false)} />}
       {siteCopy && <SiteCopyOverlay onClose={closeSiteCopy} />}
       {presenting && <Present deck={deck} startIndex={startAt} onClose={() => setPresenting(false)} />}
@@ -634,6 +690,42 @@ const STUDIO_CSS = `
 .st-grad-preset{width:46px;height:18px;border-radius:5px;border:1px solid var(--line);padding:0;}
 .st-grad-stops{display:flex;flex-direction:column;gap:6px;}
 .st-hint{padding:14px 14px;color:${P.muted};font-size:12px;line-height:1.6;}
+
+/* chart data mini-table */
+.st-chart-table-wrap{overflow-x:auto;margin:2px 0 8px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,0.15);}
+.st-chart-table{border-collapse:collapse;font-size:11px;}
+.st-chart-table th,.st-chart-table td{border:1px solid var(--line2);padding:2px;text-align:center;vertical-align:middle;}
+.st-chart-table input{width:52px;font:inherit;font-size:11px;background:var(--in);border:1px solid transparent;border-radius:4px;color:#F4E0FF;padding:3px 4px;text-align:center;}
+.st-chart-table input:focus{outline:none;border-color:${P.cyan};}
+.st-series-cell{display:flex;align-items:center;gap:4px;padding:0 2px;}
+.st-series-cell input{width:62px;text-align:left;}
+.st-series-dot{width:14px;height:14px;border-radius:4px;border:1px solid rgba(255,255,255,.35);flex:none;cursor:pointer;padding:0;}
+.st-cell-del{display:block;margin:1px auto 0;background:transparent;border:0;color:${P.muted};font-size:9px;line-height:1;padding:0;cursor:pointer;}
+.st-cell-del:hover{color:${P.red};}
+
+/* brand deviation flag on hex inputs */
+.st-hex.offbrand{border-color:${P.gold};color:${P.gold};}
+.st-offbrand-flag{color:${P.gold};font-size:12px;flex:none;}
+
+/* truncation warning */
+.st-fit-warn{margin:10px 12px;padding:9px 11px;border-radius:9px;border:1px solid ${P.gold}66;background:${P.gold}14;color:${P.gold};font-size:11.5px;line-height:1.5;}
+
+/* slide status tags + filter */
+.st-status-dot{display:inline-block;width:9px;height:9px;border-radius:50%;border:0;padding:0;flex:none;}
+.st-status-dot.big{width:11px;height:11px;cursor:pointer;margin-left:auto;border:1px solid rgba(0,0,0,0.4);}
+.st-nav-filter{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap;}
+.st-filter-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:${P.dim};background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px 9px;text-transform:capitalize;cursor:pointer;}
+.st-filter-chip.on{border-color:${P.cyan};color:#fff;}
+
+/* review (lint) dialog */
+.st-review{width:min(680px,94vw);}
+.st-review-slide{border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.st-review-head{display:flex;align-items:center;gap:8px;padding:8px 11px;background:rgba(255,255,255,0.03);cursor:pointer;font-size:12.5px;}
+.st-review-head:hover{background:rgba(0,212,255,0.07);}
+.st-review-score{margin-left:auto;font-family:ui-monospace,monospace;font-size:10.5px;color:${P.gold};}
+.st-review-score.ok{color:${P.green};}
+.st-review-issue{display:block;width:100%;text-align:left;background:transparent;border:0;border-top:1px solid var(--line2);color:${P.dim};font-size:11.5px;padding:6px 11px 6px 24px;cursor:pointer;line-height:1.45;}
+.st-review-issue:hover{background:rgba(0,212,255,0.07);color:#fff;}
 
 /* generate interactive pages dialog */
 .st-gen-backdrop{position:fixed;inset:0;z-index:950;background:rgba(10,2,20,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;}

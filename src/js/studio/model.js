@@ -48,6 +48,8 @@ export const ENTRANCES = [
 export const IDLES = ["none", "float", "pulse", "glow", "spin", "sway", "breathe", "shimmer"];
 export const EASE_OPTIONS = ["out", "inout", "back", "linear"];
 export const TRANSITIONS = ["fade", "slide-left", "slide-up", "zoom", "flip", "none"];
+export const SLIDE_STATUSES = ["draft", "review", "final"];
+export const STATUS_COLORS = { draft: "rgba(244,224,255,0.35)", review: P.gold, final: P.green };
 export const BACKGROUNDS = ["nebula", "aurora", "starfield", "grid", "mesh", "gradient", "solid"];
 export const ALIGN = ["left", "center", "right"];
 
@@ -302,6 +304,7 @@ export function createSlide(over = {}) {
     name: "Untitled slide",
     background: { type: "nebula", colors: [P.purple, P.deep], variant: 0 },
     transition: "fade",
+    status: "draft",
     elements: [],
     ...over,
   };
@@ -418,6 +421,7 @@ export function validateDeck(deck) {
       ? { type: BACKGROUNDS.includes(s.background.type) ? s.background.type : "solid", colors: Array.isArray(s.background.colors) ? s.background.colors : [P.deep], variant: s.background.variant || 0 }
       : { type: "solid", colors: [P.deep], variant: 0 },
     transition: TRANSITIONS.includes(s.transition) ? s.transition : "fade",
+    status: SLIDE_STATUSES.includes(s.status) ? s.status : "draft",
     elements: Array.isArray(s.elements) ? s.elements.filter((e) => e && e.type).map(normalizeEl) : [],
   }));
   return {

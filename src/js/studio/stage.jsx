@@ -75,7 +75,7 @@ export function SlideStage({ slide, selectedId, onSelect, onChange, onCheckpoint
   const wrapRef = useRef(null);
   const [scale, setScale] = useState(0.6);
   const scaleRef = useRef(0.6);
-  const [guides, setGuides] = useState({ v: false, h: false });
+  const [guides, setGuides] = useState({ v: null, h: null }); // snapped guide positions (stage px)
 
   useEffect(() => {
     const wrap = wrapRef.current; if (!wrap) return;
@@ -93,19 +93,35 @@ export function SlideStage({ slide, selectedId, onSelect, onChange, onCheckpoint
     onSelect(el.id);
     onCheckpoint();
     const sx = e.clientX, sy = e.clientY, ox = el.x, oy = el.y;
+
+    // Smart alignment: candidate lines are the stage edges/centre plus every
+    // other element's edges and centre. The dragged element's own left/centre/
+    // right (top/centre/bottom) snap to the nearest candidate within T px.
+    const others = slide.elements.filter((o) => o.id !== el.id);
+    const vLines = [0, STAGE_W / 2, STAGE_W, ...others.flatMap((o) => [o.x, o.x + o.w / 2, o.x + o.w])];
+    const hLines = [0, STAGE_H / 2, STAGE_H, ...others.flatMap((o) => [o.y, o.y + o.h / 2, o.y + o.h])];
+    const T = 6;
+    const snap = (lines, edges) => {
+      let best = null;
+      for (const line of lines) for (const [edge, offset] of edges) {
+        const d = Math.abs(edge - line);
+        if (d < T && (!best || d < best.d)) best = { d, line, offset };
+      }
+      return best;
+    };
+
     const move = (ev) => {
       const s = scaleRef.current;
       let nx = ox + (ev.clientX - sx) / s;
       let ny = oy + (ev.clientY - sy) / s;
-      const cx = nx + el.w / 2, cy = ny + el.h / 2;
-      const T = 8;
-      let v = false, h = false;
-      if (Math.abs(cx - STAGE_W / 2) < T) { nx = STAGE_W / 2 - el.w / 2; v = true; }
-      if (Math.abs(cy - STAGE_H / 2) < T) { ny = STAGE_H / 2 - el.h / 2; h = true; }
-      setGuides({ v, h });
+      const sv = snap(vLines, [[nx, 0], [nx + el.w / 2, el.w / 2], [nx + el.w, el.w]]);
+      const sh = snap(hLines, [[ny, 0], [ny + el.h / 2, el.h / 2], [ny + el.h, el.h]]);
+      if (sv) nx = sv.line - sv.offset;
+      if (sh) ny = sh.line - sh.offset;
+      setGuides({ v: sv ? sv.line : null, h: sh ? sh.line : null });
       onChange(el.id, { x: Math.round(nx), y: Math.round(ny) }, false);
     };
-    const up = () => { setGuides({ v: false, h: false }); window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+    const up = () => { setGuides({ v: null, h: null }); window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
     window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
   };
 
@@ -137,8 +153,8 @@ export function SlideStage({ slide, selectedId, onSelect, onChange, onCheckpoint
         <SlideView slide={slide} mode="edit" />
 
         {/* snap guides */}
-        {guides.v && <div style={{ position: "absolute", left: STAGE_W / 2, top: 0, width: 1 / scale, height: STAGE_H, background: P.cyan, opacity: 0.8 }} />}
-        {guides.h && <div style={{ position: "absolute", top: STAGE_H / 2, left: 0, height: 1 / scale, width: STAGE_W, background: P.cyan, opacity: 0.8 }} />}
+        {guides.v != null && <div style={{ position: "absolute", left: guides.v, top: 0, width: 1 / scale, height: STAGE_H, background: P.cyan, opacity: 0.8, zIndex: 50 }} />}
+        {guides.h != null && <div style={{ position: "absolute", top: guides.h, left: 0, height: 1 / scale, width: STAGE_W, background: P.cyan, opacity: 0.8, zIndex: 50 }} />}
 
         {/* interaction hit-boxes */}
         {slide.elements.map((el) => {

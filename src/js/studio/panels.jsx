@@ -4,8 +4,23 @@
 // from the .st-* classes injected in app.jsx.
 // ─────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from "react";
-import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_OPTIONS } from "./model";
+import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_OPTIONS, SLIDE_STATUSES, STATUS_COLORS } from "./model";
 import { SlideView } from "./stage";
+import { measureOverflow, isBrandColor } from "./lint";
+
+// Truncation warning: shown under the property editor whenever the selected
+// element's text won't fit its box at true stage size.
+function FitWarning({ el }) {
+  const [fit, setFit] = useState(null);
+  useEffect(() => { setFit(measureOverflow(el)); }, [el]);
+  if (!fit || fit.fits) return null;
+  return (
+    <div className="st-fit-warn">
+      ⚠ This text won't fit — it needs ≈{fit.neededH}px of height but the box is {fit.boxH}px.
+      Shorten the copy, reduce the font size, or enlarge the box; clipped text is unreadable when presented.
+    </div>
+  );
+}
 
 /* ── control primitives ─────────────────────────────────────────────────── */
 function Field({ label, children, wide }) {
@@ -39,11 +54,17 @@ function Toggle({ value, onChange, onCheckpoint }) {
   return <button className={"st-toggle" + (value ? " on" : "")} onClick={() => { onCheckpoint && onCheckpoint(); onChange(!value); }}>{value ? "On" : "Off"}</button>;
 }
 function Swatches({ value, onChange, onCheckpoint, allowNone }) {
+  // Brand-token guard: a free hex value that isn't (a tint of) the Telia
+  // palette gets flagged inline — the ✓ Review panel lists all of them.
+  const offBrand = typeof value === "string" && !isBrandColor(value);
   return (
     <div className="st-swatches">
       {allowNone && <button className={"st-sw none" + (value == null ? " on" : "")} title="None" onClick={() => { onCheckpoint && onCheckpoint(); onChange(null); }} />}
       {SWATCHES.map((s) => <button key={s.name} title={s.name} className={"st-sw" + (value === s.value ? " on" : "")} style={{ background: s.value }} onClick={() => { onCheckpoint && onCheckpoint(); onChange(s.value); }} />)}
-      <input className="st-hex" type="text" value={typeof value === "string" ? value : ""} placeholder="#hex" onFocus={onCheckpoint} onChange={(e) => onChange(e.target.value)} />
+      <input className={"st-hex" + (offBrand ? " offbrand" : "")} type="text" value={typeof value === "string" ? value : ""} placeholder="#hex"
+        title={offBrand ? "Off-brand colour — not in the Telia palette" : undefined}
+        onFocus={onCheckpoint} onChange={(e) => onChange(e.target.value)} />
+      {offBrand && <span className="st-offbrand-flag" title="Off-brand colour — not in the Telia palette">⚠</span>}
     </div>
   );
 }
@@ -73,6 +94,7 @@ export function Inspector({ element, slide, onChangeElement, onChangeSlide, onCh
   const cp = onCheckpoint;
   const setEl = (patch) => onChangeElement(el.id, patch, false);
   const setProp = (k, v) => setEl({ props: { ...el.props, [k]: v } });
+  const setProps = (patch) => setEl({ props: { ...el.props, ...patch } }); // atomic multi-key update
   const setStyle = (k, v) => setEl({ style: { ...el.style, [k]: v } });
   const setAnim = (k, v) => setEl({ anim: { ...el.anim, [k]: v } });
   const s = el.style, p = el.props;
@@ -89,7 +111,8 @@ export function Inspector({ element, slide, onChangeElement, onChangeSlide, onCh
         </div>
       </div>
 
-      <Content type={el.type} {...{ p, s, setProp, setStyle, cp }} />
+      <Content type={el.type} {...{ p, s, setProp, setProps, setStyle, cp }} />
+      <FitWarning el={el} />
 
       <Group title="Motion">
         <Field label="Entrance"><Select value={el.anim.in} onCheckpoint={cp} onChange={(v) => setAnim("in", v)} options={ENTRANCES} /></Field>
@@ -122,7 +145,7 @@ function Group({ title, children }) {
 }
 
 /* Per-type property editors. */
-function Content({ type, p, s, setProp, setStyle, cp }) {
+function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
   const colorField = (label, key, allowNone) => <Field label={label}><Swatches value={s[key]} allowNone={allowNone} onCheckpoint={cp} onChange={(v) => setStyle(key, v)} /></Field>;
 
   if (type === "heading" || type === "text") {
@@ -266,7 +289,7 @@ function Content({ type, p, s, setProp, setStyle, cp }) {
       </Group>
     );
   }
-  if (type === "chart") return <ChartEditor p={p} setProp={setProp} cp={cp} />;
+  if (type === "chart") return <ChartEditor p={p} setProp={setProp} setProps={setProps} cp={cp} />;
   if (type === "radar") return <RadarEditor p={p} s={s} setProp={setProp} setStyle={setStyle} cp={cp} colorField={colorField} />;
   if (type === "orbit") {
     return (
@@ -310,8 +333,15 @@ function GradientCtl({ p, setProp, cp, label = "Gradient" }) {
   );
 }
 
-function ChartEditor({ p, setProp, cp }) {
+// Chart data lives in an editable mini-table: X labels across the top, one
+// row per series (colour dot cycles the brand palette), numbers in the cells.
+// Every edit redraws the chart — no chart is ever "drawn" by hand.
+function ChartEditor({ p, setProp, setProps, cp }) {
   const setSeries = (i, patch) => { const n = p.series.map((s, j) => (j === i ? { ...s, ...patch } : s)); setProp("series", n); };
+  const setCell = (i, j, v) => setSeries(i, { values: p.xLabels.map((_, k) => (k === j ? v : p.series[i].values[k] ?? 0)) });
+  const nextColor = (c) => { const i = SWATCHES.findIndex((s) => s.value === c); return SWATCHES[(i + 1) % SWATCHES.length].value; };
+  const addColumn = () => { cp(); setProps({ xLabels: [...p.xLabels, `Cat ${p.xLabels.length + 1}`], series: p.series.map((s) => ({ ...s, values: [...p.xLabels.map((_, k) => s.values[k] ?? 0), 0] })) }); };
+  const delColumn = (j) => { cp(); setProps({ xLabels: p.xLabels.filter((_, k) => k !== j), series: p.series.map((s) => ({ ...s, values: p.xLabels.map((_, k) => s.values[k] ?? 0).filter((_, k) => k !== j) })) }); };
   const hint = {
     combo: "The last series draws as the line; the others as columns.",
     pie: "Slices come from the first series' values, one per X label.",
@@ -326,18 +356,43 @@ function ChartEditor({ p, setProp, cp }) {
         <Field label="Axis max"><Num value={p.axisMax} onCheckpoint={cp} onChange={(v) => setProp("axisMax", v)} /></Field>
       </div>
       {hint && <div className="st-muted" style={{ fontSize: 11.5, margin: "2px 0 8px", lineHeight: 1.4 }}>{hint}</div>}
-      <Field label="X labels (comma)" wide><TextLine value={p.xLabels.join(", ")} onCheckpoint={cp} onChange={(v) => setProp("xLabels", v.split(",").map((x) => x.trim()))} /></Field>
-      {p.series.map((sr, i) => (
-        <div className="st-subcard" key={i}>
-          <div className="st-arr-row">
-            <input className="st-in" value={sr.label} onFocus={cp} onChange={(e) => setSeries(i, { label: e.target.value })} />
-            <button className="st-icon danger" title="Remove series" onClick={() => { cp(); setProp("series", p.series.filter((_, j) => j !== i)); }}>✕</button>
-          </div>
-          <Swatches value={sr.color} onCheckpoint={cp} onChange={(v) => setSeries(i, { color: v })} />
-          <TextLine value={sr.values.join(", ")} onCheckpoint={cp} onChange={(v) => setSeries(i, { values: v.split(",").map((x) => Number(x.trim()) || 0) })} />
-        </div>
-      ))}
-      <button className="st-btn sm" onClick={() => { cp(); setProp("series", [...p.series, { label: "Series", color: P.green, values: p.xLabels.map(() => 0) }]); }}>+ Series</button>
+      <div className="st-chart-table-wrap">
+        <table className="st-chart-table">
+          <thead>
+            <tr>
+              <th></th>
+              {p.xLabels.map((l, j) => (
+                <th key={j}>
+                  <input value={l} onFocus={cp} onChange={(e) => setProp("xLabels", p.xLabels.map((x, k) => (k === j ? e.target.value : x)))} />
+                  {p.xLabels.length > 1 && <button className="st-cell-del" title="Remove column" onClick={() => delColumn(j)}>✕</button>}
+                </th>
+              ))}
+              <th><button className="st-icon" title="Add column" onClick={addColumn}>＋</button></th>
+            </tr>
+          </thead>
+          <tbody>
+            {p.series.map((sr, i) => (
+              <tr key={i}>
+                <td>
+                  <div className="st-series-cell">
+                    <button className="st-series-dot" style={{ background: sr.color }} title="Series colour — click to cycle the brand palette"
+                      onClick={() => { cp(); setSeries(i, { color: nextColor(sr.color) }); }} />
+                    <input value={sr.label} onFocus={cp} onChange={(e) => setSeries(i, { label: e.target.value })} />
+                  </div>
+                </td>
+                {p.xLabels.map((_, j) => (
+                  <td key={j}>
+                    <input type="number" step="any" value={sr.values[j] ?? 0} onFocus={cp}
+                      onChange={(e) => { if (e.target.value === "") return; const n = Number(e.target.value); if (!Number.isNaN(n)) setCell(i, j, n); }} />
+                  </td>
+                ))}
+                <td>{p.series.length > 1 && <button className="st-icon danger" title="Remove series" onClick={() => { cp(); setProp("series", p.series.filter((_, k) => k !== i)); }}>✕</button>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <button className="st-btn sm" onClick={() => { cp(); setProp("series", [...p.series, { label: `Series ${p.series.length + 1}`, color: SWATCHES[(p.series.length + 3) % SWATCHES.length].value, values: p.xLabels.map(() => 0) }]); }}>+ Series</button>
     </Group>
   );
 }
@@ -396,6 +451,7 @@ function SlideInspector({ slide, onChangeSlide, onCheckpoint }) {
       <Group title="Slide">
         <Field label="Name" wide><TextLine value={slide.name} onCheckpoint={cp} onChange={(v) => onChangeSlide({ name: v }, false)} /></Field>
         <Field label="Transition in"><Select value={slide.transition} onCheckpoint={cp} onChange={(v) => onChangeSlide({ transition: v }, false)} options={TRANSITIONS} /></Field>
+        <Field label="Status"><Seg value={slide.status || "draft"} onCheckpoint={cp} onChange={(v) => onChangeSlide({ status: v }, true)} options={SLIDE_STATUSES} /></Field>
       </Group>
       <Group title="Background">
         <Field label="Type"><Select value={slide.background.type} onCheckpoint={cp} onChange={(v) => setBg({ type: v })} options={BACKGROUNDS} /></Field>
@@ -427,23 +483,43 @@ function Thumb({ slide }) {
   );
 }
 
-export function Navigator({ slides, current, onSelect, onAdd, onDuplicate, onDelete, onMove }) {
+export function Navigator({ slides, current, onSelect, onAdd, onDuplicate, onDelete, onMove, onStatus }) {
+  // Review-cycle filter: show all slides or only those at one status.
+  const [filter, setFilter] = useState("all");
+  const cycle = (s) => SLIDE_STATUSES[(SLIDE_STATUSES.indexOf(s || "draft") + 1) % SLIDE_STATUSES.length];
+  const shown = slides.filter((s) => filter === "all" || (s.status || "draft") === filter).length;
   return (
     <div className="st-nav">
       <div className="st-nav-hd"><span>Slides</span><button className="st-btn sm primary" onClick={onAdd}>+ Slide</button></div>
-      <div className="st-nav-list">
-        {slides.map((s, i) => (
-          <div key={s.id} className={"st-slide" + (i === current ? " on" : "")} onClick={() => onSelect(i)}>
-            <div className="st-slide-top"><span className="st-slide-no">{i + 1}</span><span className="st-slide-name">{s.name}</span></div>
-            <Thumb slide={s} />
-            <div className="st-slide-ctrls" onClick={(e) => e.stopPropagation()}>
-              <button className="st-icon" title="Move up" onClick={() => onMove(i, -1)}>↑</button>
-              <button className="st-icon" title="Move down" onClick={() => onMove(i, 1)}>↓</button>
-              <button className="st-icon" title="Duplicate" onClick={() => onDuplicate(i)}>⧉</button>
-              <button className="st-icon danger" title="Delete" onClick={() => onDelete(i)}>✕</button>
-            </div>
-          </div>
+      <div className="st-nav-filter">
+        {["all", ...SLIDE_STATUSES].map((f) => (
+          <button key={f} className={"st-filter-chip" + (filter === f ? " on" : "")} onClick={() => setFilter(f)}>
+            {f !== "all" && <span className="st-status-dot" style={{ background: STATUS_COLORS[f] }} />}{f}
+          </button>
         ))}
+      </div>
+      {shown === 0 && <div className="st-hint">No “{filter}” slides.</div>}
+      <div className="st-nav-list">
+        {slides.map((s, i) => {
+          if (filter !== "all" && (s.status || "draft") !== filter) return null;
+          return (
+            <div key={s.id} className={"st-slide" + (i === current ? " on" : "")} onClick={() => onSelect(i)}>
+              <div className="st-slide-top">
+                <span className="st-slide-no">{i + 1}</span><span className="st-slide-name">{s.name}</span>
+                <button className="st-status-dot big" style={{ background: STATUS_COLORS[s.status || "draft"] }}
+                  title={`Status: ${s.status || "draft"} — click to cycle`}
+                  onClick={(e) => { e.stopPropagation(); onStatus(i, cycle(s.status)); }} />
+              </div>
+              <Thumb slide={s} />
+              <div className="st-slide-ctrls" onClick={(e) => e.stopPropagation()}>
+                <button className="st-icon" title="Move up" onClick={() => onMove(i, -1)}>↑</button>
+                <button className="st-icon" title="Move down" onClick={() => onMove(i, 1)}>↓</button>
+                <button className="st-icon" title="Duplicate" onClick={() => onDuplicate(i)}>⧉</button>
+                <button className="st-icon danger" title="Delete" onClick={() => onDelete(i)}>✕</button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -502,7 +578,7 @@ function InsertMenu({ onInsert, close }) {
   ));
 }
 
-export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onSiteCopy, saved }) {
+export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onSiteCopy, onReview, saved }) {
   return (
     <div className="st-toolbar">
       <div className="st-tb-left">
@@ -544,6 +620,7 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
       </div>
       <div className="st-tb-right">
         <span className={"st-saved" + (saved ? " on" : "")}>{saved ? "Saved ✓" : "Saving…"}</span>
+        <button className="st-btn" onClick={onReview} title="Lint every slide: text fit, projector-size fonts, contrast, density, alt text, off-brand colours">✓ Review</button>
         <Dropdown wrapClass="st-export" menuClass="st-export-menu" label="Export ▾" render={(close) => (
           <>
             <button className="st-export-item" onClick={() => { onExportHtml(); close(); }}>

@@ -12,6 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import { STAGE_W, STAGE_H } from "./model";
 import { slideToCanvasHtml } from "./canvas-interop";
+import { SLICE_COLORS } from "./chart-svg";
 
 const EMU_PER_IN = 914400;
 
@@ -95,19 +96,7 @@ export function addCanvasPageToPptx(pptx, htmlText) {
     const chartAttr = shp.getAttribute("data-chart");
     if (chartAttr) {
       try {
-        const c = JSON.parse(chartAttr);
-        const type = c.kind === "bar" ? pptx.charts.BAR : c.kind === "line" ? pptx.charts.LINE : pptx.charts.AREA;
-        slide.addChart(type,
-          (c.series || []).map((s) => ({ name: s.label, labels: c.xLabels || [], values: s.values || [] })),
-          {
-            x, y, w, h,
-            chartColors: (c.series || []).map((s) => (cssColor(s.color) || { color: "990AE3" }).color),
-            valAxisMaxVal: c.axisMax || undefined,
-            showLegend: true, legendPos: "t", legendColor: "F4E0FF",
-            catAxisLabelColor: "F4E0FF", valAxisLabelColor: "F4E0FF",
-            catGridLine: { style: "none" }, valGridLine: { color: "3D1556", style: "dash" },
-            plotArea: { fill: { color: "29003E", transparency: 100 } },
-          });
+        addNativeChart(pptx, slide, JSON.parse(chartAttr), { x, y, w, h }, bg?.color);
         return;
       } catch { /* fall through to generic handling */ }
     }
@@ -168,6 +157,96 @@ export function addCanvasPageToPptx(pptx, htmlText) {
     if (runs.length) slide.addText(runs, opts);
     else if (fill || line) slide.addShape(opts.shape, opts);
   });
+}
+
+// Map a Studio chart (props.kind + series) to a native PowerPoint chart —
+// every kind offered by the Insert → Chart picker exports as the matching
+// PowerPoint chart type.
+function addNativeChart(pptx, slide, c, pos, bgHex) {
+  const kind = c.kind || "area";
+  const series = c.series || [];
+  const labels = c.xLabels || [];
+  const hex = (col, fallback = "990AE3") => (cssColor(col) || { color: fallback }).color;
+  const seriesData = series.map((s) => ({ name: s.label, labels, values: s.values || [] }));
+  const seriesColors = series.map((s) => hex(s.color));
+  const common = {
+    ...pos,
+    showLegend: true, legendPos: "t", legendColor: "F4E0FF",
+    catAxisLabelColor: "F4E0FF", valAxisLabelColor: "F4E0FF",
+    valAxisMaxVal: c.axisMax || undefined,
+    catGridLine: { style: "none" }, valGridLine: { color: "3D1556", style: "dash" },
+    plotArea: { fill: { color: "29003E", transparency: 100 } },
+  };
+
+  switch (kind) {
+    case "bar":
+      slide.addChart(pptx.charts.BAR, seriesData, { ...common, barDir: "col", chartColors: seriesColors });
+      return;
+    case "barh":
+      slide.addChart(pptx.charts.BAR, seriesData, { ...common, barDir: "bar", chartColors: seriesColors });
+      return;
+    case "line":
+      slide.addChart(pptx.charts.LINE, seriesData, { ...common, chartColors: seriesColors, lineSize: 2.5 });
+      return;
+    case "combo": {
+      // Columns for every series but the last, which draws as the line —
+      // same convention as the canvas renderer.
+      const cols = seriesData.slice(0, -1), lineS = seriesData.slice(-1);
+      if (!cols.length || !lineS.length) break;
+      slide.addChart([
+        { type: pptx.charts.BAR, data: cols, options: { barDir: "col", chartColors: seriesColors.slice(0, -1) } },
+        { type: pptx.charts.LINE, data: lineS, options: { chartColors: seriesColors.slice(-1), lineSize: 2.5 } },
+      ], common);
+      return;
+    }
+    case "pie":
+    case "doughnut": {
+      const first = seriesData.slice(0, 1);
+      if (!first.length) break;
+      slide.addChart(kind === "pie" ? pptx.charts.PIE : pptx.charts.DOUGHNUT, first, {
+        ...common, holeSize: kind === "doughnut" ? 55 : undefined,
+        chartColors: labels.map((_, i) => hex(SLICE_COLORS[i % SLICE_COLORS.length])),
+        dataLabelColor: "F4E0FF",
+      });
+      return;
+    }
+    case "radar":
+      slide.addChart(pptx.charts.RADAR, seriesData, { ...common, radarStyle: "standard", chartColors: seriesColors });
+      return;
+    case "bubble":
+      // First entry supplies the X positions; each series contributes Y values
+      // with the value doubling as the bubble size (matches the canvas).
+      slide.addChart(pptx.charts.BUBBLE, [
+        { name: "X-Axis", values: labels.map((_, i) => i + 1) },
+        ...series.map((s) => ({ name: s.label, values: s.values || [], sizes: (s.values || []).map((v) => Math.max(0.1, v)) })),
+      ], { ...common, chartColors: seriesColors });
+      return;
+    case "waterfall": {
+      // PowerPoint (pre-2016 format) has no native waterfall: build the
+      // classic stacked-bar equivalent — an invisible base series (slide
+      // background colour) carrying visible delta bars, plus a Total column.
+      const deltas = (series[0]?.values || []).slice(0, labels.length);
+      const cum = [];
+      deltas.reduce((acc, d, i) => (cum[i] = acc + d), 0);
+      const end = cum[cum.length - 1] || 0;
+      const base = deltas.map((d, i) => Math.min(i === 0 ? 0 : cum[i - 1], cum[i])).concat(0);
+      const mag = deltas.map((d) => Math.abs(d)).concat(end);
+      const wLabels = [...labels, "Total"];
+      slide.addChart(pptx.charts.BAR, [
+        { name: "", labels: wLabels, values: base },
+        { name: series[0]?.label || "Change", labels: wLabels, values: mag },
+      ], {
+        ...common, barDir: "col", barGrouping: "stacked", showLegend: false,
+        chartColors: [bgHex || "29003E", hex(series[0]?.color, "00D4FF")],
+        valAxisMaxVal: c.axisMax || undefined,
+      });
+      return;
+    }
+    default:
+      break;
+  }
+  // Fallback (unknown kind / degenerate data): area chart of whatever we have.
+  slide.addChart(pptx.charts.AREA, seriesData, { ...common, chartColors: seriesColors });
 }
 
 // ── Deck → .pptx download ───────────────────────────────────────────────────

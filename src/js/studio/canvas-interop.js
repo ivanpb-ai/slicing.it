@@ -16,6 +16,7 @@
 // and 1 px = 0.75 pt.
 // ─────────────────────────────────────────────────────────────────────────
 import { P, FONTS, STAGE_W, STAGE_H, createSlide, createElement, baseAnim } from "./model";
+import { chartMarkup } from "./chart-svg";
 
 const EMU_PER_IN = 914400;
 const EMU_PER_PX = 9525;
@@ -155,8 +156,9 @@ export function slideToCanvasParts(slide) {
           (p.label ? para("center", span(p.label, { px: 16, color: P.muted })) : "") });
         break;
       case "chart":
-        // Carried as data so the PowerPoint exporter can rebuild a native chart.
-        shapesHtml += `<div class="shp" data-chart="${esc(JSON.stringify({ kind: p.kind, xLabels: p.xLabels, axisMax: p.axisMax, series: p.series }))}" style="left:${pctX(el.x)}%;top:${pctY(el.y)}%;width:${pctX(el.w)}%;height:${pctY(el.h)}%;justify-content:center;"></div>\n`;
+        // Drawn inline for the HTML view; carried as data so the PowerPoint
+        // exporter can rebuild it as a native, editable chart.
+        shapesHtml += `<div class="shp" data-chart="${esc(JSON.stringify({ kind: p.kind, xLabels: p.xLabels, axisMax: p.axisMax, series: p.series }))}" style="left:${pctX(el.x)}%;top:${pctY(el.y)}%;width:${pctX(el.w)}%;height:${pctY(el.h)}%;justify-content:center;">${chartMarkup(el).svg}</div>\n`;
         break;
       case "orbit":
         shp(el, { info: p.label, inner: para("center", span(p.label || "Orbit", { px: 18, color: s.accent || P.cyan })) });

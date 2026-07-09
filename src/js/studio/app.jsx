@@ -5,7 +5,7 @@
 // sheet injected below (KEYFRAMES drives every animation in effects.js).
 // ─────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { STAGE_W, STAGE_H, P, cloneDeep, uid, createElement, createSlide, createPresentation, starterDeck, loadManifest, listDecks, loadDeckById, saveDeckToLib, deleteDeckFromLib, setCurrentDeckId, duplicateDeckObj, validateDeck, downloadDeck } from "./model";
+import { STAGE_W, STAGE_H, P, cloneDeep, uid, createElement, createSlide, createPresentation, starterDeck, chartDefaults, loadManifest, listDecks, loadDeckById, saveDeckToLib, deleteDeckFromLib, setCurrentDeckId, duplicateDeckObj, validateDeck, downloadDeck } from "./model";
 import { KEYFRAMES } from "./effects";
 import { downloadDeckHtml } from "./export-html";
 import { SlideStage, SlideView } from "./stage";
@@ -317,9 +317,9 @@ export default function StudioApp() {
 
   const changeSlide = useCallback((patch, cp = false) => { if (cp) checkpoint(); patchSlide(current, (s) => ({ ...s, ...patch })); }, [checkpoint, current]);
 
-  const insertElement = (type) => {
+  const insertElement = (type, chartKind) => {
     checkpoint();
-    const el = createElement(type);
+    const el = createElement(type, type === "chart" && chartKind ? chartDefaults(chartKind) : {});
     patchSlide(current, (s) => ({ ...s, elements: [...s.elements, el] }));
     setSelectedId(el.id);
   };

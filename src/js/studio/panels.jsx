@@ -4,7 +4,7 @@
 // from the .st-* classes injected in app.jsx.
 // ─────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from "react";
-import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_OPTIONS } from "./model";
+import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_OPTIONS } from "./model";
 import { SlideView } from "./stage";
 
 /* ── control primitives ─────────────────────────────────────────────────── */
@@ -312,12 +312,20 @@ function GradientCtl({ p, setProp, cp, label = "Gradient" }) {
 
 function ChartEditor({ p, setProp, cp }) {
   const setSeries = (i, patch) => { const n = p.series.map((s, j) => (j === i ? { ...s, ...patch } : s)); setProp("series", n); };
+  const hint = {
+    combo: "The last series draws as the line; the others as columns.",
+    pie: "Slices come from the first series' values, one per X label.",
+    doughnut: "Slices come from the first series' values, one per X label.",
+    waterfall: "Values are per-step changes (negatives dip); a Total bar is added automatically.",
+    bubble: "Bubble size follows the value.",
+  }[p.kind];
   return (
     <Group title="Chart">
       <div className="st-grid2">
-        <Field label="Kind"><Select value={p.kind} onCheckpoint={cp} onChange={(v) => setProp("kind", v)} options={["area", "line", "bar"]} /></Field>
+        <Field label="Kind"><Select value={p.kind} onCheckpoint={cp} onChange={(v) => setProp("kind", v)} options={CHART_KINDS.map((k) => k.kind)} /></Field>
         <Field label="Axis max"><Num value={p.axisMax} onCheckpoint={cp} onChange={(v) => setProp("axisMax", v)} /></Field>
       </div>
+      {hint && <div className="st-muted" style={{ fontSize: 11.5, margin: "2px 0 8px", lineHeight: 1.4 }}>{hint}</div>}
       <Field label="X labels (comma)" wide><TextLine value={p.xLabels.join(", ")} onCheckpoint={cp} onChange={(v) => setProp("xLabels", v.split(",").map((x) => x.trim()))} /></Field>
       {p.series.map((sr, i) => (
         <div className="st-subcard" key={i}>
@@ -467,6 +475,33 @@ function relTime(ts) {
   return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+// Two-level insert menu: "Chart" opens a picker with the PowerPoint chart
+// family (column, bar, line, area, combo, pie, doughnut, radar, bubble,
+// waterfall) — each inserts a chart element seeded via chartDefaults().
+function InsertMenu({ onInsert, close }) {
+  const [chartsOpen, setChartsOpen] = useState(false);
+  if (chartsOpen) {
+    return (
+      <>
+        <button className="st-insert-item st-insert-back" onClick={() => setChartsOpen(false)}>
+          <span className="st-insert-ic">←</span>All elements
+        </button>
+        {CHART_KINDS.map((k) => (
+          <button key={k.kind} className="st-insert-item" onClick={() => { onInsert("chart", k.kind); close(); }}>
+            <span className="st-insert-ic">{k.icon}</span>{k.label}
+          </button>
+        ))}
+      </>
+    );
+  }
+  return ELEMENT_TYPES.map((t) => (
+    <button key={t.type} className="st-insert-item"
+      onClick={() => { if (t.type === "chart") { setChartsOpen(true); return; } onInsert(t.type); close(); }}>
+      <span className="st-insert-ic">{t.icon}</span>{t.label}{t.type === "chart" ? " ▸" : ""}
+    </button>
+  ));
+}
+
 export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onSiteCopy, saved }) {
   return (
     <div className="st-toolbar">
@@ -502,11 +537,7 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
       </div>
       <div className="st-tb-center">
         <Dropdown wrapClass="st-insert" menuClass="st-insert-menu" btnClass="st-btn primary" label="✚ Insert ▾" render={(close) => (
-          ELEMENT_TYPES.map((t) => (
-            <button key={t.type} className="st-insert-item" onClick={() => { onInsert(t.type); close(); }}>
-              <span className="st-insert-ic">{t.icon}</span>{t.label}
-            </button>
-          ))
+          <InsertMenu onInsert={onInsert} close={close} />
         )} />
         <button className="st-btn" disabled={!canUndo} onClick={onUndo} title="Undo (Ctrl+Z)">↶</button>
         <button className="st-btn" disabled={!canRedo} onClick={onRedo} title="Redo (Ctrl+Shift+Z)">↷</button>

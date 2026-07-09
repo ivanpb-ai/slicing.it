@@ -14,6 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import { P } from "../palette";
 import { KEYFRAMES } from "./effects";
+import { chartMarkup } from "./chart-svg";
 
 /* eslint-disable no-var */
 function PLAYER(DECK, P) {
@@ -252,55 +253,21 @@ function PLAYER(DECK, P) {
       };
     },
     chart: function (el) {
-      var p = el.props, W = 800, H = 340, padL = 50, padB = 36, padT = 12, padR = 20;
-      var max = p.axisMax || Math.max.apply(null, [1].concat(p.series.reduce(function (a, s) { return a.concat(s.values); }, [])));
-      var n = p.xLabels.length;
-      var xAt = function (i) { return padL + (i / Math.max(1, n - 1)) * (W - padL - padR); };
-      var yAt = function (v) { return (H - padB) - (v / max) * (H - padB - padT); };
-      var lineP = function (vals) { return vals.map(function (v, i) { return (i === 0 ? "M " : "L ") + xAt(i) + " " + yAt(v); }).join(" "); };
-      var areaP = function (vals) { return lineP(vals) + " L " + xAt(n - 1) + " " + (H - padB) + " L " + xAt(0) + " " + (H - padB) + " Z"; };
+      // Every chart kind shares one SVG renderer (chart-svg.js) with the
+      // Studio canvas, so the exported page matches the editor exactly.
+      var m = chartMarkup(el);
       var box = div({ width: "100%", height: "100%", display: "flex", flexDirection: "column" });
-      var legend = div({ display: "flex", justifyContent: "flex-end", gap: 16, marginBottom: 6, fontFamily: FONTS.mono, fontSize: 11 }, box);
-      p.series.forEach(function (s) {
+      var legend = div({ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "4px 16px", marginBottom: 6, fontFamily: FONTS.mono, fontSize: 11 }, box);
+      m.legend.forEach(function (it) {
         var item = document.createElement("span");
         css(item, { display: "inline-flex", alignItems: "center", gap: 6, color: P.dim });
         var sw = document.createElement("span");
-        css(sw, { width: 10, height: 10, borderRadius: 2, background: s.color });
-        item.appendChild(sw); item.appendChild(document.createTextNode(s.label));
+        css(sw, { width: 10, height: 10, borderRadius: 2, background: it.color });
+        item.appendChild(sw); item.appendChild(document.createTextNode(it.label));
         legend.appendChild(item);
       });
-      var uid = "cg" + Math.random().toString(36).slice(2, 8);
-      var defs = p.series.map(function (s, i) {
-        return '<linearGradient id="' + uid + i + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="' + esc(s.color) + '" stop-opacity="0.8"/><stop offset="100%" stop-color="' + esc(s.color) + '" stop-opacity="0.12"/></linearGradient>';
-      }).join("");
-      var grid = [0, 0.25, 0.5, 0.75, 1].map(function (f, i) {
-        var y = (H - padB) - (i / 4) * (H - padB - padT);
-        return '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + y + '" y2="' + y + '" stroke="' + esc(el.style.grid || P.faint) + '" stroke-dasharray="2 4"/><text x="' + (padL - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="9" fill="' + esc(el.style.axis || P.muted) + '" font-family="' + esc(FONTS.mono) + '">' + Math.round(max * f) + "</text>";
-      }).join("");
-      var seriesM = p.series.map(function (s, i) {
-        var body;
-        if (p.kind === "bar") {
-          body = s.values.map(function (v, j) {
-            var bw = (W - padL - padR) / n * 0.5 / p.series.length;
-            return '<rect x="' + (xAt(j) - (p.series.length * bw) / 2 + i * bw) + '" y="' + yAt(v) + '" width="' + bw * 0.85 + '" height="' + ((H - padB) - yAt(v)) + '" fill="' + esc(s.color) + '" rx="2" opacity="0.85"/>';
-          }).join("");
-        } else {
-          body = (p.kind !== "line" ? '<path d="' + areaP(s.values) + '" fill="url(#' + uid + i + ')" opacity="0.7"/>' : "") +
-            '<path d="' + lineP(s.values) + '" fill="none" stroke="' + esc(s.color) + '" stroke-width="2.5"/>';
-        }
-        return '<g class="sgrp" style="transition:opacity 1s;opacity:0">' + body + "</g>";
-      }).join("");
-      var labels = p.xLabels.map(function (x, i) {
-        return '<text x="' + xAt(i) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="11" fill="' + esc(P.dim) + '" font-family="' + esc(FONTS.mono) + '">' + esc(x) + "</text>";
-      }).join("");
-      var node = svg('<svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="xMidYMid meet" style="width:100%;flex:1;min-height:0"><defs>' + defs + "</defs>" + grid + seriesM + labels + "</svg>");
-      box.appendChild(node);
-      return {
-        node: box,
-        activate: function () {
-          node.querySelectorAll(".sgrp").forEach(function (g) { g.style.opacity = 1; });
-        },
-      };
+      box.appendChild(svg(m.svg));
+      return { node: box };
     },
     orbit: function (el) {
       var s = el.style, sats = ["🛰️", "🛰️", "📡"];

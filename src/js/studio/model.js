@@ -50,7 +50,7 @@ export const EASE_OPTIONS = ["out", "inout", "back", "linear"];
 export const TRANSITIONS = ["fade", "slide-left", "slide-up", "zoom", "flip", "none"];
 export const SLIDE_STATUSES = ["draft", "review", "final"];
 export const STATUS_COLORS = { draft: "rgba(244,224,255,0.35)", review: P.gold, final: P.green };
-export const BACKGROUNDS = ["nebula", "aurora", "starfield", "grid", "mesh", "gradient", "solid"];
+export const BACKGROUNDS = ["nebula", "aurora", "starfield", "grid", "mesh", "waves", "rain", "circuit", "rings", "beams", "bokeh", "gradient", "solid"];
 export const ALIGN = ["left", "center", "right"];
 
 // Chart kinds — the standard PowerPoint chart family. `kind` is stored in

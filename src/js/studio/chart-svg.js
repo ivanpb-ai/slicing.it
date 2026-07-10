@@ -8,18 +8,22 @@
 // native charts — see export-pptx.js.
 //
 //   chartMarkup(el) → { legend: [{label, color}], svg: "<svg…>" }
+//
+// makeChartMarkup(P) is a SELF-CONTAINED factory: export-html.js serialises
+// it into the exported presentation with Function.toString(), so nothing in
+// it may reference module scope — everything it needs comes from its P
+// argument or is defined inside.
 // ─────────────────────────────────────────────────────────────────────────
-import { P, FONTS } from "./model";
+import { P } from "./model";
 
-// Per-slice colours for pie/doughnut (categories, not series).
-export const SLICE_COLORS = [P.purple, P.cyan, P.magenta, P.gold, P.green, P.electric, P.orange, P.teal];
+export function makeChartMarkup(P) {
+  const SLICE_COLORS = [P.purple, P.cyan, P.magenta, P.gold, P.green, P.electric, P.orange, P.teal];
+  const MONO = "'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace";
+  const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const num = (v) => (typeof v === "number" && isFinite(v) ? v : 0);
+  const W = 800, H = 340;
 
-const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-const num = (v) => (typeof v === "number" && isFinite(v) ? v : 0);
-
-const W = 800, H = 340;
-
-export function chartMarkup(el) {
+  return function chartMarkup(el) {
   const p = el.props || {};
   const kind = p.kind || "area";
   const series = (p.series || []).map((s) => ({ ...s, values: (s.values || []).map(num) }));
@@ -32,7 +36,7 @@ export function chartMarkup(el) {
 
   const gridCol = el.style?.grid || P.faint;
   const axisCol = el.style?.axis || P.muted;
-  const mono = esc(FONTS.mono);
+  const mono = esc(MONO);
   const tick = (x, y, text, anchor = "middle") =>
     `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="10" fill="${esc(axisCol)}" font-family="${mono}">${esc(text)}</text>`;
 
@@ -179,4 +183,9 @@ export function chartMarkup(el) {
     legend,
     svg: `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;flex:1;min-height:0"><defs>${defs}</defs>${body}</svg>`,
   };
+  };
 }
+
+// Module-level instances for the Studio itself.
+export const chartMarkup = makeChartMarkup(P);
+export const SLICE_COLORS = [P.purple, P.cyan, P.magenta, P.gold, P.green, P.electric, P.orange, P.teal];

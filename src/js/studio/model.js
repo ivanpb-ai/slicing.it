@@ -246,7 +246,7 @@ export function createElement(type, over = {}) {
             { label: "Sensing", color: P.gold, values: [0, 1, 5, 18, 44, 84] },
           ],
         },
-        style: { axis: P.muted, grid: P.faint, opacity: 1 },
+        style: { axis: P.muted, grid: P.faint, legend: P.dim, opacity: 1 },
         anim: baseAnim({ in: "fade" }),
       };
       break;

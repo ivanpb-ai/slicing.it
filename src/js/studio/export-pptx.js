@@ -169,12 +169,14 @@ function addNativeChart(pptx, slide, c, pos, bgHex) {
   const hex = (col, fallback = "990AE3") => (cssColor(col) || { color: fallback }).color;
   const seriesData = series.map((s) => ({ name: s.label, labels, values: s.values || [] }));
   const seriesColors = series.map((s) => hex(s.color));
+  const legendColor = hex(c.legend, "F4E0FF");
+  const axisColor = hex(c.axis, "F4E0FF");
   const common = {
     ...pos,
-    showLegend: true, legendPos: "t", legendColor: "F4E0FF",
-    catAxisLabelColor: "F4E0FF", valAxisLabelColor: "F4E0FF",
+    showLegend: true, legendPos: "t", legendColor,
+    catAxisLabelColor: axisColor, valAxisLabelColor: axisColor,
     valAxisMaxVal: c.axisMax || undefined,
-    catGridLine: { style: "none" }, valGridLine: { color: "3D1556", style: "dash" },
+    catGridLine: { style: "none" }, valGridLine: { color: hex(c.grid, "3D1556"), style: "dash" },
     plotArea: { fill: { color: "29003E", transparency: 100 } },
   };
 

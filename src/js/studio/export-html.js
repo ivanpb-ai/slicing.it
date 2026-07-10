@@ -258,9 +258,10 @@ function PLAYER(DECK, P) {
       var m = chartMarkup(el);
       var box = div({ width: "100%", height: "100%", display: "flex", flexDirection: "column" });
       var legend = div({ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "4px 16px", marginBottom: 6, fontFamily: FONTS.mono, fontSize: 11 }, box);
+      var legendColor = (el.style && el.style.legend) || P.dim;
       m.legend.forEach(function (it) {
         var item = document.createElement("span");
-        css(item, { display: "inline-flex", alignItems: "center", gap: 6, color: P.dim });
+        css(item, { display: "inline-flex", alignItems: "center", gap: 6, color: legendColor });
         var sw = document.createElement("span");
         css(sw, { width: 10, height: 10, borderRadius: 2, background: it.color });
         item.appendChild(sw); item.appendChild(document.createTextNode(it.label));

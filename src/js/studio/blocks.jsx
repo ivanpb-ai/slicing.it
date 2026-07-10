@@ -217,11 +217,12 @@ function Chart({ el }) {
   // All chart kinds share one SVG renderer (chart-svg.js) — the same drawing
   // used by the HTML export and the generated converter pages.
   const { legend, svg } = chartMarkup(el);
+  const legendColor = el.style?.legend || P.dim;
   return (
     <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "4px 16px", marginBottom: 6, fontFamily: FONTS.mono, fontSize: 11 }}>
         {legend.map((it, i) => (
-          <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: P.dim }}>
+          <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: legendColor }}>
             <span style={{ width: 10, height: 10, borderRadius: 2, background: it.color }} />{it.label}
           </span>
         ))}

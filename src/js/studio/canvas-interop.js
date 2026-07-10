@@ -158,7 +158,7 @@ export function slideToCanvasParts(slide) {
       case "chart":
         // Drawn inline for the HTML view; carried as data so the PowerPoint
         // exporter can rebuild it as a native, editable chart.
-        shapesHtml += `<div class="shp" data-chart="${esc(JSON.stringify({ kind: p.kind, xLabels: p.xLabels, axisMax: p.axisMax, series: p.series }))}" style="left:${pctX(el.x)}%;top:${pctY(el.y)}%;width:${pctX(el.w)}%;height:${pctY(el.h)}%;justify-content:center;">${chartMarkup(el).svg}</div>\n`;
+        shapesHtml += `<div class="shp" data-chart="${esc(JSON.stringify({ kind: p.kind, xLabels: p.xLabels, axisMax: p.axisMax, series: p.series, legend: s.legend, axis: s.axis, grid: s.grid }))}" style="left:${pctX(el.x)}%;top:${pctY(el.y)}%;width:${pctX(el.w)}%;height:${pctY(el.h)}%;justify-content:center;">${chartMarkup(el).svg}</div>\n`;
         break;
       case "orbit":
         shp(el, { info: p.label, inner: para("center", span(p.label || "Orbit", { px: 18, color: s.accent || P.cyan })) });
@@ -287,7 +287,11 @@ export function canvasHtmlToSlide(htmlText) {
     if (chartData) {
       try {
         const c = JSON.parse(chartData);
-        el("chart", { x, y, w, h, rotation, props: { kind: c.kind || "area", xLabels: c.xLabels || [], axisMax: c.axisMax, series: c.series || [] } });
+        el("chart", {
+          x, y, w, h, rotation,
+          props: { kind: c.kind || "area", xLabels: c.xLabels || [], axisMax: c.axisMax, series: c.series || [] },
+          style: { axis: c.axis || P.muted, grid: c.grid || P.faint, legend: c.legend || P.dim, opacity: 1 },
+        });
         return;
       } catch { /* fall through to generic handling */ }
     }

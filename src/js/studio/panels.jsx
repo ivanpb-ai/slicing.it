@@ -289,7 +289,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
       </Group>
     );
   }
-  if (type === "chart") return <ChartEditor p={p} setProp={setProp} setProps={setProps} cp={cp} />;
+  if (type === "chart") return <ChartEditor p={p} s={s} setProp={setProp} setProps={setProps} setStyle={setStyle} cp={cp} />;
   if (type === "radar") return <RadarEditor p={p} s={s} setProp={setProp} setStyle={setStyle} cp={cp} colorField={colorField} />;
   if (type === "orbit") {
     return (
@@ -336,7 +336,7 @@ function GradientCtl({ p, setProp, cp, label = "Gradient" }) {
 // Chart data lives in an editable mini-table: X labels across the top, one
 // row per series (colour dot cycles the brand palette), numbers in the cells.
 // Every edit redraws the chart — no chart is ever "drawn" by hand.
-function ChartEditor({ p, setProp, setProps, cp }) {
+function ChartEditor({ p, s, setProp, setProps, setStyle, cp }) {
   const setSeries = (i, patch) => { const n = p.series.map((s, j) => (j === i ? { ...s, ...patch } : s)); setProp("series", n); };
   const setCell = (i, j, v) => setSeries(i, { values: p.xLabels.map((_, k) => (k === j ? v : p.series[i].values[k] ?? 0)) });
   const nextColor = (c) => { const i = SWATCHES.findIndex((s) => s.value === c); return SWATCHES[(i + 1) % SWATCHES.length].value; };
@@ -356,6 +356,9 @@ function ChartEditor({ p, setProp, setProps, cp }) {
         <Field label="Axis max"><Num value={p.axisMax} onCheckpoint={cp} onChange={(v) => setProp("axisMax", v)} /></Field>
       </div>
       {hint && <div className="st-muted" style={{ fontSize: 11.5, margin: "2px 0 8px", lineHeight: 1.4 }}>{hint}</div>}
+      <Field label="Legend text"><Swatches value={s.legend} onCheckpoint={cp} onChange={(v) => setStyle("legend", v)} /></Field>
+      <Field label="Axis labels"><Swatches value={s.axis} onCheckpoint={cp} onChange={(v) => setStyle("axis", v)} /></Field>
+      <Field label="Grid lines"><Swatches value={s.grid} onCheckpoint={cp} onChange={(v) => setStyle("grid", v)} /></Field>
       <div className="st-chart-table-wrap">
         <table className="st-chart-table">
           <thead>

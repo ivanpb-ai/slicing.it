@@ -29,6 +29,7 @@ export const KEYFRAMES = `
 @keyframes stOrbitR  { from { transform: rotate(360deg); } to { transform: rotate(0); } }
 @keyframes stAurora  { 0% { transform: translate3d(-8%,-6%,0) rotate(0deg); } 50% { transform: translate3d(8%,6%,0) rotate(8deg); } 100% { transform: translate3d(-8%,-6%,0) rotate(0deg); } }
 @keyframes stGridMove{ from { background-position: 0 0; } to { background-position: 0 60px; } }
+@keyframes stDrift   { 0%,100% { transform: translate3d(-4%,4%,0) scale(1); } 50% { transform: translate3d(5%,-7%,0) scale(1.1); } }
 @keyframes stHint    { 0%,100% { opacity: 0.4; transform: translateY(0); } 50% { opacity: 1; transform: translateY(5px); } }
 `;
 

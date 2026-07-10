@@ -14,11 +14,12 @@
 // ─────────────────────────────────────────────────────────────────────────
 import { P } from "../palette";
 import { KEYFRAMES } from "./effects";
-import { chartMarkup } from "./chart-svg";
+import { makeChartMarkup } from "./chart-svg";
 
 /* eslint-disable no-var */
-function PLAYER(DECK, P) {
+function PLAYER(DECK, P, MAKE_CHART) {
   var STAGE_W = 1280, STAGE_H = 720, TRANS_DUR = 0.9;
+  var chartMarkup = MAKE_CHART(P);
   var TR_CSS = "opacity " + TRANS_DUR + "s cubic-bezier(0.16,1,0.3,1), transform " + TRANS_DUR + "s cubic-bezier(0.16,1,0.3,1)";
   var FONTS = {
     head: "'Telia Sans Heading','Telia Sans',system-ui,sans-serif",
@@ -338,6 +339,35 @@ function PLAYER(DECK, P) {
   };
 
   // ── backgrounds (mirror studio backgrounds.jsx; return {node, stop?}) ──
+  // Circuit traces + bokeh layout, duplicated from backgrounds.jsx because
+  // this player must stay self-contained.
+  function makeCircuitPaths() {
+    var paths = [];
+    for (var i = 0; i < 14; i++) {
+      var pts = [[-20, Math.random() * STAGE_H]];
+      var x = pts[0][0], y = pts[0][1];
+      while (x < STAGE_W + 20) {
+        x += 90 + Math.random() * 200; pts.push([x, y]);
+        if (Math.random() < 0.75 && x < STAGE_W) { y = Math.max(20, Math.min(STAGE_H - 20, y + (Math.random() - 0.5) * 260)); pts.push([x, y]); }
+      }
+      var len = 0, seg = [0];
+      for (var k = 1; k < pts.length; k++) { len += Math.abs(pts[k][0] - pts[k - 1][0]) + Math.abs(pts[k][1] - pts[k - 1][1]); seg.push(len); }
+      paths.push({ pts: pts, seg: seg, len: len, speed: 0.05 + Math.random() * 0.12, off: Math.random() });
+    }
+    return paths;
+  }
+  function circuitPointAt(path, frac) {
+    var d = frac * path.len, k = 1;
+    while (k < path.seg.length - 1 && path.seg[k] < d) k++;
+    var t0 = path.seg[k - 1], t1 = path.seg[k], f = t1 > t0 ? (d - t0) / (t1 - t0) : 0;
+    var a = path.pts[k - 1], b = path.pts[k];
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+  }
+  var BOKEH_DOTS = [
+    [12, 78, 190, 0], [28, 30, 120, 1], [45, 85, 150, 2], [62, 22, 230, 0], [74, 66, 110, 1],
+    [88, 38, 170, 2], [52, 52, 90, 0], [92, 82, 140, 1], [18, 48, 80, 2], [38, 62, 60, 1],
+  ];
+
   function blob(color, x, y, size, anim, dur, parent) {
     return div({
       position: "absolute", left: x + "%", top: y + "%", width: size, height: size,
@@ -456,6 +486,112 @@ function PLAYER(DECK, P) {
       }, gr);
       div({ position: "absolute", inset: 0, background: "radial-gradient(circle at 50% 75%, " + colors[0] + "22, transparent 60%)" }, gr);
       return { node: gr };
+    }
+    if (type === "waves") {
+      var wcols = [hexToRgb(colors[0] || P.cyan), hexToRgb(colors[1] || P.purple), hexToRgb(colors[2] || P.magenta)];
+      var wdeep = hexToRgb(P.deep), wt = 0;
+      return canvasBg(function (ctx) {
+        wt += 0.008;
+        var g = ctx.createLinearGradient(0, 0, 0, STAGE_H);
+        g.addColorStop(0, "#12031f"); g.addColorStop(1, rgba(wdeep, 1));
+        ctx.fillStyle = g; ctx.fillRect(0, 0, STAGE_W, STAGE_H);
+        for (var k = 0; k < 3; k++) {
+          var c = wcols[k], base = STAGE_H * (0.3 + 0.22 * k), amp = 44 + 16 * k;
+          var dir = k % 2 ? -1 : 1, freq = 0.0062 - k * 0.0012;
+          var wave = function (x) { return base + Math.sin(x * freq + wt * (1.4 - 0.3 * k) * dir + k * 2.1) * amp + Math.sin(x * 0.0021 + wt * 0.7) * 16; };
+          [[7, 0.10], [1.8, 0.75]].forEach(function (wa) {
+            ctx.beginPath();
+            for (var x = -10; x <= STAGE_W + 10; x += 8) { var y = wave(x); x < 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+            ctx.strokeStyle = rgba(c, wa[1]); ctx.lineWidth = wa[0]; ctx.stroke();
+          });
+          for (var sp = 0; sp < 4; sp++) {
+            var sx = ((wt * (60 + 22 * k) * dir + sp * STAGE_W / 4) % (STAGE_W + 40) + STAGE_W + 40) % (STAGE_W + 40) - 20;
+            ctx.fillStyle = rgba(c, 0.9);
+            ctx.beginPath(); ctx.arc(sx, wave(sx), 2.4, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+      });
+    }
+    if (type === "rain") {
+      var rtint = hexToRgb(colors[0] || P.cyan);
+      var streams = [];
+      for (var ri = 0; ri < Math.floor(STAGE_W / 26); ri++) streams.push({ x: ri * 26 + 10, y: Math.random() * STAGE_H * 1.6 - STAGE_H * 0.6, v: 1.6 + Math.random() * 3.4, len: 70 + Math.random() * 150, w: Math.random() < 0.25 ? 2 : 1.2 });
+      return canvasBg(function (ctx) {
+        var g = ctx.createLinearGradient(0, 0, 0, STAGE_H);
+        g.addColorStop(0, "#0a0518"); g.addColorStop(1, "#1c0530");
+        ctx.fillStyle = g; ctx.fillRect(0, 0, STAGE_W, STAGE_H);
+        streams.forEach(function (s) {
+          s.y += s.v;
+          if (s.y - s.len > STAGE_H) { s.y = -20 - Math.random() * 200; s.v = 1.6 + Math.random() * 3.4; s.len = 70 + Math.random() * 150; }
+          var lg = ctx.createLinearGradient(0, s.y - s.len, 0, s.y);
+          lg.addColorStop(0, rgba(rtint, 0)); lg.addColorStop(1, rgba(rtint, 0.45));
+          ctx.strokeStyle = lg; ctx.lineWidth = s.w;
+          ctx.beginPath(); ctx.moveTo(s.x, s.y - s.len); ctx.lineTo(s.x, s.y); ctx.stroke();
+          ctx.fillStyle = "rgba(244,240,255,0.85)";
+          ctx.beginPath(); ctx.arc(s.x, s.y, s.w, 0, Math.PI * 2); ctx.fill();
+        });
+      });
+    }
+    if (type === "circuit") {
+      var ctrace = hexToRgb(colors[0] || P.purple), cpulse = hexToRgb(colors[1] || P.cyan);
+      var cpaths = makeCircuitPaths(), ct = 0;
+      return canvasBg(function (ctx) {
+        ct += 0.016;
+        var g = ctx.createLinearGradient(0, 0, STAGE_W, STAGE_H);
+        g.addColorStop(0, "#0d0420"); g.addColorStop(1, rgba(hexToRgb(P.deep), 1));
+        ctx.fillStyle = g; ctx.fillRect(0, 0, STAGE_W, STAGE_H);
+        cpaths.forEach(function (p) {
+          ctx.strokeStyle = rgba(ctrace, 0.20); ctx.lineWidth = 1.1;
+          ctx.beginPath();
+          p.pts.forEach(function (pt, k) { k ? ctx.lineTo(pt[0], pt[1]) : ctx.moveTo(pt[0], pt[1]); });
+          ctx.stroke();
+          ctx.fillStyle = rgba(ctrace, 0.4);
+          for (var k = 1; k < p.pts.length - 1; k++) { ctx.beginPath(); ctx.arc(p.pts[k][0], p.pts[k][1], 1.8, 0, Math.PI * 2); ctx.fill(); }
+          var frac = (ct * p.speed + p.off) % 1;
+          var head = circuitPointAt(p, frac), tail = circuitPointAt(p, Math.max(0, frac - 0.03));
+          ctx.strokeStyle = rgba(cpulse, 0.5); ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(tail[0], tail[1]); ctx.lineTo(head[0], head[1]); ctx.stroke();
+          ctx.fillStyle = rgba(cpulse, 0.95);
+          ctx.beginPath(); ctx.arc(head[0], head[1], 2.8, 0, Math.PI * 2); ctx.fill();
+        });
+      });
+    }
+    if (type === "rings") {
+      var rc0 = colors[0] || P.cyan, rc1 = colors[1] || P.purple;
+      var rg = div(Object.assign({}, fill, { background: "radial-gradient(circle at 62% 42%, " + rc1 + "2e, " + P.deep + " 62%)" }));
+      [420, 640, 880, 1140].forEach(function (d, i) {
+        var ring = div({
+          position: "absolute", left: "62%", top: "42%", width: d, height: d, marginLeft: -d / 2, marginTop: -d / 2,
+          borderRadius: "50%", border: "1px " + (i % 2 ? "dashed" : "solid") + " " + rc0 + (i % 2 ? "3a" : "20"),
+          animation: (i % 2 ? "stOrbitR" : "stOrbit") + " " + (36 + i * 16) + "s linear infinite",
+        }, rg);
+        div({ position: "absolute", top: -4, left: "50%", width: 8, height: 8, marginLeft: -4, borderRadius: "50%", background: rc0, boxShadow: "0 0 14px " + rc0 }, ring);
+      });
+      div({ position: "absolute", left: "62%", top: "42%", width: 200, height: 200, margin: -100, borderRadius: "50%", background: "radial-gradient(circle, " + rc1 + "5c, transparent 70%)", filter: "blur(12px)", animation: "stBreathe 7s ease-in-out infinite" }, rg);
+      return { node: rg };
+    }
+    if (type === "beams") {
+      var bc0 = colors[0] || P.purple, bc1 = colors[1] || P.cyan;
+      var bm = div(Object.assign({}, fill, { background: "linear-gradient(160deg, #12031f, " + P.deep + ")" }));
+      div({
+        position: "absolute", left: "50%", top: "112%", width: 2800, height: 2800, marginLeft: -1400, marginTop: -1400, borderRadius: "50%",
+        background: "conic-gradient(from 0deg, transparent 0deg, " + bc0 + "33 10deg, transparent 24deg, transparent 70deg, " + bc1 + "26 84deg, transparent 100deg, transparent 160deg, " + bc0 + "2b 174deg, transparent 190deg, transparent 260deg, " + bc1 + "20 274deg, transparent 290deg)",
+        filter: "blur(16px)", animation: "stOrbit 70s linear infinite",
+      }, bm);
+      div({ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 105%, " + bc0 + "2e, transparent 55%)" }, bm);
+      return { node: bm };
+    }
+    if (type === "bokeh") {
+      var bcs = [colors[0] || P.purple, colors[1] || P.cyan, colors[2] || P.magenta];
+      var bk = div(Object.assign({}, fill, { background: "linear-gradient(180deg, #14032a, " + P.deep + ")" }));
+      BOKEH_DOTS.forEach(function (dot, i) {
+        div({
+          position: "absolute", left: dot[0] + "%", top: dot[1] + "%", width: dot[2], height: dot[2], borderRadius: "50%",
+          background: "radial-gradient(circle, " + bcs[dot[3]] + "55, transparent 66%)", filter: "blur(14px)",
+          animation: "stDrift " + (14 + i * 3) + "s ease-in-out " + (-i * 2.2) + "s infinite",
+        }, bk);
+      });
+      return { node: bk };
     }
     if (type === "gradient") return { node: div(Object.assign({}, fill, { background: "linear-gradient(135deg, " + colors[0] + ", " + (colors[1] || P.deep) + ")" })) };
     return { node: div(Object.assign({}, fill, { background: colors[0] || P.deep })) };
@@ -662,7 +798,7 @@ export function buildDeckHtml(deck) {
 </div>
 <script>
 /* Built with NorthStar Presentation Studio. Navigate with arrow keys, space or click. */
-(${PLAYER.toString()})(${deckJson}, ${paletteJson});
+(${PLAYER.toString()})(${deckJson}, ${paletteJson}, ${makeChartMarkup.toString()});
 </script>
 </body>
 </html>

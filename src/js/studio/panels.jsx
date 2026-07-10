@@ -449,6 +449,13 @@ function LoopEditor({ p, setProp, cp }) {
 const BG_SEED_COLORS = {
   nebula: [P.purple, P.deep], aurora: [P.purple, P.magenta, P.cyan], starfield: [P.cyan, P.light],
   grid: [P.cyan], mesh: [P.purple, P.magenta, P.cyan], gradient: [P.purple, P.deep],
+  waves: [P.cyan, P.purple, P.magenta], rain: [P.cyan], circuit: [P.purple, P.cyan],
+  rings: [P.cyan, P.purple], beams: [P.purple, P.cyan], bokeh: [P.purple, P.cyan, P.magenta],
+};
+// How many colour slots each background exposes in the inspector.
+const BG_SLOTS = {
+  solid: 2, gradient: 2, nebula: 1, starfield: 1, grid: 1, rain: 1,
+  circuit: 2, rings: 2, beams: 2, aurora: 3, mesh: 3, waves: 3, bokeh: 3,
 };
 const isNearWhite = (c) => {
   if (typeof c !== "string") return true;
@@ -471,7 +478,7 @@ function SlideInspector({ slide, onChangeSlide, onCheckpoint }) {
     const next = isNearWhite(colors[0]) ? seed : seed.map((d, i) => colors[i] || d);
     setBg({ type: v, colors: next });
   };
-  const slots = slide.background.type === "solid" || slide.background.type === "gradient" ? 2 : (slide.background.type === "nebula" || slide.background.type === "starfield" || slide.background.type === "grid") ? 1 : 3;
+  const slots = BG_SLOTS[slide.background.type] ?? 3;
   return (
     <div className="st-inspector">
       <div className="st-insp-head"><span className="st-insp-type">Slide</span></div>

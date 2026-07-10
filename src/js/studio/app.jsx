@@ -669,7 +669,7 @@ const STUDIO_CSS = `
 .st-in,.st-area,.st-sel,.st-hex{width:100%;font:inherit;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:var(--in);color:#F4E0FF;}
 .st-in:focus,.st-area:focus,.st-sel:focus,.st-hex:focus{outline:none;border-color:${P.cyan};}
 .st-area{resize:vertical;line-height:1.45;}
-.st-sel{appearance:none;cursor:pointer;}
+.st-sel{appearance:none;cursor:pointer;padding-right:24px;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="9" height="6"><path d="M0 0l4.5 6L9 0z" fill="%23F4E0FF" opacity="0.55"/></svg>');background-repeat:no-repeat;background-position:right 9px center;}
 .st-seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex:1;}
 .st-seg button{flex:1;background:transparent;color:${P.dim};border:0;padding:6px 4px;border-left:1px solid var(--line);text-transform:capitalize;}
 .st-seg button:first-child{border-left:0;}

@@ -442,11 +442,35 @@ function LoopEditor({ p, setProp, cp }) {
   );
 }
 
+// Sensible colour seeds per background type — used when the current colours
+// don't suit the type being switched to (e.g. a slide imported from the
+// Slide Converter carries a solid white; a white-based nebula just looks
+// washed out, which reads as "the animated backgrounds are broken").
+const BG_SEED_COLORS = {
+  nebula: [P.purple, P.deep], aurora: [P.purple, P.magenta, P.cyan], starfield: [P.cyan, P.light],
+  grid: [P.cyan], mesh: [P.purple, P.magenta, P.cyan], gradient: [P.purple, P.deep],
+};
+const isNearWhite = (c) => {
+  if (typeof c !== "string") return true;
+  const m = /^#([0-9a-f]{6})$/i.exec(c.trim());
+  if (!m) return false;
+  const n = parseInt(m[1], 16);
+  return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255) > 216;
+};
+
 function SlideInspector({ slide, onChangeSlide, onCheckpoint }) {
   const cp = onCheckpoint;
   const setBg = (patch) => onChangeSlide({ background: { ...slide.background, ...patch } }, false);
   const colors = slide.background.colors || [];
   const setColor = (i, v) => { const n = [...colors]; n[i] = v; setBg({ colors: n }); };
+  const setType = (v) => {
+    const seed = BG_SEED_COLORS[v];
+    if (!seed) { setBg({ type: v }); return; } // solid keeps whatever is there
+    // A near-white base means the colours came from a solid/imported slide —
+    // reseed entirely; otherwise keep the user's colours and pad missing slots.
+    const next = isNearWhite(colors[0]) ? seed : seed.map((d, i) => colors[i] || d);
+    setBg({ type: v, colors: next });
+  };
   const slots = slide.background.type === "solid" || slide.background.type === "gradient" ? 2 : (slide.background.type === "nebula" || slide.background.type === "starfield" || slide.background.type === "grid") ? 1 : 3;
   return (
     <div className="st-inspector">
@@ -457,7 +481,7 @@ function SlideInspector({ slide, onChangeSlide, onCheckpoint }) {
         <Field label="Status"><Seg value={slide.status || "draft"} onCheckpoint={cp} onChange={(v) => onChangeSlide({ status: v }, true)} options={SLIDE_STATUSES} /></Field>
       </Group>
       <Group title="Background">
-        <Field label="Type"><Select value={slide.background.type} onCheckpoint={cp} onChange={(v) => setBg({ type: v })} options={BACKGROUNDS} /></Field>
+        <Field label="Type"><Select value={slide.background.type} onCheckpoint={cp} onChange={setType} options={BACKGROUNDS} /></Field>
         {Array.from({ length: slots }).map((_, i) => (
           <Field key={i} label={i === 0 ? "Colour" : `Colour ${i + 1}`}><Swatches value={colors[i]} onCheckpoint={cp} onChange={(v) => setColor(i, v)} /></Field>
         ))}

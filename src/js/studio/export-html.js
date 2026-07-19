@@ -258,10 +258,11 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
     chart: function (el) {
       // Every chart kind shares one SVG renderer (chart-svg.js) with the
       // Studio canvas, so the exported page matches the editor exactly.
-      var m = chartMarkup(el);
+      var reveal = !!(el.props && el.props.reveal);
+      var m = chartMarkup(el, { animate: reveal });
       var box = div({ width: "100%", height: "100%", display: "flex", flexDirection: "column" });
-      var legend = div({ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "4px 16px", marginBottom: 6, fontFamily: FONTS.mono, fontSize: 11 }, box);
       var legendColor = (el.style && el.style.legend) || P.dim;
+      var legend = div({ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "4px 16px", marginBottom: 6, fontFamily: FONTS.mono, fontSize: 11 }, box);
       m.legend.forEach(function (it) {
         var item = document.createElement("span");
         css(item, { display: "inline-flex", alignItems: "center", gap: 6, color: legendColor });
@@ -270,8 +271,16 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
         item.appendChild(sw); item.appendChild(document.createTextNode(it.label));
         legend.appendChild(item);
       });
-      box.appendChild(svg(m.svg));
-      return { node: box };
+      var node = svg(m.svg);
+      box.appendChild(node);
+      return {
+        node: box,
+        // Rebuilding the svg on slide entry restarts the reveal stagger.
+        activate: reveal ? function () {
+          var fresh = svg(chartMarkup(el, { animate: true }).svg);
+          box.replaceChild(fresh, node); node = fresh;
+        } : undefined,
+      };
     },
     orbit: function (el) {
       var s = el.style, sats = ["🛰️", "🛰️", "📡"];

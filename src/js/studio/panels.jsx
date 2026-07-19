@@ -356,6 +356,10 @@ function ChartEditor({ p, s, setProp, setProps, setStyle, cp }) {
         <Field label="Axis max"><Num value={p.axisMax} onCheckpoint={cp} onChange={(v) => setProp("axisMax", v)} /></Field>
       </div>
       {hint && <div className="st-muted" style={{ fontSize: 11.5, margin: "2px 0 8px", lineHeight: 1.4 }}>{hint}</div>}
+      <div className="st-grid2">
+        <Field label="Rotate slowly"><Toggle value={!!p.rotate} onCheckpoint={cp} onChange={(v) => setProp("rotate", v)} /></Field>
+        <Field label="Reveal 1-by-1"><Toggle value={!!p.reveal} onCheckpoint={cp} onChange={(v) => setProp("reveal", v)} /></Field>
+      </div>
       <Field label="Legend text"><Swatches value={s.legend} onCheckpoint={cp} onChange={(v) => setStyle("legend", v)} /></Field>
       <Field label="Axis labels"><Swatches value={s.axis} onCheckpoint={cp} onChange={(v) => setStyle("axis", v)} /></Field>
       <Field label="Grid lines"><Swatches value={s.grid} onCheckpoint={cp} onChange={(v) => setStyle("grid", v)} /></Field>

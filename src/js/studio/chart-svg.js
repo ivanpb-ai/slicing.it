@@ -23,9 +23,16 @@ export function makeChartMarkup(P) {
   const num = (v) => (typeof v === "number" && isFinite(v) ? v : 0);
   const W = 800, H = 340;
 
-  return function chartMarkup(el) {
+  return function chartMarkup(el, opts) {
   const p = el.props || {};
   const kind = p.kind || "area";
+  // "Reveal one by one": every data item is wrapped in a <g> that fades in
+  // with a staggered delay (stChartIn keyframe, injected globally).
+  const animate = !!(opts && opts.animate);
+  let itemIdx = 0;
+  const item = (inner) => animate
+    ? `<g style="opacity:0;animation:stChartIn 0.55s cubic-bezier(0.16,1,0.3,1) ${(0.1 + itemIdx++ * 0.13).toFixed(2)}s forwards">${inner}</g>`
+    : inner;
   const series = (p.series || []).map((s) => ({ ...s, values: (s.values || []).map(num) }));
   const xLabels = p.xLabels || [];
   const s0 = series[0] || { label: "", color: P.cyan, values: [] };
@@ -67,13 +74,13 @@ export function makeChartMarkup(P) {
       const bw = plotW / n * 0.6 / Math.max(1, cols.length);
       body += s.values.map((v, j) => {
         const cx = padL + ((j + 0.5) / n) * plotW;
-        return `<rect x="${cx - (cols.length * bw) / 2 + i * bw}" y="${yAt(v)}" width="${bw * 0.85}" height="${(H - padB) - yAt(v)}" fill="${esc(s.color)}" rx="2" opacity="0.9"/>`;
+        return item(`<rect x="${cx - (cols.length * bw) / 2 + i * bw}" y="${yAt(v)}" width="${bw * 0.85}" height="${(H - padB) - yAt(v)}" fill="${esc(s.color)}" rx="2" opacity="0.9"/>`);
       }).join("");
     });
     if (lineSeries) {
       const pts = lineSeries.values.map((v, j) => `${padL + ((j + 0.5) / n) * plotW},${yAt(v)}`);
-      body += `<polyline points="${pts.join(" ")}" fill="none" stroke="${esc(lineSeries.color)}" stroke-width="2.5"/>`
-        + pts.map((pt) => { const [x, y] = pt.split(","); return `<circle cx="${x}" cy="${y}" r="4" fill="${esc(lineSeries.color)}"/>`; }).join("");
+      body += item(`<polyline points="${pts.join(" ")}" fill="none" stroke="${esc(lineSeries.color)}" stroke-width="2.5"/>`
+        + pts.map((pt) => { const [x, y] = pt.split(","); return `<circle cx="${x}" cy="${y}" r="4" fill="${esc(lineSeries.color)}"/>`; }).join(""));
     }
   } else if (kind === "barh") {
     const max = p.axisMax || Math.max(1, ...allVals);
@@ -88,7 +95,7 @@ export function makeChartMarkup(P) {
       const bh = plotH / n * 0.6 / Math.max(1, series.length);
       body += s.values.map((v, j) => {
         const cy = padT + ((j + 0.5) / n) * plotH;
-        return `<rect x="${padL2}" y="${cy - (series.length * bh) / 2 + i * bh}" width="${xAt(v) - padL2}" height="${bh * 0.85}" fill="${esc(s.color)}" rx="2" opacity="0.9"/>`;
+        return item(`<rect x="${padL2}" y="${cy - (series.length * bh) / 2 + i * bh}" width="${xAt(v) - padL2}" height="${bh * 0.85}" fill="${esc(s.color)}" rx="2" opacity="0.9"/>`);
       }).join("");
     });
     body += xLabels.map((l, j) => tick(padL2 - 8, padT + ((j + 0.5) / n) * plotH + 4, l, "end")).join("");
@@ -100,11 +107,13 @@ export function makeChartMarkup(P) {
     const lineP = (vals) => vals.map((v, i) => `${i === 0 ? "M" : "L"} ${xAt(i)} ${yAt(v)}`).join(" ");
     body += yTicks(max) + xCats(false);
     series.forEach((s, i) => {
+      let seg = "";
       if (kind === "area") {
         defs += `<linearGradient id="cg_${el.id}_${i}" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="${esc(s.color)}" stop-opacity="0.8"/><stop offset="100%" stop-color="${esc(s.color)}" stop-opacity="0.12"/></linearGradient>`;
-        body += `<path d="${lineP(s.values)} L ${xAt(n - 1)} ${H - padB} L ${xAt(0)} ${H - padB} Z" fill="url(#cg_${el.id}_${i})" opacity="0.7"/>`;
+        seg += `<path d="${lineP(s.values)} L ${xAt(n - 1)} ${H - padB} L ${xAt(0)} ${H - padB} Z" fill="url(#cg_${el.id}_${i})" opacity="0.7"/>`;
       }
-      body += `<path d="${lineP(s.values)}" fill="none" stroke="${esc(s.color)}" stroke-width="2.5"/>`;
+      seg += `<path d="${lineP(s.values)}" fill="none" stroke="${esc(s.color)}" stroke-width="2.5"/>`;
+      body += item(seg);
     });
   } else if (kind === "pie" || kind === "doughnut") {
     const cx = W / 2, cy = (H - 8) / 2, R = Math.min(W, H) / 2 - 22;
@@ -117,8 +126,8 @@ export function makeChartMarkup(P) {
       const large = frac > 0.5 ? 1 : 0;
       const [x0, y0] = [cx + R * Math.cos(a0), cy + R * Math.sin(a0)];
       const [x1, y1] = [cx + R * Math.cos(a1), cy + R * Math.sin(a1)];
-      if (frac > 0.999) body += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${esc(SLICE_COLORS[i % SLICE_COLORS.length])}"/>`;
-      else if (frac > 0) body += `<path d="M ${cx} ${cy} L ${x0} ${y0} A ${R} ${R} 0 ${large} 1 ${x1} ${y1} Z" fill="${esc(SLICE_COLORS[i % SLICE_COLORS.length])}" stroke="${esc(P.deep)}" stroke-width="1.5"/>`;
+      if (frac > 0.999) body += item(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="${esc(SLICE_COLORS[i % SLICE_COLORS.length])}"/>`);
+      else if (frac > 0) body += item(`<path d="M ${cx} ${cy} L ${x0} ${y0} A ${R} ${R} 0 ${large} 1 ${x1} ${y1} Z" fill="${esc(SLICE_COLORS[i % SLICE_COLORS.length])}" stroke="${esc(P.deep)}" stroke-width="1.5"/>`);
       a0 = a1;
     });
     if (kind === "doughnut") body += `<circle cx="${cx}" cy="${cy}" r="${R * 0.55}" fill="${esc(el.style?.hole || P.deep)}"/>`;
@@ -138,7 +147,7 @@ export function makeChartMarkup(P) {
     }
     series.forEach((s) => {
       const pts = Array.from({ length: n }, (_, i) => pt(i, (Math.max(0, s.values[i] || 0) / max) * R).join(",")).join(" ");
-      body += `<polygon points="${pts}" fill="${esc(s.color)}" fill-opacity="0.15" stroke="${esc(s.color)}" stroke-width="2"/>`;
+      body += item(`<polygon points="${pts}" fill="${esc(s.color)}" fill-opacity="0.15" stroke="${esc(s.color)}" stroke-width="2"/>`);
     });
   } else if (kind === "bubble") {
     const max = p.axisMax || Math.max(1, ...allVals);
@@ -148,7 +157,7 @@ export function makeChartMarkup(P) {
     series.forEach((s) => {
       body += s.values.map((v, j) => {
         const x = padL + ((j + 0.5) / n) * plotW;
-        return `<circle cx="${x}" cy="${yAt(v)}" r="${8 + (Math.max(0, v) / max) * 20}" fill="${esc(s.color)}" fill-opacity="0.75" stroke="${esc(s.color)}"/>`;
+        return item(`<circle cx="${x}" cy="${yAt(v)}" r="${8 + (Math.max(0, v) / max) * 20}" fill="${esc(s.color)}" fill-opacity="0.75" stroke="${esc(s.color)}"/>`);
       }).join("");
     });
   } else if (kind === "waterfall") {
@@ -169,19 +178,20 @@ export function makeChartMarkup(P) {
       const yTop = yAt(Math.max(from, to));
       const hgt = Math.max(2, Math.abs(yAt(from) - yAt(to)));
       const col = d >= 0 ? s0.color : (el.style?.negative || P.orange);
-      body += `<rect x="${x}" y="${yTop}" width="${bw}" height="${hgt}" fill="${esc(col)}" rx="2" opacity="0.9"/>`
+      body += item(`<rect x="${x}" y="${yTop}" width="${bw}" height="${hgt}" fill="${esc(col)}" rx="2" opacity="0.9"/>`
         + `<line x1="${x + bw}" x2="${x + bw + plotW / n * 0.4}" y1="${yAt(to)}" y2="${yAt(to)}" stroke="${esc(gridCol)}" stroke-dasharray="3 3"/>`
-        + tick(x + bw / 2, yTop - 6, String(d));
+        + tick(x + bw / 2, yTop - 6, String(d)));
       body += tick(padL + ((i + 0.5) / n) * plotW, H - 10, xLabels[i] || "");
     });
     const xT = padL + ((n - 0.5) / n) * plotW - bw / 2;
-    body += `<rect x="${xT}" y="${yAt(end)}" width="${bw}" height="${(H - padB) - yAt(end)}" fill="${esc(el.style?.total || P.purple)}" rx="2"/>`
-      + tick(xT + bw / 2, yAt(end) - 6, String(end)) + tick(padL + ((n - 0.5) / n) * plotW, H - 10, "Total");
+    body += item(`<rect x="${xT}" y="${yAt(end)}" width="${bw}" height="${(H - padB) - yAt(end)}" fill="${esc(el.style?.total || P.purple)}" rx="2"/>`
+      + tick(xT + bw / 2, yAt(end) - 6, String(end))) + tick(padL + ((n - 0.5) / n) * plotW, H - 10, "Total");
   }
 
+  const spin = p.rotate ? "animation:stSpin 40s linear infinite;transform-origin:50% 50%;" : "";
   return {
     legend,
-    svg: `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;flex:1;min-height:0"><defs>${defs}</defs>${body}</svg>`,
+    svg: `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;flex:1;min-height:0;${spin}"><defs>${defs}</defs>${body}</svg>`,
   };
   };
 }

@@ -216,7 +216,7 @@ function Ring({ el, mode, active }) {
 function Chart({ el }) {
   // All chart kinds share one SVG renderer (chart-svg.js) — the same drawing
   // used by the HTML export and the generated converter pages.
-  const { legend, svg } = chartMarkup(el);
+  const { legend, svg } = chartMarkup(el, { animate: !!el.props.reveal });
   const legendColor = el.style?.legend || P.dim;
   return (
     <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>

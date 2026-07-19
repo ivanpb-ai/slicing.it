@@ -451,12 +451,17 @@ const BG_SEED_COLORS = {
   grid: [P.cyan], mesh: [P.purple, P.magenta, P.cyan], gradient: [P.purple, P.deep],
   waves: [P.cyan, P.purple, P.magenta], rain: [P.cyan], circuit: [P.purple, P.cyan],
   rings: [P.cyan, P.purple], beams: [P.purple, P.cyan], bokeh: [P.purple, P.cyan, P.magenta],
+  map: [P.cyan, P.magenta],
 };
 // How many colour slots each background exposes in the inspector.
 const BG_SLOTS = {
   solid: 2, gradient: 2, nebula: 1, starfield: 1, grid: 1, rain: 1,
-  circuit: 2, rings: 2, beams: 2, aurora: 3, mesh: 3, waves: 3, bokeh: 3,
+  circuit: 2, rings: 2, beams: 2, map: 2, aurora: 3, mesh: 3, waves: 3, bokeh: 3,
 };
+const DEFAULT_MAP_LOCATIONS = [
+  { label: "Stockholm", lat: 59.33, lng: 18.07 },
+  { label: "Singapore", lat: 1.35, lng: 103.82 },
+];
 const isNearWhite = (c) => {
   if (typeof c !== "string") return true;
   const m = /^#([0-9a-f]{6})$/i.exec(c.trim());
@@ -464,6 +469,35 @@ const isNearWhite = (c) => {
   const n = parseInt(m[1], 16);
   return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255) > 216;
 };
+
+// The map background's tour stops: up to four labelled lat/lng points the
+// camera zooms into, one after another.
+function MapLocationsEditor({ locations, onChange, cp }) {
+  const setLoc = (i, patch) => onChange(locations.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+  return (
+    <Group title="Map locations">
+      <div className="st-muted" style={{ fontSize: 11.5, marginBottom: 8, lineHeight: 1.4 }}>
+        The camera slowly zooms into each location in turn. Coordinates are decimal degrees
+        (e.g. Stockholm 59.33, 18.07 — negative = south / west).
+      </div>
+      {locations.map((l, i) => (
+        <div className="st-subcard" key={i}>
+          <div className="st-arr-row">
+            <input className="st-in" placeholder="Label (optional)" value={l.label || ""} onFocus={cp} onChange={(e) => setLoc(i, { label: e.target.value })} />
+            <button className="st-icon danger" title="Remove location" onClick={() => { cp(); onChange(locations.filter((_, j) => j !== i)); }}>✕</button>
+          </div>
+          <div className="st-grid2">
+            <Field label="Latitude"><Num value={l.lat} step={0.01} min={-60} max={85} onCheckpoint={cp} onChange={(v) => setLoc(i, { lat: v })} /></Field>
+            <Field label="Longitude"><Num value={l.lng} step={0.01} min={-180} max={180} onCheckpoint={cp} onChange={(v) => setLoc(i, { lng: v })} /></Field>
+          </div>
+        </div>
+      ))}
+      {locations.length < 4 && (
+        <button className="st-btn sm" onClick={() => { cp(); onChange([...locations, { label: "", lat: 0, lng: 0 }]); }}>+ Location</button>
+      )}
+    </Group>
+  );
+}
 
 function SlideInspector({ slide, onChangeSlide, onCheckpoint }) {
   const cp = onCheckpoint;
@@ -476,7 +510,9 @@ function SlideInspector({ slide, onChangeSlide, onCheckpoint }) {
     // A near-white base means the colours came from a solid/imported slide —
     // reseed entirely; otherwise keep the user's colours and pad missing slots.
     const next = isNearWhite(colors[0]) ? seed : seed.map((d, i) => colors[i] || d);
-    setBg({ type: v, colors: next });
+    const patch = { type: v, colors: next };
+    if (v === "map" && !(slide.background.locations || []).length) patch.locations = DEFAULT_MAP_LOCATIONS;
+    setBg(patch);
   };
   const slots = BG_SLOTS[slide.background.type] ?? 3;
   return (
@@ -493,6 +529,9 @@ function SlideInspector({ slide, onChangeSlide, onCheckpoint }) {
           <Field key={i} label={i === 0 ? "Colour" : `Colour ${i + 1}`}><Swatches value={colors[i]} onCheckpoint={cp} onChange={(v) => setColor(i, v)} /></Field>
         ))}
       </Group>
+      {slide.background.type === "map" && (
+        <MapLocationsEditor locations={slide.background.locations || []} onChange={(locations) => setBg({ locations })} cp={cp} />
+      )}
       <div className="st-hint">Click an element to edit it. Drag on the canvas to move, drag a corner to resize, double-click text to edit inline.</div>
     </div>
   );

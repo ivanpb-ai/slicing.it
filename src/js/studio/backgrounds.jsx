@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef } from "react";
 import { STAGE_W, STAGE_H, P } from "./model";
+import { drawMap } from "./worldmap";
 
 function hexToRgb(hex) {
   if (typeof hex !== "string") return [120, 30, 170];
@@ -272,6 +273,23 @@ function CircuitCanvas({ colors }) {
   return <canvas ref={ref} style={{ width: STAGE_W, height: STAGE_H, position: "absolute", inset: 0 }} />;
 }
 
+// ── World map — camera tours the slide's chosen locations. ─────────────────
+function MapCanvas({ colors, locations }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const cvs = ref.current; if (!cvs) return;
+    const ctx = cvs.getContext("2d");
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cvs.width = STAGE_W * dpr; cvs.height = STAGE_H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    let t = 0, raf = 0;
+    const draw = () => { t += 0.016; drawMap(ctx, t, colors, locations); raf = requestAnimationFrame(draw); };
+    draw();
+    return () => cancelAnimationFrame(raf);
+  }, [colors, locations]);
+  return <canvas ref={ref} style={{ width: STAGE_W, height: STAGE_H, position: "absolute", inset: 0 }} />;
+}
+
 // CSS-only backgrounds share this absolute fill.
 const fill = { position: "absolute", inset: 0, overflow: "hidden" };
 
@@ -306,6 +324,7 @@ export function Background({ bg, mode = "live" }) {
       waves: `linear-gradient(180deg, #12031f 20%, ${c0}44 55%, ${P.deep} 90%)`,
       rain: `linear-gradient(180deg, #0a0518, ${c0}26)`,
       circuit: `radial-gradient(circle at 30% 40%, ${c0}2a, #0d0420 75%)`,
+      map: `radial-gradient(circle at 48% 42%, ${c0}30, #0c0322 72%)`,
       rings: `radial-gradient(circle at 62% 42%, ${c1}55, ${P.deep} 68%)`,
       beams: `conic-gradient(from 320deg at 50% 110%, ${P.deep}, ${c0}55, ${P.deep} 30%, ${c1}44 45%, ${P.deep} 60%)`,
       bokeh: `radial-gradient(circle at 25% 70%, ${c0}55, transparent 42%), radial-gradient(circle at 72% 30%, ${c1}44, ${P.deep} 68%)`,
@@ -320,6 +339,7 @@ export function Background({ bg, mode = "live" }) {
   if (type === "waves") return <WavesCanvas colors={colors} />;
   if (type === "rain") return <RainCanvas colors={colors} />;
   if (type === "circuit") return <CircuitCanvas colors={colors} />;
+  if (type === "map") return <MapCanvas colors={colors} locations={bg?.locations} />;
 
   if (type === "rings") {
     const c0 = colors[0] || P.cyan, c1 = colors[1] || P.purple;

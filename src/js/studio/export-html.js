@@ -15,11 +15,13 @@
 import { P } from "../palette";
 import { KEYFRAMES } from "./effects";
 import { makeChartMarkup } from "./chart-svg";
+import { makeMapRenderer } from "./worldmap";
 
 /* eslint-disable no-var */
-function PLAYER(DECK, P, MAKE_CHART) {
+function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
   var STAGE_W = 1280, STAGE_H = 720, TRANS_DUR = 0.9;
   var chartMarkup = MAKE_CHART(P);
+  var drawMap = MAKE_MAP(P);
   var TR_CSS = "opacity " + TRANS_DUR + "s cubic-bezier(0.16,1,0.3,1), transform " + TRANS_DUR + "s cubic-bezier(0.16,1,0.3,1)";
   var FONTS = {
     head: "'Telia Sans Heading','Telia Sans',system-ui,sans-serif",
@@ -556,6 +558,11 @@ function PLAYER(DECK, P, MAKE_CHART) {
         });
       });
     }
+    if (type === "map") {
+      var mlocs = (bg && bg.locations) || [];
+      var mcols = colors, mt = 0;
+      return canvasBg(function (ctx) { mt += 0.016; drawMap(ctx, mt, mcols, mlocs); });
+    }
     if (type === "rings") {
       var rc0 = colors[0] || P.cyan, rc1 = colors[1] || P.purple;
       var rg = div(Object.assign({}, fill, { background: "radial-gradient(circle at 62% 42%, " + rc1 + "2e, " + P.deep + " 62%)" }));
@@ -798,7 +805,7 @@ export function buildDeckHtml(deck) {
 </div>
 <script>
 /* Built with NorthStar Presentation Studio. Navigate with arrow keys, space or click. */
-(${PLAYER.toString()})(${deckJson}, ${paletteJson}, ${makeChartMarkup.toString()});
+(${PLAYER.toString()})(${deckJson}, ${paletteJson}, ${makeChartMarkup.toString()}, ${makeMapRenderer.toString()});
 </script>
 </body>
 </html>

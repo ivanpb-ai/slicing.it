@@ -188,7 +188,8 @@ export function makeChartMarkup(P) {
       + tick(xT + bw / 2, yAt(end) - 6, String(end))) + tick(padL + ((n - 0.5) / n) * plotW, H - 10, "Total");
   }
 
-  const spin = p.rotate ? "animation:stSpin 40s linear infinite;transform-origin:50% 50%;" : "";
+  // Horizontal (carousel-style) rotation around the vertical axis.
+  const spin = p.rotate ? "animation:stSpinY 26s linear infinite;transform-origin:50% 50%;transform-style:preserve-3d;" : "";
   return {
     legend,
     svg: `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;flex:1;min-height:0;${spin}"><defs>${defs}</defs>${body}</svg>`,

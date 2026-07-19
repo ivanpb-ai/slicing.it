@@ -50,7 +50,7 @@ export const EASE_OPTIONS = ["out", "inout", "back", "linear"];
 export const TRANSITIONS = ["fade", "slide-left", "slide-up", "zoom", "flip", "none"];
 export const SLIDE_STATUSES = ["draft", "review", "final"];
 export const STATUS_COLORS = { draft: "rgba(244,224,255,0.35)", review: P.gold, final: P.green };
-export const BACKGROUNDS = ["nebula", "aurora", "starfield", "grid", "mesh", "waves", "rain", "circuit", "rings", "beams", "bokeh", "gradient", "solid"];
+export const BACKGROUNDS = ["nebula", "aurora", "starfield", "grid", "mesh", "waves", "rain", "circuit", "rings", "beams", "bokeh", "map", "gradient", "solid"];
 export const ALIGN = ["left", "center", "right"];
 
 // Chart kinds — the standard PowerPoint chart family. `kind` is stored in
@@ -418,7 +418,15 @@ export function validateDeck(deck) {
     id: s.id || uid("slide"),
     name: typeof s.name === "string" ? s.name : "Slide",
     background: s.background && typeof s.background === "object"
-      ? { type: BACKGROUNDS.includes(s.background.type) ? s.background.type : "solid", colors: Array.isArray(s.background.colors) ? s.background.colors : [P.deep], variant: s.background.variant || 0 }
+      ? {
+          type: BACKGROUNDS.includes(s.background.type) ? s.background.type : "solid",
+          colors: Array.isArray(s.background.colors) ? s.background.colors : [P.deep],
+          variant: s.background.variant || 0,
+          // the "map" background's tour stops (up to 4, manually specified)
+          ...(Array.isArray(s.background.locations)
+            ? { locations: s.background.locations.slice(0, 4).map((l) => ({ label: String(l?.label || ""), lat: num(l?.lat, 0), lng: num(l?.lng, 0) })) }
+            : {}),
+        }
       : { type: "solid", colors: [P.deep], variant: 0 },
     transition: TRANSITIONS.includes(s.transition) ? s.transition : "fade",
     status: SLIDE_STATUSES.includes(s.status) ? s.status : "draft",

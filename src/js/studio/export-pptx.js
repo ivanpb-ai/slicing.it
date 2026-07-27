@@ -222,7 +222,7 @@ function addNativeChart(pptx, slide, c, pos, bgHex) {
       // with the value doubling as the bubble size (matches the canvas).
       slide.addChart(pptx.charts.BUBBLE, [
         { name: "X-Axis", values: labels.map((_, i) => i + 1) },
-        ...series.map((s) => ({ name: s.label, values: s.values || [], sizes: (s.values || []).map((v) => Math.max(0.1, v)) })),
+        ...series.map((s) => ({ name: s.label, values: s.values || [], sizes: (s.values || []).map((v) => Math.max(0.1, Math.abs(v)) ) })),
       ], { ...common, chartColors: seriesColors });
       return;
     case "waterfall": {

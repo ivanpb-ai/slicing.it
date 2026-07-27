@@ -58,7 +58,10 @@ export function makeChartMarkup(P) {
   // Value domain: negative values extend the axis below a zero baseline.
   const dataMin = Math.min(0, ...allVals, 0);
   const dataMax = Math.max(...allVals, 0);
-  const domain = () => [dataMin, Math.max(p.axisMax || dataMax, dataMin + 1, 1)];
+  // axisMax may stretch the axis but never clip below the data — a stale
+  // axisMax (e.g. carried over from another chart kind) must not push bars
+  // outside the plot.
+  const domain = () => [dataMin, Math.max(p.axisMax || 0, dataMax, dataMin + 1, 1)];
   const yTicks = (lo, hi) => [0, 0.25, 0.5, 0.75, 1].map((f) => {
     const y = (H - padB) - f * plotH;
     return `<line x1="${padL}" x2="${W - padR}" y1="${y}" y2="${y}" stroke="${esc(gridCol)}" stroke-dasharray="2 4"/>` + tick(padL - 8, y + 4, String(Math.round(lo + f * (hi - lo))), "end");
@@ -179,7 +182,7 @@ export function makeChartMarkup(P) {
     deltas.reduce((acc, d, i) => (cum[i] = acc + d), 0);
     const end = cum[cum.length - 1] || 0;
     const lo = Math.min(0, ...cum);
-    const hi = Math.max(p.axisMax || Math.max(...cum, end, 0), lo + 1, 1);
+    const hi = Math.max(p.axisMax || 0, ...cum, end, 0, lo + 1, 1);
     const yAt = (v) => (H - padB) - ((v - lo) / (hi - lo)) * plotH;
     const n = deltas.length + 1;
     body += yTicks(lo, hi);

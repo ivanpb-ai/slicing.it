@@ -228,21 +228,31 @@ function addNativeChart(pptx, slide, c, pos, bgHex) {
     case "waterfall": {
       // PowerPoint (pre-2016 format) has no native waterfall: build the
       // classic stacked-bar equivalent — an invisible base series (slide
-      // background colour) carrying visible delta bars, plus a Total column.
+      // background colour) plus up/down magnitude series, so segments above
+      // and below zero both land correctly (PowerPoint stacks positives
+      // upward and negatives downward from the axis).
       const deltas = (series[0]?.values || []).slice(0, labels.length);
       const cum = [];
       deltas.reduce((acc, d, i) => (cum[i] = acc + d), 0);
       const end = cum[cum.length - 1] || 0;
-      const base = deltas.map((d, i) => Math.min(i === 0 ? 0 : cum[i - 1], cum[i])).concat(0);
-      const mag = deltas.map((d) => Math.abs(d)).concat(end);
+      const segs = deltas.map((d, i) => {
+        const from = i === 0 ? 0 : cum[i - 1], to = cum[i];
+        return [Math.min(from, to), Math.max(from, to)];
+      }).concat([[Math.min(0, end), Math.max(0, end)]]);
+      const base = [], up = [], down = [];
+      for (const [a, b] of segs) {
+        if (a >= 0) { base.push(a); up.push(b - a); down.push(0); }
+        else if (b <= 0) { base.push(b); up.push(0); down.push(a - b); }
+        else { base.push(0); up.push(b); down.push(a); } // straddles zero
+      }
       const wLabels = [...labels, "Total"];
       slide.addChart(pptx.charts.BAR, [
         { name: "", labels: wLabels, values: base },
-        { name: series[0]?.label || "Change", labels: wLabels, values: mag },
+        { name: series[0]?.label || "Change", labels: wLabels, values: up },
+        { name: "", labels: wLabels, values: down },
       ], {
         ...common, barDir: "col", barGrouping: "stacked", showLegend: false,
-        chartColors: [bgHex || "29003E", hex(series[0]?.color, "00D4FF")],
-        valAxisMaxVal: c.axisMax || undefined,
+        chartColors: [bgHex || "29003E", hex(series[0]?.color, "00D4FF"), "FF8A65"],
       });
       return;
     }

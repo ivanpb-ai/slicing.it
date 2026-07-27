@@ -363,6 +363,10 @@ function ChartEditor({ p, s, setProp, setProps, setStyle, cp }) {
       <Field label="Legend text"><Swatches value={s.legend} onCheckpoint={cp} onChange={(v) => setStyle("legend", v)} /></Field>
       <Field label="Axis labels"><Swatches value={s.axis} onCheckpoint={cp} onChange={(v) => setStyle("axis", v)} /></Field>
       <Field label="Grid lines"><Swatches value={s.grid} onCheckpoint={cp} onChange={(v) => setStyle("grid", v)} /></Field>
+      <div className="st-grid2">
+        <Field label="Legend size"><Num value={s.legendSize ?? 11} min={6} max={40} onCheckpoint={cp} onChange={(v) => setStyle("legendSize", v)} /></Field>
+        <Field label="Axis size"><Num value={s.axisSize ?? 10} min={6} max={40} onCheckpoint={cp} onChange={(v) => setStyle("axisSize", v)} /></Field>
+      </div>
       <div className="st-chart-table-wrap">
         <table className="st-chart-table">
           <thead>

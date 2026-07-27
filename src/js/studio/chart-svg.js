@@ -43,9 +43,10 @@ export function makeChartMarkup(P) {
 
   const gridCol = el.style?.grid || P.faint;
   const axisCol = el.style?.axis || P.muted;
+  const axisSize = num(el.style?.axisSize) || 10;
   const mono = esc(MONO);
   const tick = (x, y, text, anchor = "middle") =>
-    `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="10" fill="${esc(axisCol)}" font-family="${mono}">${esc(text)}</text>`;
+    `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${axisSize}" fill="${esc(axisCol)}" font-family="${mono}">${esc(text)}</text>`;
 
   let body = "";
   let defs = "";

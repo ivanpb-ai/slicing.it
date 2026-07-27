@@ -663,7 +663,15 @@ function InsertMenu({ onInsert, close }) {
   ));
 }
 
-export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onSiteCopy, onReview, saved }) {
+const CLOUD_LABELS = {
+  ok: ["☁ synced", "Your presentations are synced across devices"],
+  sync: ["☁ syncing…", "Syncing your presentations…"],
+  off: ["this device", "Cloud sync unavailable — presentations are saved on this device only"],
+  unauth: ["sign in", "Session expired — reload and sign in to sync across devices"],
+};
+
+export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onSiteCopy, onReview, saved, cloud }) {
+  const [cloudText, cloudTitle] = CLOUD_LABELS[cloud] || CLOUD_LABELS.off;
   return (
     <div className="st-toolbar">
       <div className="st-tb-left">
@@ -704,7 +712,9 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
         <button className="st-btn" disabled={!canRedo} onClick={onRedo} title="Redo (Ctrl+Shift+Z)">↷</button>
       </div>
       <div className="st-tb-right">
-        <span className={"st-saved" + (saved ? " on" : "")}>{saved ? "Saved ✓" : "Saving…"}</span>
+        <span className={"st-saved" + (saved ? " on" : "")} title={cloudTitle}>
+          {saved ? "Saved ✓" : "Saving…"}<span className={"st-cloud " + (cloud || "off")}> · {cloudText}</span>
+        </span>
         <button className="st-btn" onClick={onReview} title="Lint every slide: text fit, projector-size fonts, contrast, density, alt text, off-brand colours">✓ Review</button>
         <Dropdown wrapClass="st-export" menuClass="st-export-menu" label="Export ▾" render={(close) => (
           <>

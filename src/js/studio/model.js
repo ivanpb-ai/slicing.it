@@ -498,14 +498,16 @@ export function loadDeckById(id) {
   return d ? validateDeck(d) : null;
 }
 
-// Persist a deck and upsert its manifest entry; marks it as the current deck.
-export function saveDeckToLib(deck) {
+// Persist a deck and upsert its manifest entry; by default marks it as the
+// current deck and stamps "now". Cloud sync passes an explicit updatedAt (the
+// remote timestamp) and makeCurrent:false so pulls don't steal focus.
+export function saveDeckToLib(deck, opts = {}) {
   writeJSON(deckKey(deck.id), deck);
   const m = loadManifest();
-  const entry = { id: deck.id, title: deck.title || "Untitled", updatedAt: Date.now() };
+  const entry = { id: deck.id, title: deck.title || "Untitled", updatedAt: opts.updatedAt ?? Date.now() };
   const i = m.items.findIndex((x) => x.id === deck.id);
   if (i >= 0) m.items[i] = entry; else m.items.push(entry);
-  m.currentId = deck.id;
+  if (opts.makeCurrent !== false) m.currentId = deck.id;
   writeJSON(MANIFEST_KEY, m);
   return listDecks();
 }

@@ -16,6 +16,7 @@ import { canvasHtmlToSlide, takeTransferredSlides } from "./canvas-interop";
 import { exportDeckPptx } from "./export-pptx";
 import { API_MODES, generateDeckPages, downloadPage, downloadPagesZip } from "./generate-pages";
 import { lintDeck } from "./lint";
+import { syncLibrary, cloudPut, cloudDelete } from "./cloud";
 
 const cloneSlide = (s) => ({ ...cloneDeep(s), id: uid("slide"), elements: s.elements.map((e) => ({ ...cloneDeep(e), id: uid("el") })) });
 
@@ -318,25 +319,64 @@ export default function StudioApp() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
   const [saved, setSaved] = useState(true);
+  // Cross-device sync state: "sync" | "ok" | "off" (API unreachable) | "unauth"
+  const [cloud, setCloud] = useState("sync");
   const [undo, setUndo] = useState([]);
   const [redo, setRedo] = useState([]);
   const fileRef = useRef(null);
   const saveTimer = useRef(0);
   const deckRef = useRef(deck);
   deckRef.current = deck;
+  const touchedRef = useRef(false); // has the user edited anything this session?
+
+  const pushCloud = useCallback((d, updatedAt) => {
+    setCloud((c) => (c === "off" || c === "unauth" ? c : "sync"));
+    cloudPut(d, updatedAt)
+      .then(() => setCloud("ok"))
+      .catch((e) => setCloud(e?.status === 401 ? "unauth" : "off"));
+  }, []);
+
+  // Pull/merge the shared library on launch; push anything newer local-side.
+  useEffect(() => {
+    let on = true;
+    (async () => {
+      try {
+        const { pulled } = await syncLibrary(deckRef.current.id);
+        if (!on) return;
+        setLibrary(listDecks());
+        // The open deck was updated on another device and nothing has been
+        // edited here yet — swap in the fresh copy.
+        if (pulled.includes(deckRef.current.id) && !touchedRef.current) {
+          const fresh = loadDeckById(deckRef.current.id);
+          if (fresh) setDeck(fresh);
+        }
+        setCloud("ok");
+      } catch (e) {
+        if (on) setCloud(e?.status === 401 ? "unauth" : "off");
+      }
+    })();
+    return () => { on = false; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const slide = deck.slides[Math.min(current, deck.slides.length - 1)];
   const selected = useMemo(() => slide.elements.find((e) => e.id === selectedId) || null, [slide, selectedId]);
 
-  // autosave (debounced)
+  // autosave (debounced) — local first, then mirrored to the shared library
   useEffect(() => {
     setSaved(false);
     clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => { saveDeckToLib(deckRef.current); setLibrary(listDecks()); setSaved(true); }, 600);
+    saveTimer.current = setTimeout(() => {
+      const now = Date.now();
+      saveDeckToLib(deckRef.current, { updatedAt: now });
+      setLibrary(listDecks());
+      setSaved(true);
+      pushCloud(deckRef.current, now);
+    }, 600);
     return () => clearTimeout(saveTimer.current);
-  }, [deck]);
+  }, [deck, pushCloud]);
 
   const checkpoint = useCallback(() => {
+    touchedRef.current = true;
     const cur = JSON.stringify(deckRef.current);
     setUndo((u) => (u[u.length - 1] === cur ? u : [...u.slice(-79), cur]));
     setRedo([]);
@@ -430,7 +470,11 @@ export default function StudioApp() {
 
   // library / deck ops — each presentation is stored separately
   const untitledName = () => `Untitled presentation ${library.length + 1}`;
-  const persistCurrent = () => saveDeckToLib(deckRef.current);
+  const persistCurrent = () => {
+    const now = Date.now();
+    saveDeckToLib(deckRef.current, { updatedAt: now });
+    pushCloud(deckRef.current, now);
+  };
   const switchTo = (d) => {
     setDeck(d); setCurrent(0); setSelectedId(null); setEditingId(null);
     setUndo([]); setRedo([]); setCurrentDeckId(d.id); setLibrary(listDecks());
@@ -441,6 +485,7 @@ export default function StudioApp() {
   const deleteDeck = (id) => {
     const item = library.find((x) => x.id === id);
     if (!window.confirm(`Delete “${item?.title || "this presentation"}”? This can't be undone.`)) return;
+    cloudDelete(id); // tombstone server-side so the deletion reaches other devices
     const m = deleteDeckFromLib(id);
     if (id === deck.id) {
       const next = m.currentId ? loadDeckById(m.currentId) : null;
@@ -534,7 +579,7 @@ export default function StudioApp() {
         onInsert={insertElement} onUndo={doUndo} onRedo={doRedo} canUndo={undo.length > 0} canRedo={redo.length > 0}
         onPresent={() => { setStartAt(current); setPresenting(true); }}
         library={library} currentId={deck.id} onOpenDeck={openDeck} onNewDeck={newPresentation} onDuplicateDeck={duplicateCurrentDeck} onDeleteDeck={deleteDeck}
-        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onSiteCopy={() => setSiteCopy(true)} onReview={() => setReviewing(true)} saved={saved}
+        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onSiteCopy={() => setSiteCopy(true)} onReview={() => setReviewing(true)} saved={saved} cloud={cloud}
       />
 
       <div className="st-body">
@@ -595,8 +640,11 @@ const STUDIO_CSS = `
 .st-title{background:transparent;border:1px solid transparent;border-radius:7px;color:#fff;font:inherit;font-weight:600;font-size:14px;padding:5px 8px;min-width:180px;}
 .st-title:hover{border-color:var(--line);}
 .st-title:focus{outline:none;border-color:${P.cyan};background:var(--in);}
-.st-saved{font-size:11px;color:${P.muted};min-width:54px;}
+.st-saved{font-size:11px;color:${P.muted};min-width:54px;white-space:nowrap;}
 .st-saved.on{color:${P.green};}
+.st-cloud{color:${P.muted};}
+.st-cloud.ok{color:${P.cyan};}
+.st-cloud.unauth{color:${P.gold};}
 .st-insert{position:relative;}
 .st-insert-menu{position:absolute;top:110%;left:0;z-index:20;background:#22093b;border:1px solid var(--line);border-radius:12px;padding:8px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px;width:280px;box-shadow:0 20px 50px rgba(0,0,0,.5);}
 .st-insert-item{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);color:#F4E0FF;border-radius:8px;padding:8px 10px;text-align:left;}

@@ -218,9 +218,10 @@ function Chart({ el }) {
   // used by the HTML export and the generated converter pages.
   const { legend, svg } = chartMarkup(el, { animate: !!el.props.reveal });
   const legendColor = el.style?.legend || P.dim;
+  const legendSize = el.style?.legendSize || 11;
   return (
     <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-      <div style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "4px 16px", marginBottom: 6, fontFamily: FONTS.mono, fontSize: 11 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "4px 16px", marginBottom: 6, fontFamily: FONTS.mono, fontSize: legendSize }}>
         {legend.map((it, i) => (
           <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: legendColor }}>
             <span style={{ width: 10, height: 10, borderRadius: 2, background: it.color }} />{it.label}

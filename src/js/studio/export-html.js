@@ -262,7 +262,8 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
       var m = chartMarkup(el, { animate: reveal });
       var box = div({ width: "100%", height: "100%", display: "flex", flexDirection: "column" });
       var legendColor = (el.style && el.style.legend) || P.dim;
-      var legend = div({ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "4px 16px", marginBottom: 6, fontFamily: FONTS.mono, fontSize: 11 }, box);
+      var legendSize = (el.style && el.style.legendSize) || 11;
+      var legend = div({ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "4px 16px", marginBottom: 6, fontFamily: FONTS.mono, fontSize: legendSize }, box);
       m.legend.forEach(function (it) {
         var item = document.createElement("span");
         css(item, { display: "inline-flex", alignItems: "center", gap: 6, color: legendColor });

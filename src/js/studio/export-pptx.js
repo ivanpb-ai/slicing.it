@@ -174,7 +174,9 @@ function addNativeChart(pptx, slide, c, pos, bgHex) {
   const common = {
     ...pos,
     showLegend: true, legendPos: "t", legendColor,
+    legendFontSize: c.legendSize || 11,
     catAxisLabelColor: axisColor, valAxisLabelColor: axisColor,
+    catAxisLabelFontSize: c.axisSize || 10, valAxisLabelFontSize: c.axisSize || 10,
     valAxisMaxVal: c.axisMax || undefined,
     catGridLine: { style: "none" }, valGridLine: { color: hex(c.grid, "3D1556"), style: "dash" },
     plotArea: { fill: { color: "29003E", transparency: 100 } },

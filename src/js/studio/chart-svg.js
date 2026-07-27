@@ -55,27 +55,34 @@ export function makeChartMarkup(P) {
   const padL = 50, padB = 30, padT = 12, padR = 20;
   const plotW = W - padL - padR, plotH = H - padB - padT;
   const allVals = series.flatMap((s) => s.values);
-  const yTicks = (max) => [0, 0.25, 0.5, 0.75, 1].map((f) => {
+  // Value domain: negative values extend the axis below a zero baseline.
+  const dataMin = Math.min(0, ...allVals, 0);
+  const dataMax = Math.max(...allVals, 0);
+  const domain = () => [dataMin, Math.max(p.axisMax || dataMax, dataMin + 1, 1)];
+  const yTicks = (lo, hi) => [0, 0.25, 0.5, 0.75, 1].map((f) => {
     const y = (H - padB) - f * plotH;
-    return `<line x1="${padL}" x2="${W - padR}" y1="${y}" y2="${y}" stroke="${esc(gridCol)}" stroke-dasharray="2 4"/>` + tick(padL - 8, y + 4, String(Math.round(max * f)), "end");
-  }).join("");
+    return `<line x1="${padL}" x2="${W - padR}" y1="${y}" y2="${y}" stroke="${esc(gridCol)}" stroke-dasharray="2 4"/>` + tick(padL - 8, y + 4, String(Math.round(lo + f * (hi - lo))), "end");
+  }).join("") + (lo < 0
+    ? (() => { const zy = (H - padB) - (-lo / (hi - lo)) * plotH; return `<line x1="${padL}" x2="${W - padR}" y1="${zy}" y2="${zy}" stroke="${esc(axisCol)}" stroke-opacity="0.55"/>`; })()
+    : "");
   const xCats = (centered) => xLabels.map((l, i) => {
     const x = centered ? padL + ((i + 0.5) / Math.max(1, xLabels.length)) * plotW : padL + (i / Math.max(1, xLabels.length - 1)) * plotW;
     return tick(x, H - 10, l);
   }).join("");
 
   if (kind === "bar" || kind === "combo") {
-    const max = p.axisMax || Math.max(1, ...allVals);
-    const yAt = (v) => (H - padB) - (v / max) * plotH;
+    const [lo, hi] = domain();
+    const yAt = (v) => (H - padB) - ((v - lo) / (hi - lo)) * plotH;
     const n = Math.max(1, xLabels.length);
     const cols = kind === "combo" ? series.slice(0, -1) : series;
     const lineSeries = kind === "combo" ? series[series.length - 1] : null;
-    body += yTicks(max) + xCats(true);
+    body += yTicks(lo, hi) + xCats(true);
     cols.forEach((s, i) => {
       const bw = plotW / n * 0.6 / Math.max(1, cols.length);
       body += s.values.map((v, j) => {
         const cx = padL + ((j + 0.5) / n) * plotW;
-        return item(`<rect x="${cx - (cols.length * bw) / 2 + i * bw}" y="${yAt(v)}" width="${bw * 0.85}" height="${(H - padB) - yAt(v)}" fill="${esc(s.color)}" rx="2" opacity="0.9"/>`);
+        const y0 = yAt(0), y1 = yAt(v);
+        return item(`<rect x="${cx - (cols.length * bw) / 2 + i * bw}" y="${Math.min(y0, y1)}" width="${bw * 0.85}" height="${Math.max(1, Math.abs(y0 - y1))}" fill="${esc(s.color)}" rx="2" opacity="0.9"/>`);
       }).join("");
     });
     if (lineSeries) {
@@ -84,34 +91,37 @@ export function makeChartMarkup(P) {
         + pts.map((pt) => { const [x, y] = pt.split(","); return `<circle cx="${x}" cy="${y}" r="4" fill="${esc(lineSeries.color)}"/>`; }).join(""));
     }
   } else if (kind === "barh") {
-    const max = p.axisMax || Math.max(1, ...allVals);
+    const [lo, hi] = domain();
     const padL2 = 110;
     const plotW2 = W - padL2 - padR;
-    const xAt = (v) => padL2 + (v / max) * plotW2;
+    const xAt = (v) => padL2 + ((v - lo) / (hi - lo)) * plotW2;
     const n = Math.max(1, xLabels.length);
     body += [0, 0.25, 0.5, 0.75, 1].map((f) =>
-      `<line y1="${padT}" y2="${H - padB}" x1="${xAt(max * f)}" x2="${xAt(max * f)}" stroke="${esc(gridCol)}" stroke-dasharray="2 4"/>` + tick(xAt(max * f), H - 10, String(Math.round(max * f)))
+      `<line y1="${padT}" y2="${H - padB}" x1="${padL2 + f * plotW2}" x2="${padL2 + f * plotW2}" stroke="${esc(gridCol)}" stroke-dasharray="2 4"/>` + tick(padL2 + f * plotW2, H - 10, String(Math.round(lo + f * (hi - lo))))
     ).join("");
+    if (lo < 0) body += `<line y1="${padT}" y2="${H - padB}" x1="${xAt(0)}" x2="${xAt(0)}" stroke="${esc(axisCol)}" stroke-opacity="0.55"/>`;
     series.forEach((s, i) => {
       const bh = plotH / n * 0.6 / Math.max(1, series.length);
       body += s.values.map((v, j) => {
         const cy = padT + ((j + 0.5) / n) * plotH;
-        return item(`<rect x="${padL2}" y="${cy - (series.length * bh) / 2 + i * bh}" width="${xAt(v) - padL2}" height="${bh * 0.85}" fill="${esc(s.color)}" rx="2" opacity="0.9"/>`);
+        const x0 = xAt(0), x1 = xAt(v);
+        return item(`<rect x="${Math.min(x0, x1)}" y="${cy - (series.length * bh) / 2 + i * bh}" width="${Math.max(1, Math.abs(x1 - x0))}" height="${bh * 0.85}" fill="${esc(s.color)}" rx="2" opacity="0.9"/>`);
       }).join("");
     });
     body += xLabels.map((l, j) => tick(padL2 - 8, padT + ((j + 0.5) / n) * plotH + 4, l, "end")).join("");
   } else if (kind === "line" || kind === "area") {
-    const max = p.axisMax || Math.max(1, ...allVals);
+    const [lo, hi] = domain();
     const n = xLabels.length;
     const xAt = (i) => padL + (i / Math.max(1, n - 1)) * plotW;
-    const yAt = (v) => (H - padB) - (v / max) * plotH;
+    const yAt = (v) => (H - padB) - ((v - lo) / (hi - lo)) * plotH;
+    const base = yAt(0); // areas fill to the zero baseline, not the plot floor
     const lineP = (vals) => vals.map((v, i) => `${i === 0 ? "M" : "L"} ${xAt(i)} ${yAt(v)}`).join(" ");
-    body += yTicks(max) + xCats(false);
+    body += yTicks(lo, hi) + xCats(false);
     series.forEach((s, i) => {
       let seg = "";
       if (kind === "area") {
         defs += `<linearGradient id="cg_${el.id}_${i}" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="${esc(s.color)}" stop-opacity="0.8"/><stop offset="100%" stop-color="${esc(s.color)}" stop-opacity="0.12"/></linearGradient>`;
-        seg += `<path d="${lineP(s.values)} L ${xAt(n - 1)} ${H - padB} L ${xAt(0)} ${H - padB} Z" fill="url(#cg_${el.id}_${i})" opacity="0.7"/>`;
+        seg += `<path d="${lineP(s.values)} L ${xAt(n - 1)} ${base} L ${xAt(0)} ${base} Z" fill="url(#cg_${el.id}_${i})" opacity="0.7"/>`;
       }
       seg += `<path d="${lineP(s.values)}" fill="none" stroke="${esc(s.color)}" stroke-width="2.5"/>`;
       body += item(seg);
@@ -151,14 +161,15 @@ export function makeChartMarkup(P) {
       body += item(`<polygon points="${pts}" fill="${esc(s.color)}" fill-opacity="0.15" stroke="${esc(s.color)}" stroke-width="2"/>`);
     });
   } else if (kind === "bubble") {
-    const max = p.axisMax || Math.max(1, ...allVals);
-    const yAt = (v) => (H - padB) - (v / max) * plotH;
+    const [lo, hi] = domain();
+    const yAt = (v) => (H - padB) - ((v - lo) / (hi - lo)) * plotH;
     const n = Math.max(1, xLabels.length);
-    body += yTicks(max) + xCats(true);
+    const span = Math.max(Math.abs(lo), Math.abs(hi), 1);
+    body += yTicks(lo, hi) + xCats(true);
     series.forEach((s) => {
       body += s.values.map((v, j) => {
         const x = padL + ((j + 0.5) / n) * plotW;
-        return item(`<circle cx="${x}" cy="${yAt(v)}" r="${8 + (Math.max(0, v) / max) * 20}" fill="${esc(s.color)}" fill-opacity="0.75" stroke="${esc(s.color)}"/>`);
+        return item(`<circle cx="${x}" cy="${yAt(v)}" r="${8 + (Math.abs(v) / span) * 20}" fill="${esc(s.color)}" fill-opacity="0.75" stroke="${esc(s.color)}"/>`);
       }).join("");
     });
   } else if (kind === "waterfall") {
@@ -167,10 +178,11 @@ export function makeChartMarkup(P) {
     const cum = [];
     deltas.reduce((acc, d, i) => (cum[i] = acc + d), 0);
     const end = cum[cum.length - 1] || 0;
-    const max = p.axisMax || Math.max(1, ...cum, end);
-    const yAt = (v) => (H - padB) - (Math.max(0, v) / max) * plotH;
+    const lo = Math.min(0, ...cum);
+    const hi = Math.max(p.axisMax || Math.max(...cum, end, 0), lo + 1, 1);
+    const yAt = (v) => (H - padB) - ((v - lo) / (hi - lo)) * plotH;
     const n = deltas.length + 1;
-    body += yTicks(max);
+    body += yTicks(lo, hi);
     const bw = plotW / n * 0.6;
     deltas.forEach((d, i) => {
       const from = i === 0 ? 0 : cum[i - 1];
@@ -185,8 +197,9 @@ export function makeChartMarkup(P) {
       body += tick(padL + ((i + 0.5) / n) * plotW, H - 10, xLabels[i] || "");
     });
     const xT = padL + ((n - 0.5) / n) * plotW - bw / 2;
-    body += item(`<rect x="${xT}" y="${yAt(end)}" width="${bw}" height="${(H - padB) - yAt(end)}" fill="${esc(el.style?.total || P.purple)}" rx="2"/>`
-      + tick(xT + bw / 2, yAt(end) - 6, String(end))) + tick(padL + ((n - 0.5) / n) * plotW, H - 10, "Total");
+    const yT0 = yAt(0), yT1 = yAt(end);
+    body += item(`<rect x="${xT}" y="${Math.min(yT0, yT1)}" width="${bw}" height="${Math.max(2, Math.abs(yT0 - yT1))}" fill="${esc(el.style?.total || P.purple)}" rx="2"/>`
+      + tick(xT + bw / 2, Math.min(yT0, yT1) - 6, String(end))) + tick(padL + ((n - 0.5) / n) * plotW, H - 10, "Total");
   }
 
   // Horizontal (carousel-style) rotation around the vertical axis.

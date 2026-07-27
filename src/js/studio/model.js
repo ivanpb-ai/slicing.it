@@ -87,7 +87,7 @@ export function chartDefaults(kind) {
     case "bubble":
       return { props: { kind, xLabels: ["1", "2", "3", "4"], axisMax: 6, series: three([4.3, 4.5, 3.4, 4.4], [2.4, 2.5, 1.8, 2.8], [2, 2, 3, 5]) } };
     case "waterfall":
-      return { props: { kind, xLabels: ["Point 1", "Point 2", "Point 3"], axisMax: 0, series: [{ label: "Change", color: P.cyan, values: [500, 200, 100] }] } };
+      return { props: { kind, xLabels: ["Point 1", "Point 2", "Point 3"], axisMax: 0, series: [{ label: "Change", color: P.cyan, values: [500, 200, -150] }] } };
     case "combo":
       return { props: { kind, xLabels: cats, axisMax: 6, series: three([4.3, 2.5, 3.5, 4.5], [2.4, 4.4, 1.8, 2.8], [2, 2, 3, 5]) } };
     case "barh":

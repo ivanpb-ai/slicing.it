@@ -27,8 +27,12 @@ function Field({ label, children, wide }) {
   return <div className={"st-field" + (wide ? " wide" : "")}><span className="st-label">{label}</span>{children}</div>;
 }
 function Num({ value, onChange, onCheckpoint, step = 1, min, max }) {
-  return <input className="st-in" type="number" step={step} min={min} max={max} value={value ?? 0} onFocus={onCheckpoint}
-    onChange={(e) => { if (e.target.value === "") return; const n = Number(e.target.value); if (!Number.isNaN(n)) onChange(n); }} />;
+  // Track the raw text locally so a partially typed value (a lone "-" while
+  // entering a negative number) isn't wiped by the controlled re-render.
+  const [txt, setTxt] = useState(value ?? 0);
+  useEffect(() => { setTxt(value ?? 0); }, [value]);
+  return <input className="st-in" type="number" step={step} min={min} max={max} value={txt} onFocus={onCheckpoint}
+    onChange={(e) => { const t = e.target.value; setTxt(t); if (t === "") return; const n = Number(t); if (!Number.isNaN(n)) onChange(n); }} />;
 }
 function TextLine({ value, onChange, onCheckpoint, placeholder }) {
   return <input className="st-in" type="text" value={value ?? ""} placeholder={placeholder} onFocus={onCheckpoint} onChange={(e) => onChange(e.target.value)} />;
@@ -392,10 +396,7 @@ function ChartEditor({ p, s, setProp, setProps, setStyle, cp }) {
                   </div>
                 </td>
                 {p.xLabels.map((_, j) => (
-                  <td key={j}>
-                    <input type="number" step="any" value={sr.values[j] ?? 0} onFocus={cp}
-                      onChange={(e) => { if (e.target.value === "") return; const n = Number(e.target.value); if (!Number.isNaN(n)) setCell(i, j, n); }} />
-                  </td>
+                  <td key={j}><Num step="any" value={sr.values[j] ?? 0} onCheckpoint={cp} onChange={(v) => setCell(i, j, v)} /></td>
                 ))}
                 <td>{p.series.length > 1 && <button className="st-icon danger" title="Remove series" onClick={() => { cp(); setProp("series", p.series.filter((_, k) => k !== i)); }}>✕</button>}</td>
               </tr>

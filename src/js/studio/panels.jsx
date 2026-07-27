@@ -4,7 +4,7 @@
 // from the .st-* classes injected in app.jsx.
 // ─────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from "react";
-import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_OPTIONS, SLIDE_STATUSES, STATUS_COLORS } from "./model";
+import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, chartDefaults, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_OPTIONS, SLIDE_STATUSES, STATUS_COLORS } from "./model";
 import { SlideView } from "./stage";
 import { measureOverflow, isBrandColor } from "./lint";
 
@@ -356,7 +356,10 @@ function ChartEditor({ p, s, setProp, setProps, setStyle, cp }) {
   return (
     <Group title="Chart">
       <div className="st-grid2">
-        <Field label="Kind"><Select value={p.kind} onCheckpoint={cp} onChange={(v) => setProp("kind", v)} options={CHART_KINDS.map((k) => k.kind)} /></Field>
+        {/* Switching kind resets the axis max — a scale tuned for one kind
+            (e.g. columns of 0–6) makes no sense for another (waterfall
+            cumulative sums). */}
+        <Field label="Kind"><Select value={p.kind} onCheckpoint={cp} onChange={(v) => setProps({ kind: v, axisMax: chartDefaults(v).props.axisMax ?? 0 })} options={CHART_KINDS.map((k) => k.kind)} /></Field>
         <Field label="Axis max"><Num value={p.axisMax} onCheckpoint={cp} onChange={(v) => setProp("axisMax", v)} /></Field>
       </div>
       {hint && <div className="st-muted" style={{ fontSize: 11.5, margin: "2px 0 8px", lineHeight: 1.4 }}>{hint}</div>}

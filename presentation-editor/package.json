@@ -1,0 +1,31 @@
+{
+  "type": "module",
+  "name": "presentation-studio",
+  "version": "1.0.0",
+  "description": "A browser-based presentation editor: drag-and-drop animated slides, live backgrounds, charts, and export to HTML or PowerPoint.",
+  "browserslist": "defaults",
+  "scripts": {
+    "start": "parcel src/index.html",
+    "dev": "parcel src/index.html",
+    "build": "parcel build src/index.html --no-cache --public-url ./"
+  },
+  "keywords": [
+    "presentation",
+    "slides",
+    "editor",
+    "pptx"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@netlify/blobs": "^10.7.10",
+    "jszip": "^3.10.1",
+    "pptxgenjs": "^4.0.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "buffer": "^6.0.3",
+    "parcel": "^2.16.3",
+    "process": "^0.11.10"
+  }
+}

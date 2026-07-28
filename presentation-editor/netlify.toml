@@ -1,0 +1,22 @@
+# Presentation Studio — Netlify configuration.
+#
+# Environment variables (Site settings → Environment variables):
+#   EDITOR_PASSWORD     optional — password-gates the editor and enables
+#                       cross-device deck sync (netlify/functions/decks.mjs).
+#                       Unset: the editor is public and decks stay device-local.
+#   PERPLEXITY_API_KEY  optional — enables AI-enriched "interactive pages"
+#                       export (netlify/functions/perplexity.mjs).
+#   PERPLEXITY_MODEL    optional — defaults to "sonar".
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Gate the editor behind the password (no-op while EDITOR_PASSWORD is unset).
+[[edge_functions]]
+  path = "/"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/index.html"
+  function = "editor-auth"

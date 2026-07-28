@@ -670,7 +670,7 @@ const CLOUD_LABELS = {
   unauth: ["sign in", "Session expired — reload and sign in to sync across devices"],
 };
 
-export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onReview, saved, cloud }) {
+export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onReview, onHelp, saved, cloud }) {
   const [cloudText, cloudTitle] = CLOUD_LABELS[cloud] || CLOUD_LABELS.off;
   return (
     <div className="st-toolbar">
@@ -710,6 +710,7 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
         <span className={"st-saved" + (saved ? " on" : "")} title={cloudTitle}>
           {saved ? "Saved ✓" : "Saving…"}<span className={"st-cloud " + (cloud || "off")}> · {cloudText}</span>
         </span>
+        <button className="st-btn" onClick={onHelp} title="How the editor works">?</button>
         <button className="st-btn" onClick={onReview} title="Lint every slide: text fit, projector-size fonts, contrast, density, alt text, off-palette colours">✓ Review</button>
         <Dropdown wrapClass="st-export" menuClass="st-export-menu" label="Export ▾" render={(close) => (
           <>

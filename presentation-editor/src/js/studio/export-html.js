@@ -786,6 +786,10 @@ body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; co
 // Add @font-face rules here to embed custom fonts in exported decks.
 const FONT_CSS = "";
 
+// Same mark as src/assets/favicon.svg, inlined so exported files keep it.
+const FAVICON = "data:image/svg+xml," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6C5CE7"/><stop offset="1" stop-color="#00D4FF"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#g)"/><rect x="12" y="16" width="40" height="28" rx="4" fill="#0B1026" opacity="0.85"/><path d="M27 23l14 7-14 7z" fill="#FFFFFF"/><rect x="22" y="48" width="20" height="3.5" rx="1.75" fill="#0B1026" opacity="0.85"/></svg>');
+
 export function buildDeckHtml(deck) {
   // <-escape so user text can never terminate the <script> block early.
   const deckJson = JSON.stringify(deck).replace(/</g, "\\u003c");
@@ -797,6 +801,7 @@ export function buildDeckHtml(deck) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${title.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</title>
+<link rel="icon" type="image/svg+xml" href="${FAVICON}">
 <style>${FONT_CSS}${KEYFRAMES}${PLAYER_CSS}</style>
 </head>
 <body>

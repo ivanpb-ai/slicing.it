@@ -21,8 +21,9 @@ export const API_MODES = [
 
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+// Same mark as src/assets/favicon.svg, inlined so downloaded pages keep it.
 const FAVICON = "data:image/svg+xml," + encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#6C5CE7" d="M12 1l4.5 6.4L23 12l-6.5 4.6L12 23l-4.5-6.4L1 12l6.5-4.6z"/></svg>');
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6C5CE7"/><stop offset="1" stop-color="#00D4FF"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#g)"/><rect x="12" y="16" width="40" height="28" rx="4" fill="#0B1026" opacity="0.85"/><path d="M27 23l14 7-14 7z" fill="#FFFFFF"/><rect x="22" y="48" width="20" height="3.5" rx="1.75" fill="#0B1026" opacity="0.85"/></svg>');
 
 // The API often echoes the queried term as a "LABEL – " prefix, which
 // duplicates the modal title. Strip it, but only when followed by a separator.

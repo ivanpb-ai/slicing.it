@@ -243,6 +243,78 @@ function GeneratePagesDialog({ deck, onClose }) {
   );
 }
 
+// ── Help dialog ─────────────────────────────────────────────────────────────
+// A quick tour of the editor's tools, opened from the toolbar's "? Help".
+const Kbd = ({ k }) => <span className="st-kbd">{k}</span>;
+
+const HELP_SECTIONS = [
+  {
+    title: "🖼 Canvas (centre)",
+    body: <>Click an element to select it, drag to move (snap guides appear against other elements and the stage centre), drag a corner handle to resize. Double-click headings, text, kickers, quotes, buttons, card titles or counter labels to edit them in place. Nudge the selection with the arrow keys (<Kbd k="Shift" /> = 10&nbsp;px steps); <Kbd k="Esc" /> deselects.</>,
+  },
+  {
+    title: "✚ Insert",
+    body: <>Adds a block to the current slide: headings, text, kickers, counters, buttons, lists, cards, icons, images, shapes, quotes, progress rings, orbit/radar/loop visuals — and charts. “Chart” opens a picker with the full PowerPoint chart family (column, bar, line, area, combo, pie, doughnut, radar, bubble, waterfall); the data is edited in a mini-table in the Inspector and the chart redraws live.</>,
+  },
+  {
+    title: "🎛 Inspector (right)",
+    body: <>Shows the selected element's content, style, <b>Motion</b> (entrance effect, delay, duration, easing, idle loop) and <b>Layout</b> (position, size, rotation, opacity). With nothing selected it edits the slide itself: name, transition, review status, and one of 14 live animated backgrounds with its colours.</>,
+  },
+  {
+    title: "🗂 Slides (left)",
+    body: <>Thumbnails of every slide. <b>+ Slide</b> adds one after the current; hovering a thumbnail reveals move / duplicate / delete. The coloured dot cycles the slide's status (draft → review → final) and the chips above filter by status.</>,
+  },
+  {
+    title: "▤ Decks",
+    body: <>Your presentation library — every deck autosaves as you edit. Create, duplicate, delete and switch decks, or <b>Import</b> a Studio <code>.json</code> file (or <code>.html</code> pages exported from this editor) as a new deck.</>,
+  },
+  {
+    title: "✓ Review",
+    body: <>Lints every slide: text that overflows its box, fonts too small to project, low contrast, too much copy, images without alt text, and colours outside the theme palette. Click an issue to jump straight to it.</>,
+  },
+  {
+    title: "⬇ Export",
+    body: <><b>HTML presentation</b> — one self-contained file with the full animated player. <b>PowerPoint (.pptx)</b> — native slides with editable charts. <b>Interactive pages</b> — one click-to-explain page per slide, optionally enriched via the Perplexity API. <b>Studio JSON</b> — the editable source, for backup or sharing.</>,
+  },
+  {
+    title: "▶ Present",
+    body: <>Fullscreen playback with entrance animations and slide transitions. Navigate with <Kbd k="→" /> <Kbd k="←" /> <Kbd k="Space" />, click left/right half of the screen, or the dots on top; <Kbd k="Home" />/<Kbd k="End" /> jump to the first/last slide and <Kbd k="Esc" /> exits.</>,
+  },
+  {
+    title: "⌨ Shortcuts",
+    body: <><Kbd k="Ctrl/⌘+Z" /> undo · <Kbd k="Ctrl/⌘+Shift+Z" /> / <Kbd k="Ctrl/⌘+Y" /> redo · <Kbd k="Ctrl/⌘+D" /> duplicate element · <Kbd k="Del" /> delete element · arrows nudge · <Kbd k="Esc" /> deselect.</>,
+  },
+  {
+    title: "💾 Saving",
+    body: <>Everything autosaves to this browser's local storage a moment after each change (“Saved ✓”). When the optional server sync is configured, “☁ synced” means the library is also mirrored across your devices; “this device” means it lives only here — use Export → Studio JSON for backups.</>,
+  },
+];
+
+function HelpDialog({ onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div className="st-gen-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="st-gen st-help">
+        <div className="st-gen-head">
+          <b>? Help — how the editor works</b>
+          <button className="st-icon" onClick={onClose}>✕</button>
+        </div>
+        <p className="st-gen-sub">Slides are composed on a fixed 1280×720 stage that scales to any screen. Everything on a slide is a block you can drag, style and animate.</p>
+        {HELP_SECTIONS.map((s) => (
+          <div key={s.title} className="st-help-sec">
+            <b>{s.title}</b>
+            <p>{s.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Pick the deck to open on launch: last-edited, else first in the library,
 // else seed the starter deck.
 function initialDeck() {
@@ -267,6 +339,7 @@ export default function StudioApp() {
   const [startAt, setStartAt] = useState(0);
   const [genPages, setGenPages] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [helping, setHelping] = useState(false);
   const [saved, setSaved] = useState(true);
   // Cross-device sync state: "sync" | "ok" | "off" (API unreachable) | "unauth"
   const [cloud, setCloud] = useState("sync");
@@ -489,7 +562,7 @@ export default function StudioApp() {
   // keyboard shortcuts (editor only)
   useEffect(() => {
     const onKey = (e) => {
-      if (presenting || genPages || reviewing) return;
+      if (presenting || genPages || reviewing || helping) return;
       const ae = document.activeElement;
       const editable = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable);
       const meta = e.metaKey || e.ctrlKey;
@@ -511,7 +584,7 @@ export default function StudioApp() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [presenting, genPages, reviewing, selectedId, slide, checkpoint, changeElement, doUndo, doRedo]);
+  }, [presenting, genPages, reviewing, helping, selectedId, slide, checkpoint, changeElement, doUndo, doRedo]);
 
   return (
     <div className="st-root">
@@ -522,7 +595,7 @@ export default function StudioApp() {
         onInsert={insertElement} onUndo={doUndo} onRedo={doRedo} canUndo={undo.length > 0} canRedo={redo.length > 0}
         onPresent={() => { setStartAt(current); setPresenting(true); }}
         library={library} currentId={deck.id} onOpenDeck={openDeck} onNewDeck={newPresentation} onDuplicateDeck={duplicateCurrentDeck} onDeleteDeck={deleteDeck}
-        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onReview={() => setReviewing(true)} saved={saved} cloud={cloud}
+        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onReview={() => setReviewing(true)} onHelp={() => setHelping(true)} saved={saved} cloud={cloud}
       />
 
       <div className="st-body">
@@ -553,6 +626,7 @@ export default function StudioApp() {
       {reviewing && <ReviewDialog deck={deck} onClose={() => setReviewing(false)}
         onGoto={(i, elId) => { setReviewing(false); setCurrent(i); setSelectedId(elId); setEditingId(null); }} />}
       {genPages && <GeneratePagesDialog deck={deck} onClose={() => setGenPages(false)} />}
+      {helping && <HelpDialog onClose={() => setHelping(false)} />}
       {presenting && <Present deck={deck} startIndex={startAt} onClose={() => setPresenting(false)} />}
     </div>
   );
@@ -578,8 +652,10 @@ const STUDIO_CSS = `
 /* toolbar */
 .st-toolbar{height:52px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px;background:rgba(12,17,36,0.97);border-bottom:1px solid var(--line);z-index:5;}
 .st-tb-left,.st-tb-center,.st-tb-right{display:flex;align-items:center;gap:8px;}
-.st-brand{font-weight:700;letter-spacing:.5px;color:${P.cyan};}
-.st-title{background:transparent;border:1px solid transparent;border-radius:7px;color:#fff;font:inherit;font-weight:600;font-size:14px;padding:5px 8px;min-width:180px;}
+.st-tb-left{flex:1 1 auto;min-width:0;}
+.st-tb-center,.st-tb-right{flex:none;}
+.st-brand{font-weight:700;letter-spacing:.5px;color:${P.cyan};white-space:nowrap;}
+.st-title{flex:1 1 auto;min-width:140px;max-width:480px;background:transparent;border:1px solid transparent;border-radius:7px;color:#fff;font:inherit;font-weight:600;font-size:14px;padding:5px 8px;text-overflow:ellipsis;}
 .st-title:hover{border-color:var(--line);}
 .st-title:focus{outline:none;border-color:${P.cyan};background:var(--in);}
 .st-saved{font-size:11px;color:${P.muted};min-width:54px;white-space:nowrap;}
@@ -713,6 +789,14 @@ const STUDIO_CSS = `
 .st-review-score.ok{color:${P.green};}
 .st-review-issue{display:block;width:100%;text-align:left;background:transparent;border:0;border-top:1px solid var(--line2);color:${P.dim};font-size:11.5px;padding:6px 11px 6px 24px;cursor:pointer;line-height:1.45;}
 .st-review-issue:hover{background:rgba(0,212,255,0.07);color:#fff;}
+
+/* help dialog */
+.st-help{width:min(720px,94vw);}
+.st-help-sec{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;background:var(--panel);}
+.st-help-sec>b{font-size:13px;}
+.st-help-sec p{margin:5px 0 0;font-size:12.5px;color:${P.dim};line-height:1.6;}
+.st-help-sec code{font-family:ui-monospace,monospace;font-size:11.5px;background:rgba(0,0,0,0.3);border-radius:4px;padding:1px 5px;}
+.st-kbd{display:inline-block;font-family:ui-monospace,monospace;font-size:10.5px;line-height:1.5;color:#fff;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 6px;background:rgba(0,0,0,0.35);white-space:nowrap;}
 
 /* generate interactive pages dialog */
 .st-gen-backdrop{position:fixed;inset:0;z-index:950;background:rgba(6,9,18,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;}

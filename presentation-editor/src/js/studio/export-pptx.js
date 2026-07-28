@@ -109,7 +109,6 @@ export function addCanvasPageToPptx(pptx, htmlText) {
       : undefined;
 
     const paras = [...shp.querySelectorAll(".para")];
-    const isHeading = shp.classList.contains("title");
     const valign = { "flex-start": "top", center: "middle", "flex-end": "bottom" }[st.justifyContent] || "top";
 
     const runs = [];

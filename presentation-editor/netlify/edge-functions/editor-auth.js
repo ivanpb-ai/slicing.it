@@ -1,4 +1,4 @@
-// Optional login gate for the editor.
+// Optional login gate for the editor, with per-user accounts.
 //
 // Why a form + cookie instead of HTTP Basic Auth?
 // The native Basic-Auth popup is suppressed in many corporate environments:
@@ -6,20 +6,48 @@
 // renders a bare 401 body and never prompts), and some managed browsers disable
 // the Basic scheme by policy. A normal HTTPS form + cookie works everywhere.
 //
-// Configure in the Netlify site's environment variables:
-//   EDITOR_PASSWORD  (optional) — the shared password. Unset → the editor is
-//                    public (and cross-device deck sync is disabled; see
-//                    netlify/functions/decks.mjs).
+// Configure in the Netlify site's environment variables (pick one):
+//   EDITOR_USERS     comma-separated "username:password" pairs, e.g.
+//                    "alice:s3cret,bob:hunter2". Each user signs in with their
+//                    own credentials and sees/edits only their own decks
+//                    (see netlify/functions/decks.mjs). Usernames: letters,
+//                    digits, "_" or "-", max 32 chars.
+//   EDITOR_PASSWORD  a single shared password — one implicit account named
+//                    "default"; everyone who signs in shares one deck library.
+//   Neither set → the editor is public and decks stay device-local.
 //
-// On success, a token (SHA-256 of the password + a static pepper) is stored in
-// an HttpOnly, Secure cookie; the password itself is never stored client-side.
+// On success two cookies are set: studio_auth (HttpOnly) carrying
+// "<user>:<SHA-256 of pepper+user+password>", and studio_user (readable) so
+// the client can namespace its local storage per user. The password itself is
+// never stored client-side. Any URL with ?signout=1 clears both cookies.
 
-const COOKIE = "studio_auth";
+const AUTH_COOKIE = "studio_auth";
+const USER_COOKIE = "studio_user";
 const PEPPER = "studio-editor-gate-v1";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+const USER_RE = /^[a-z0-9_-]{1,32}$/i;
 
-async function tokenFor(password) {
-  const bytes = new TextEncoder().encode(`${PEPPER}:${password}`);
+// → { map: Map<user, password>, multi: boolean }
+function parseUsers(env) {
+  const map = new Map();
+  const multi = env.get("EDITOR_USERS");
+  if (multi) {
+    for (const pair of multi.split(",")) {
+      const i = pair.indexOf(":");
+      if (i < 1) continue;
+      const name = pair.slice(0, i).trim();
+      const pw = pair.slice(i + 1).trim();
+      if (USER_RE.test(name) && pw) map.set(name, pw);
+    }
+    return { map, multi: true };
+  }
+  const single = env.get("EDITOR_PASSWORD");
+  if (single) map.set("default", single);
+  return { map, multi: false };
+}
+
+async function tokenFor(user, password) {
+  const bytes = new TextEncoder().encode(`${PEPPER}:${user}:${password}`);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
@@ -39,8 +67,19 @@ function readCookie(header, name) {
   return null;
 }
 
+// The auth cookie is "<user>:<token>"; returns the username or null.
+async function authedUser(cookieHeader, map) {
+  const raw = readCookie(cookieHeader, AUTH_COOKIE) || "";
+  const i = raw.indexOf(":");
+  if (i < 1) return null;
+  const user = raw.slice(0, i);
+  const pw = map.get(user);
+  if (!pw) return null;
+  return constantEquals(raw.slice(i + 1), await tokenFor(user, pw)) ? user : null;
+}
+
 // The form has no `action`, so it posts back to whatever gated path served it.
-function loginPage(failed) {
+function loginPage(multi, failed) {
   return `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="robots" content="noindex"/><title>Presentation Studio · Sign in</title>
@@ -62,9 +101,10 @@ body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:c
 <body>
  <form class="card" method="post" autocomplete="on">
   <div class="brand">◆ Presentation Studio</div>
-  <p class="sub">Enter password to continue.</p>
-  ${failed ? '<div class="err">Incorrect password — please try again.</div>' : ""}
-  <input class="pw" type="password" name="password" placeholder="Password" autofocus autocomplete="current-password" required/>
+  <p class="sub">${multi ? "Sign in to your presentations." : "Enter password to continue."}</p>
+  ${failed ? '<div class="err">Incorrect credentials — please try again.</div>' : ""}
+  ${multi ? '<input class="pw" type="text" name="username" placeholder="Username" autofocus autocomplete="username" required/>' : ""}
+  <input class="pw" type="password" name="password" placeholder="Password" ${multi ? "" : "autofocus"} autocomplete="current-password" required/>
   <button class="go" type="submit">Sign in</button>
  </form>
 </body></html>`;
@@ -73,34 +113,42 @@ body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:c
 const htmlHeaders = { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" };
 
 export default async (request, context) => {
-  const password = Netlify.env.get("EDITOR_PASSWORD");
-  if (!password) return context.next(); // no password configured — stay open
+  const { map, multi } = parseUsers(Netlify.env);
+  if (!map.size) return context.next(); // no accounts configured — stay open
 
-  const expected = await tokenFor(password);
+  const url = new URL(request.url);
+
+  // Sign out: clear both cookies and reload the page without the parameter.
+  if (url.searchParams.has("signout")) {
+    url.searchParams.delete("signout");
+    const headers = new Headers({ "Location": url.pathname + url.search, "Cache-Control": "no-store" });
+    headers.append("Set-Cookie", `${AUTH_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);
+    headers.append("Set-Cookie", `${USER_COOKIE}=; Path=/; Secure; SameSite=Lax; Max-Age=0`);
+    return new Response(null, { status: 303, headers });
+  }
 
   // Already signed in?
-  if (constantEquals(readCookie(request.headers.get("cookie"), COOKIE) || "", expected)) {
-    return context.next();
-  }
+  if (await authedUser(request.headers.get("cookie"), map)) return context.next();
 
   // Handle a sign-in submission.
   if (request.method === "POST") {
-    let supplied = "";
-    try { supplied = String((await request.formData()).get("password") || ""); } catch { /* ignore */ }
-    if (supplied && constantEquals(await tokenFor(supplied), expected)) {
-      const url = new URL(request.url);
-      return new Response(null, {
-        status: 303,
-        headers: {
-          "Location": url.pathname + url.search,
-          "Set-Cookie": `${COOKIE}=${expected}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${MAX_AGE}`,
-          "Cache-Control": "no-store",
-        },
-      });
+    let user = "default", supplied = "";
+    try {
+      const form = await request.formData();
+      supplied = String(form.get("password") || "");
+      if (multi) user = String(form.get("username") || "").trim();
+    } catch { /* ignore */ }
+    const pw = map.get(user);
+    if (pw && supplied && constantEquals(await tokenFor(user, supplied), await tokenFor(user, pw))) {
+      const token = await tokenFor(user, pw);
+      const headers = new Headers({ "Location": url.pathname + url.search, "Cache-Control": "no-store" });
+      headers.append("Set-Cookie", `${AUTH_COOKIE}=${encodeURIComponent(`${user}:${token}`)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${MAX_AGE}`);
+      headers.append("Set-Cookie", `${USER_COOKIE}=${encodeURIComponent(user)}; Path=/; Secure; SameSite=Lax; Max-Age=${MAX_AGE}`);
+      return new Response(null, { status: 303, headers });
     }
-    return new Response(loginPage(true), { status: 401, headers: htmlHeaders });
+    return new Response(loginPage(multi, true), { status: 401, headers: htmlHeaders });
   }
 
   // Otherwise show the login form.
-  return new Response(loginPage(false), { status: 200, headers: htmlHeaders });
+  return new Response(loginPage(multi, false), { status: 200, headers: htmlHeaders });
 };

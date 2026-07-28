@@ -55,9 +55,17 @@ Deploy the repo to Netlify (build command and functions are configured in
 
 | Variable | Effect |
 | --- | --- |
-| `EDITOR_PASSWORD` | Password-gates the editor (cookie-based sign-in form) and enables cross-device deck sync backed by Netlify Blobs. Unset: editor is public, decks stay device-local. |
+| `EDITOR_USERS` | Per-user accounts as comma-separated `username:password` pairs, e.g. `alice:s3cret,bob:hunter2`. Each user signs in with their own credentials and **sees and edits only their own presentations** — server-side (each user gets an isolated Netlify Blobs namespace) and locally (each browser profile's storage is namespaced by the signed-in user). Usernames: letters, digits, `_`, `-`, max 32 chars. |
+| `EDITOR_PASSWORD` | Alternative to `EDITOR_USERS`: a single shared password (everyone shares one deck library). Ignored when `EDITOR_USERS` is set. Neither set: the editor is public and decks stay device-local. |
 | `PERPLEXITY_API_KEY` | Enables the AI enrichment in the "Interactive pages" export and the live-explanation toggle on generated pages. Get a key at <https://www.perplexity.ai/settings/api>. |
 | `PERPLEXITY_MODEL` | Perplexity model for the proxy (default `sonar`). |
+
+With `EDITOR_USERS` set, the sign-in form asks for username + password; the
+Decks menu shows who is signed in and offers **Sign out** (or open any URL
+with `?signout=1`). Decks created on a browser before accounts were enabled
+are adopted by the first user who signs in there. To change or revoke access,
+edit `EDITOR_USERS` and redeploy — a removed user's cookie stops working
+immediately (their decks stay in the blob store until you delete them).
 
 > **Note:** the Perplexity proxy (`/api/perplexity`) is CORS-open by design so
 > downloaded pages keep working from anywhere — anyone who can reach your site

@@ -4,7 +4,8 @@
 // from the .st-* classes injected in app.jsx.
 // ─────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from "react";
-import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, chartDefaults, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_OPTIONS, SLIDE_STATUSES, STATUS_COLORS, currentUser } from "./model";
+import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, chartDefaults, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_OPTIONS, SLIDE_STATUSES, STATUS_COLORS } from "./model";
+import { userLabel, canSignOut, doSignOut } from "./auth";
 import { SlideView } from "./stage";
 import { measureOverflow, isBrandColor } from "./lint";
 
@@ -695,10 +696,10 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
               <button className="st-btn sm" onClick={() => { onDuplicateDeck(); close(); }}>Duplicate</button>
               <button className="st-btn sm" title="Import a Studio .json — or .html pages exported from this editor" onClick={() => { onImport(); close(); }}>Import…</button>
             </div>
-            {currentUser && (
+            {userLabel() && (
               <div className="st-decks-user">
-                <span title="Only your own presentations are shown and synced">👤 {currentUser}</span>
-                <a className="st-btn sm" href="?signout=1" title="Sign out and switch user">Sign out</a>
+                <span title="Only your own presentations are shown and synced">👤 {userLabel()}</span>
+                {canSignOut() && <button className="st-btn sm" onClick={doSignOut} title="Sign out and switch user">Sign out</button>}
               </div>
             )}
           </>

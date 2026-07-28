@@ -53,19 +53,39 @@ Perplexity option simply reports the API as unavailable.
 Deploy the repo to Netlify (build command and functions are configured in
 `netlify.toml`) and set environment variables as needed:
 
+### User accounts — pick one mode
+
+**Netlify Identity (recommended for open registration).** Enable Identity in
+the Netlify UI (Site configuration → Identity → Enable). You get open
+self-registration, password-reset emails, email confirmation and as many
+users as you need, with no code or env vars — the app detects Identity
+automatically. Visitors see a sign-in gate; the Identity widget handles
+sign-up/sign-in/recovery; each account's presentations are private (an
+isolated per-user namespace in Netlify Blobs, plus per-user browser storage).
+In the Identity settings you can switch registration between *Open* and
+*Invite only*, require email confirmation, and add external providers
+(Google, GitHub, …) — the widget picks these up automatically. Leave
+`EDITOR_USERS`/`EDITOR_PASSWORD` unset in this mode.
+
+**Env-var accounts (small fixed team).**
+
 | Variable | Effect |
 | --- | --- |
-| `EDITOR_USERS` | Per-user accounts as comma-separated `username:password` pairs, e.g. `alice:s3cret,bob:hunter2`. Each user signs in with their own credentials and **sees and edits only their own presentations** — server-side (each user gets an isolated Netlify Blobs namespace) and locally (each browser profile's storage is namespaced by the signed-in user). Usernames: letters, digits, `_`, `-`, max 32 chars. |
-| `EDITOR_PASSWORD` | Alternative to `EDITOR_USERS`: a single shared password (everyone shares one deck library). Ignored when `EDITOR_USERS` is set. Neither set: the editor is public and decks stay device-local. |
+| `EDITOR_USERS` | Comma-separated `username:password` pairs, e.g. `alice:s3cret,bob:hunter2`. Each user signs in with their own credentials and sees/edits only their own presentations. Usernames: letters, digits, `_`, `-`, max 32 chars. Sign out via the Decks menu or any URL with `?signout=1`. |
+| `EDITOR_PASSWORD` | A single shared password (everyone shares one deck library). Ignored when `EDITOR_USERS` is set. |
+
+**Open.** With Identity disabled and neither variable set, the editor is
+public and decks stay device-local.
+
+In every mode, decks created on a browser before accounts were enabled are
+adopted by the first user who signs in there.
+
+### Other environment variables
+
+| Variable | Effect |
+| --- | --- |
 | `PERPLEXITY_API_KEY` | Enables the AI enrichment in the "Interactive pages" export and the live-explanation toggle on generated pages. Get a key at <https://www.perplexity.ai/settings/api>. |
 | `PERPLEXITY_MODEL` | Perplexity model for the proxy (default `sonar`). |
-
-With `EDITOR_USERS` set, the sign-in form asks for username + password; the
-Decks menu shows who is signed in and offers **Sign out** (or open any URL
-with `?signout=1`). Decks created on a browser before accounts were enabled
-are adopted by the first user who signs in there. To change or revoke access,
-edit `EDITOR_USERS` and redeploy — a removed user's cookie stops working
-immediately (their decks stay in the blob store until you delete them).
 
 > **Note:** the Perplexity proxy (`/api/perplexity`) is CORS-open by design so
 > downloaded pages keep working from anywhere — anyone who can reach your site

@@ -1,10 +1,16 @@
 // Per-user deck storage for the Presentation Studio, so each signed-in user
 // gets their own library on every device. Decks live in Netlify Blobs under a
-// per-user namespace; access is gated by the sign-in cookie set by
-// netlify/edge-functions/editor-auth.js — the cookie holds "<user>:<token>"
-// where the token is a SHA-256 derived from that user's password, which this
-// function recomputes and checks. Users are configured via EDITOR_USERS
-// ("alice:pw1,bob:pw2") or EDITOR_PASSWORD (a single implicit "default" user).
+// per-user namespace. Two auth schemes, tried in order:
+//
+//   1. Netlify Identity — the client sends "Authorization: Bearer <JWT>";
+//      the token is validated against the site's own GoTrue endpoint
+//      (/.netlify/identity/user) and the stable Identity user id becomes the
+//      namespace. Open self-registration and password resets are handled by
+//      Identity itself.
+//   2. Cookie gate — the sign-in cookie set by
+//      netlify/edge-functions/editor-auth.js holds "<user>:<token>" where the
+//      token is a SHA-256 derived from that user's password (EDITOR_USERS
+//      "alice:pw1,bob:pw2", or EDITOR_PASSWORD as one "default" user).
 //
 //   GET    /api/decks          → { items: [{id, title, updatedAt, deleted?}] }
 //   GET    /api/decks?id=X     → { deck }
@@ -43,8 +49,8 @@ function parseUsers() {
 const tokenFor = (user, password) =>
   crypto.createHash("sha256").update(`${PEPPER}:${user}:${password}`).digest("hex");
 
-// → authenticated username, or null.
-function authedUser(req) {
+// → cookie-gate username, or null.
+function cookieAuthedUser(req) {
   const map = parseUsers();
   if (!map.size) return null;
   const part = (req.headers.get("cookie") || "").split(/; */).find((p) => p.trim().startsWith(COOKIE + "="));
@@ -59,12 +65,35 @@ function authedUser(req) {
   return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(expected)) ? user : null;
 }
 
+// → Netlify Identity user id, or null. The bearer token is validated by
+// asking the site's own GoTrue instance who it belongs to — no shared JWT
+// secret needed, and revoked/expired tokens fail naturally.
+async function identityAuthedUser(req) {
+  const m = /^Bearer\s+(\S+)$/i.exec(req.headers.get("authorization") || "");
+  if (!m) return null;
+  const base = process.env.URL || new URL(req.url).origin;
+  try {
+    const r = await fetch(base + "/.netlify/identity/user", { headers: { Authorization: "Bearer " + m[1] } });
+    if (!r.ok) return null;
+    const u = await r.json();
+    return u && typeof u.id === "string" && /^[a-f0-9-]{16,64}$/i.test(u.id) ? u.id : null;
+  } catch { return null; }
+}
+
 export default async (req) => {
-  const user = authedUser(req);
-  if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
+  // Identity first (namespace prefixed "iduser:" so a UUID can never collide
+  // with a cookie-gate username), then the cookie gate.
+  let prefix = null;
+  const idUser = await identityAuthedUser(req);
+  if (idUser) prefix = `iduser:${idUser}`;
+  else {
+    const cUser = cookieAuthedUser(req);
+    if (cUser) prefix = `user:${cUser}`;
+  }
+  if (!prefix) return Response.json({ error: "unauthorized" }, { status: 401 });
 
   const store = getStore("studio-decks");
-  const k = (s) => `user:${user}:${s}`; // per-user namespace
+  const k = (s) => `${prefix}:${s}`; // per-user namespace
   const id = new URL(req.url).searchParams.get("id");
   if (id && !ID_RE.test(id)) return Response.json({ error: "bad id" }, { status: 400 });
   const manifest = (await store.get(k(MANIFEST), { type: "json" })) || { items: [] };

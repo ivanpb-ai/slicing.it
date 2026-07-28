@@ -9,6 +9,7 @@
 // device-local behaviour.
 // ─────────────────────────────────────────────────────────────────────────
 import { loadManifest, loadDeckById, saveDeckToLib, deleteDeckFromLib, validateDeck } from "./model";
+import { authHeader } from "./auth";
 
 const API = "/api/decks";
 const SKEW = 1500; // ms of clock tolerance between devices
@@ -16,8 +17,8 @@ const SKEW = 1500; // ms of clock tolerance between devices
 async function req(method, id, body) {
   const r = await fetch(API + (id ? "?id=" + encodeURIComponent(id) : ""), {
     method,
-    credentials: "same-origin",
-    headers: body ? { "Content-Type": "application/json" } : undefined,
+    credentials: "same-origin", // cookie-gate auth; Identity auth rides the header
+    headers: { ...(body ? { "Content-Type": "application/json" } : {}), ...(await authHeader()) },
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!r.ok) { const e = new Error("HTTP " + r.status); e.status = r.status; throw e; }

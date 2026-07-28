@@ -388,19 +388,14 @@ export function starterDeck() {
 }
 
 // ── Persistence + import/export ────────────────────────────────────────────
-// Per-user scope: the sign-in gate (netlify/edge-functions/editor-auth.js)
-// sets a readable "studio_user" cookie; every localStorage key is namespaced
-// by it, so users sharing a browser each see only their own decks. Without a
-// signed-in user (open or local-dev mode) the unscoped keys are used.
-function cookieUser() {
-  try {
-    const m = document.cookie.match(/(?:^|;\s*)studio_user=([^;]+)/);
-    const u = m ? decodeURIComponent(m[1]) : "";
-    return /^[a-z0-9_-]{1,32}$/i.test(u) ? u : "";
-  } catch { return ""; }
-}
-export const currentUser = cookieUser();
-const ns = (key) => (currentUser ? `studio.${currentUser}.${key}` : `studio.${key}`);
+// Per-user scope: auth.js resolves who is signed in (Netlify Identity user id
+// or the cookie-gate username); every localStorage key is namespaced by it,
+// so users sharing a browser each see only their own decks. Anonymous (open
+// or local-dev mode) uses the unscoped keys. Safe to read at module init:
+// studio-entry.jsx awaits initAuth() before importing any studio module.
+import { storageScope } from "./auth";
+const SCOPE = storageScope();
+const ns = (key) => (SCOPE ? `studio.${SCOPE}.${key}` : `studio.${key}`);
 
 const STORE_KEY = ns("deck.v1");
 
@@ -506,7 +501,7 @@ export function loadManifest() {
   // Decks saved on this browser before accounts existed (unscoped keys) are
   // adopted into the signed-in user's scope on first load, so nothing is lost
   // when a deployment turns on per-user sign-in.
-  if (!m.items.length && currentUser) {
+  if (!m.items.length && SCOPE) {
     const shared = readJSON("studio.library.v1");
     if (shared && Array.isArray(shared.items) && shared.items.length) {
       for (const it of shared.items) {

@@ -429,7 +429,22 @@ export function starterDeck() {
 }
 
 // ── Persistence + import/export ────────────────────────────────────────────
-const STORE_KEY = "northstar.studio.deck.v1";
+// Per-user scope: in EDITOR_USERS mode the sign-in gate
+// (netlify/edge-functions/editor-auth.js) sets a readable "ns_editor_user"
+// cookie; every localStorage key is namespaced by it, so users sharing a
+// browser each see only their own decks. In shared-password mode (no cookie)
+// the original unscoped keys are used, exactly as before.
+function cookieUser() {
+  try {
+    const m = document.cookie.match(/(?:^|;\s*)ns_editor_user=([^;]+)/);
+    const u = m ? decodeURIComponent(m[1]) : "";
+    return /^[a-z0-9_-]{1,32}$/i.test(u) ? u : "";
+  } catch { return ""; }
+}
+export const currentUser = cookieUser();
+const ns = (key) => (currentUser ? `northstar.studio.${currentUser}.${key}` : `northstar.studio.${key}`);
+
+const STORE_KEY = ns("deck.v1");
 
 export function loadDeck() {
   try {
@@ -511,8 +526,8 @@ export function downloadDeck(deck) {
 // A manifest lists every deck ({id,title,updatedAt}); each deck is stored under
 // its own key so autosave only rewrites the one being edited. A pre-existing
 // single deck (v1) is migrated into the library on first load.
-const MANIFEST_KEY = "northstar.studio.library.v1";
-const deckKey = (id) => "northstar.studio.deck." + id;
+const MANIFEST_KEY = ns("library.v1");
+const deckKey = (id) => ns("deck.") + id;
 
 const readJSON = (key) => { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch { return null; } };
 const writeJSON = (key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch { return false; } };
@@ -528,6 +543,20 @@ export function loadManifest() {
       m = { currentId: valid.id, items: [{ id: valid.id, title: valid.title, updatedAt: Date.now() }] };
       writeJSON(MANIFEST_KEY, m);
       clearDeck();
+    }
+  }
+  // Decks saved on this browser before per-user accounts (unscoped keys) are
+  // adopted into the signed-in user's scope on first load, so nothing is lost
+  // when a deployment switches from EDITOR_PASSWORD to EDITOR_USERS.
+  if (!m.items.length && currentUser) {
+    const shared = readJSON("northstar.studio.library.v1");
+    if (shared && Array.isArray(shared.items) && shared.items.length) {
+      for (const it of shared.items) {
+        const d = readJSON("northstar.studio.deck." + it.id);
+        if (d) writeJSON(deckKey(it.id), d);
+      }
+      m = { currentId: shared.currentId || shared.items[0].id, items: shared.items.slice() };
+      writeJSON(MANIFEST_KEY, m);
     }
   }
   return m;

@@ -30,7 +30,9 @@ Telia-only (stays in `src/js/studio/`):
 - Auth specifics: `ns_editor_auth`/`ns_editor_user` cookie names, the
   NorthStar pepper, the gate also covering the other protected site pages,
   locked (503) when unconfigured, and `EDITOR_PASSWORD` shared mode keeping
-  the legacy plain-hash cookie and the original unnamespaced blob/local keys
+  the legacy plain-hash cookie and the original unnamespaced blob/local keys;
+  the Decks-menu Sign out row is always shown (the gated page implies a
+  signed-in visitor), plain in shared mode
   (protects the live site's existing data)
 - NorthStar-themed starter deck and element seed content
 

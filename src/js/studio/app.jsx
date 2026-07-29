@@ -322,7 +322,7 @@ const HELP_SECTIONS = [
   },
   {
     title: "💾 Saving",
-    body: <>Everything autosaves to this browser's local storage a moment after each change (“Saved ✓”). “☁ synced” means the library is also mirrored across devices via the editor sign-in; “this device” means it lives only here — use Export → Studio JSON for backups.</>,
+    body: <>Everything autosaves to this browser's local storage a moment after each change (“Saved ✓”). “☁ synced” means the library is also mirrored across devices via the editor sign-in; “this device” means it lives only here — use Export → Studio JSON for backups. Sign out from the bottom of the Decks menu (with per-user accounts, each user sees only their own presentations).</>,
   },
 ];
 

@@ -34,7 +34,9 @@ Telia-only (stays in slicing.it):
 - Auth specifics: `ns_editor_auth`/`ns_editor_user` cookie names, the
   NorthStar pepper, the gate also covering the other protected site pages,
   locked (503) when unconfigured, and `EDITOR_PASSWORD` shared mode keeping
-  the legacy plain-hash cookie and the original unnamespaced blob/local keys
+  the legacy plain-hash cookie and the original unnamespaced blob/local keys;
+  the Decks-menu Sign out row is always shown (the gated page implies a
+  signed-in visitor), plain in shared mode
 - NorthStar-themed starter deck and element seed content
 
 Synced in BOTH since 2026-07: the `EDITOR_USERS` multi-user cookie gate

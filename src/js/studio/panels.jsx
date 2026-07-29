@@ -788,12 +788,15 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
               <span className="st-deckname">🌐 NorthStar site copy</span>
               <span className="st-deckdate">the live deck (copy.js) — edit & export</span>
             </button>
-            {currentUser && (
-              <div className="st-decks-user">
-                <span title="Only your own presentations are shown and synced">👤 {currentUser}</span>
-                <a className="st-btn sm" href="?signout=1" title="Sign out and switch user">Sign out</a>
-              </div>
-            )}
+            {/* The gated page only renders when signed in, so the sign-out row
+                is always offered: with the username in EDITOR_USERS mode, plain
+                in shared-password mode. */}
+            <div className="st-decks-user">
+              <span title={currentUser ? "Only your own presentations are shown and synced" : "Signed in with the shared editor password"}>
+                {currentUser ? `👤 ${currentUser}` : "🔐 Signed in"}
+              </span>
+              <a className="st-btn sm" href="?signout=1" title="Sign out of the editor">Sign out</a>
+            </div>
           </>
         )} />
         <input className="st-title" value={title} onFocus={onCheckpoint} onChange={(e) => onTitle(e.target.value)} title="Rename this presentation" />

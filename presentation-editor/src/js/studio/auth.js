@@ -75,6 +75,14 @@ export function userLabel() {
   return "";
 }
 
+// True for the EDITOR_PASSWORD (admin) account — cookie mode only; Identity
+// users are never admin.
+export function isAdmin() {
+  if (mode !== "cookie") return false;
+  const u = cookieUser();
+  return u === "admin" || u === "default";
+}
+
 export function canSignOut() { return (mode === "identity" && !!identityUser) || mode === "cookie"; }
 
 export function doSignOut() {

@@ -14,7 +14,8 @@ import { canvasHtmlToSlide } from "./canvas-interop";
 import { exportDeckPptx } from "./export-pptx";
 import { API_MODES, generateDeckPages, downloadPage, downloadPagesZip } from "./generate-pages";
 import { lintDeck } from "./lint";
-import { syncLibrary, cloudPut, cloudDelete } from "./cloud";
+import { syncLibrary, cloudPut, cloudDelete, cloudGetTemplate, cloudPutTemplate } from "./cloud";
+import { isAdmin } from "./auth";
 
 const cloneSlide = (s) => ({ ...cloneDeep(s), id: uid("slide"), elements: s.elements.map((e) => ({ ...cloneDeep(e), id: uid("el") })) });
 
@@ -266,7 +267,7 @@ const HELP_SECTIONS = [
   },
   {
     title: "▤ Decks",
-    body: <>Your presentation library — every deck autosaves as you edit. Create, duplicate, delete and switch decks, or <b>Import</b> a Studio <code>.json</code> file (or <code>.html</code> pages exported from this editor) as a new deck.</>,
+    body: <>Your presentation library — every deck autosaves as you edit. Create, duplicate, delete and switch decks, or <b>Import</b> a Studio <code>.json</code> file (or <code>.html</code> pages exported from this editor) as a new deck. The admin account can publish the deck it is editing as the <b>welcome deck</b> every new user starts with (only admin can change it).</>,
   },
   {
     title: "✓ Review",
@@ -325,8 +326,10 @@ function initialDeck() {
   }
   const starter = starterDeck();
   saveDeckToLib(starter);
+  seededStarter = true; // launch effect may swap it for the published welcome deck
   return starter;
 }
+let seededStarter = false;
 
 // ── main editor ─────────────────────────────────────────────────────────────
 export default function StudioApp() {
@@ -373,6 +376,22 @@ export default function StudioApp() {
           if (fresh) setDeck(fresh);
         }
         setCloud("ok");
+        // A brand-new library was seeded with the built-in starter — replace
+        // it with the admin-published welcome deck when one exists. Users get
+        // their own copy; only admin can change the template itself.
+        if (seededStarter && !touchedRef.current) {
+          const raw = await cloudGetTemplate();
+          const tpl = raw ? validateDeck(raw) : null;
+          if (on && tpl && !touchedRef.current) {
+            const seededId = deckRef.current.id;
+            const copy = duplicateDeckObj(tpl, tpl.title || "Welcome to Presentation Studio");
+            saveDeckToLib(copy);
+            deleteDeckFromLib(seededId);
+            cloudDelete(seededId); // the starter may already have autosynced
+            setDeck(copy); setCurrent(0); setSelectedId(null); setEditingId(null);
+            setCurrentDeckId(copy.id); setLibrary(listDecks());
+          }
+        }
       } catch (e) {
         if (on) setCloud(e?.status === 401 ? "unauth" : "off");
       }
@@ -559,6 +578,15 @@ export default function StudioApp() {
   const exportPptx = () => exportDeckPptx(deckRef.current)
     .catch((err) => window.alert("PowerPoint export failed: " + (err?.message || err)));
 
+  // Admin only: publish the deck being edited as the site-wide welcome deck.
+  const publishTemplate = () => {
+    if (!window.confirm(`Make “${deckRef.current.title || "Untitled"}” the welcome deck that every NEW user starts with? Existing users keep their decks.`)) return;
+    cloudPutTemplate(deckRef.current)
+      .then(() => window.alert("Published — new users will now start with this deck."))
+      .catch((e) => window.alert("Could not publish the welcome deck: " + (e?.message || e)));
+  };
+
+
   // keyboard shortcuts (editor only)
   useEffect(() => {
     const onKey = (e) => {
@@ -595,7 +623,7 @@ export default function StudioApp() {
         onInsert={insertElement} onUndo={doUndo} onRedo={doRedo} canUndo={undo.length > 0} canRedo={redo.length > 0}
         onPresent={() => { setStartAt(current); setPresenting(true); }}
         library={library} currentId={deck.id} onOpenDeck={openDeck} onNewDeck={newPresentation} onDuplicateDeck={duplicateCurrentDeck} onDeleteDeck={deleteDeck}
-        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onReview={() => setReviewing(true)} onHelp={() => setHelping(true)} saved={saved} cloud={cloud}
+        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onReview={() => setReviewing(true)} onHelp={() => setHelping(true)} onPublishTemplate={isAdmin() ? publishTemplate : null} saved={saved} cloud={cloud}
       />
 
       <div className="st-body">

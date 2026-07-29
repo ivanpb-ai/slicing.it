@@ -51,7 +51,11 @@ Synced in BOTH since 2026-07: the `EDITOR_USERS` multi-user cookie gate
 `user:<name>:`; per-user localStorage scope via the readable user cookie;
 "Signed in as … / Sign out" row in the Decks menu; `EDITOR_PASSWORD` as
 the reserved `admin` account's credential — usable alongside EDITOR_USERS,
-never by regular users, with "admin" ignored in EDITOR_USERS). Auth changes
+never by regular users, with "admin" ignored in EDITOR_USERS; the
+admin-published welcome-deck template — site-global "__template__" blob,
+readable by any signed-in user to seed a new library, writable by admin
+only via Decks → "★ Set as welcome deck", built-in starter as fallback).
+Auth changes
 must be ported to both, translating the cookie/pepper names listed above.
 
 ### Porting mechanics

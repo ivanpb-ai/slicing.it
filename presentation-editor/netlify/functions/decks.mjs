@@ -86,20 +86,43 @@ async function identityAuthedUser(req) {
 export default async (req) => {
   // Identity first (namespace prefixed "iduser:" so a UUID can never collide
   // with a cookie-gate username), then the cookie gate.
-  let prefix = null;
+  let prefix = null, isAdmin = false;
   const idUser = await identityAuthedUser(req);
   if (idUser) prefix = `iduser:${idUser}`;
   else {
     const cUser = cookieAuthedUser(req);
     // The admin account keeps the former "default" user's namespace so data
     // from before the admin rename stays in place.
-    if (cUser) prefix = `user:${cUser === "admin" ? "default" : cUser}`;
+    if (cUser) { prefix = `user:${cUser === "admin" ? "default" : cUser}`; isAdmin = cUser === "admin" || cUser === "default"; }
   }
   if (!prefix) return Response.json({ error: "unauthorized" }, { status: 401 });
 
+  const url = new URL(req.url);
+
+  // ── Welcome-deck template (site-global "__template__" key). Any signed-in
+  // user may read it (their first library is seeded from it); ONLY admin may
+  // change or remove it — admin alone controls the default deck.
+  if (url.searchParams.get("template")) {
+    if (req.method !== "GET" && !isAdmin) return Response.json({ error: "forbidden" }, { status: 403 });
+    const store = getStore("studio-decks");
+    if (req.method === "GET") {
+      const deck = await store.get("__template__", { type: "json" });
+      return deck ? Response.json({ deck }) : Response.json({ error: "not found" }, { status: 404 });
+    }
+    if (req.method === "PUT") {
+      let body;
+      try { body = await req.json(); } catch { body = null; }
+      if (!body || !body.deck || typeof body.deck !== "object") return Response.json({ error: "bad request" }, { status: 400 });
+      await store.setJSON("__template__", body.deck);
+      return Response.json({ ok: true });
+    }
+    if (req.method === "DELETE") { await store.delete("__template__"); return Response.json({ ok: true }); }
+    return Response.json({ error: "method not allowed" }, { status: 405 });
+  }
+
   const store = getStore("studio-decks");
   const k = (s) => `${prefix}:${s}`; // per-user namespace
-  const id = new URL(req.url).searchParams.get("id");
+  const id = url.searchParams.get("id");
   if (id && !ID_RE.test(id)) return Response.json({ error: "bad id" }, { status: 400 });
   const manifest = (await store.get(k(MANIFEST), { type: "json" })) || { items: [] };
 

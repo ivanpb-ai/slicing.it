@@ -63,7 +63,8 @@ export function openLogin() { netlifyIdentity.open(); }
 // can never collide with a cookie-mode username.
 export function storageScope() {
   if (mode === "identity" && identityUser) return "id-" + identityUser.id;
-  if (mode === "cookie") return cookieUser();
+  // Admin keeps the former "default" user's scope for data continuity.
+  if (mode === "cookie") { const u = cookieUser(); return u === "admin" ? "default" : u; }
   return "";
 }
 

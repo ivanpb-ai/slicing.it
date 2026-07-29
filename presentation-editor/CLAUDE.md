@@ -20,7 +20,8 @@ Generic-only (stays in this repo):
   Display" heading marker)
 - `src/js/studio/auth.js` + Netlify Identity (open self-registration,
   JWT-validated decks API); open access when nothing is configured;
-  `EDITOR_PASSWORD` here maps to a namespaced "default" user
+  `EDITOR_PASSWORD` here stores admin's decks under the legacy
+  "default" namespace
 - Self-hosted Perplexity proxy (`netlify/functions/perplexity.mjs`;
   `generate-pages.js` here has two modes: none/perplexity)
 - Generic starter deck, README/netlify.toml docs
@@ -33,17 +34,20 @@ Telia-only (stays in slicing.it):
   (its `generate-pages.js` has three modes: none/northstar/generic)
 - Auth specifics: `ns_editor_auth`/`ns_editor_user` cookie names, the
   NorthStar pepper, the gate also covering the other protected site pages,
-  locked (503) when unconfigured, and `EDITOR_PASSWORD` shared mode keeping
-  the legacy plain-hash cookie and the original unnamespaced blob/local keys;
-  the Decks-menu Sign out row is always shown (the gated page implies a
-  signed-in visitor), plain in shared mode
+  locked (503) when unconfigured; `EDITOR_PASSWORD` is the admin
+  credential and admin owns the legacy unnamespaced blob/local keys
+  (without EDITOR_USERS the legacy plain-hash cookie format is kept); the
+  Decks-menu Sign out row is always shown (the gated page implies a
+  signed-in visitor)
 - NorthStar-themed starter deck and element seed content
 
 Synced in BOTH since 2026-07: the `EDITOR_USERS` multi-user cookie gate
 (comma-separated `user:password` pairs; per-user Netlify Blobs namespaces
 `user:<name>:`; per-user localStorage scope via the readable user cookie;
-"Signed in as … / Sign out" row in the Decks menu). Auth changes must be
-ported to both, translating the cookie/pepper names (`studio_auth`/
+"Signed in as … / Sign out" row in the Decks menu; `EDITOR_PASSWORD` as
+the reserved `admin` account's credential — usable alongside EDITOR_USERS,
+never by regular users, with "admin" ignored in EDITOR_USERS). Auth changes
+must be ported to both, translating the cookie/pepper names (`studio_auth`/
 `studio_user` + studio pepper here ↔ the ns_ names + NorthStar pepper).
 
 ### Porting mechanics

@@ -71,8 +71,8 @@ In the Identity settings you can switch registration between *Open* and
 
 | Variable | Effect |
 | --- | --- |
-| `EDITOR_USERS` | Comma-separated `username:password` pairs, e.g. `alice:s3cret,bob:hunter2`. Each user signs in with their own credentials and sees/edits only their own presentations. Usernames: letters, digits, `_`, `-`, max 32 chars. Sign out via the Decks menu or any URL with `?signout=1`. |
-| `EDITOR_PASSWORD` | A single shared password (everyone shares one deck library). Ignored when `EDITOR_USERS` is set. |
+| `EDITOR_USERS` | Comma-separated `username:password` pairs, e.g. `alice:s3cret,bob:hunter2`. Each user signs in with their own credentials and sees/edits only their own presentations. Usernames: letters, digits, `_`, `-`, max 32 chars (`admin` and `default` are reserved). Sign out via the Decks menu or any URL with `?signout=1`. |
+| `EDITOR_PASSWORD` | The **admin** credential: username `admin` signs in with it — alongside `EDITOR_USERS`, or via a password-only form when `EDITOR_USERS` is unset. Regular users cannot use it. |
 
 **Open.** With Identity disabled and neither variable set, the editor is
 public and decks stay device-local.

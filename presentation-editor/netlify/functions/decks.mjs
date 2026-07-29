@@ -10,7 +10,8 @@
 //   2. Cookie gate — the sign-in cookie set by
 //      netlify/edge-functions/editor-auth.js holds "<user>:<token>" where the
 //      token is a SHA-256 derived from that user's password (EDITOR_USERS
-//      "alice:pw1,bob:pw2", or EDITOR_PASSWORD as one "default" user).
+//      "alice:pw1,bob:pw2"; EDITOR_PASSWORD is the reserved "admin"
+//      account's password).
 //
 //   GET    /api/decks          → { items: [{id, title, updatedAt, deleted?}] }
 //   GET    /api/decks?id=X     → { deck }
@@ -28,21 +29,23 @@ const MANIFEST = "__manifest__";
 const ID_RE = /^[a-z0-9_-]{1,64}$/i;
 const USER_RE = /^[a-z0-9_-]{1,32}$/i;
 
+// "admin"/"default" are reserved: never read from EDITOR_USERS.
+// EDITOR_PASSWORD is the admin credential; "default" is its legacy alias.
 function parseUsers() {
   const map = new Map();
-  const multi = process.env.EDITOR_USERS;
-  if (multi) {
-    for (const pair of multi.split(",")) {
+  const multiSrc = process.env.EDITOR_USERS;
+  if (multiSrc) {
+    for (const pair of multiSrc.split(",")) {
       const i = pair.indexOf(":");
       if (i < 1) continue;
       const name = pair.slice(0, i).trim();
       const pw = pair.slice(i + 1).trim();
-      if (USER_RE.test(name) && pw) map.set(name, pw);
+      const lower = name.toLowerCase();
+      if (USER_RE.test(name) && pw && lower !== "admin" && lower !== "default") map.set(name, pw);
     }
-    return map;
   }
   const single = process.env.EDITOR_PASSWORD;
-  if (single) map.set("default", single);
+  if (single) { map.set("admin", single); map.set("default", single); }
   return map;
 }
 
@@ -88,7 +91,9 @@ export default async (req) => {
   if (idUser) prefix = `iduser:${idUser}`;
   else {
     const cUser = cookieAuthedUser(req);
-    if (cUser) prefix = `user:${cUser}`;
+    // The admin account keeps the former "default" user's namespace so data
+    // from before the admin rename stays in place.
+    if (cUser) prefix = `user:${cUser === "admin" ? "default" : cUser}`;
   }
   if (!prefix) return Response.json({ error: "unauthorized" }, { status: 401 });
 

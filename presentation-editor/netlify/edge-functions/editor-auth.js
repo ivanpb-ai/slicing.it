@@ -12,8 +12,13 @@
 //                    own credentials and sees/edits only their own decks
 //                    (see netlify/functions/decks.mjs). Usernames: letters,
 //                    digits, "_" or "-", max 32 chars.
-//   EDITOR_PASSWORD  a single shared password — one implicit account named
-//                    "default"; everyone who signs in shares one deck library.
+//                    "admin" and "default" are reserved — entries with those
+//                    names are ignored.
+//   EDITOR_PASSWORD  the ADMIN credential: username "admin" signs in with it
+//                    (alongside EDITOR_USERS, or via a password-only form
+//                    when EDITOR_USERS is unset). For data continuity the
+//                    admin account keeps the storage namespace of the former
+//                    "default" user, and old "default" cookies stay valid.
 //   Neither set → the editor is public and decks stay device-local.
 //
 // On success two cookies are set: studio_auth (HttpOnly) carrying
@@ -27,23 +32,25 @@ const PEPPER = "studio-editor-gate-v1";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 const USER_RE = /^[a-z0-9_-]{1,32}$/i;
 
-// → { map: Map<user, password>, multi: boolean }
+// → { map: Map<user, password>, multi: boolean }. "admin"/"default" are
+// reserved: never read from EDITOR_USERS. EDITOR_PASSWORD is the admin
+// credential; "default" is its legacy alias so pre-admin cookies keep working.
 function parseUsers(env) {
   const map = new Map();
-  const multi = env.get("EDITOR_USERS");
-  if (multi) {
-    for (const pair of multi.split(",")) {
+  const multiSrc = env.get("EDITOR_USERS");
+  if (multiSrc) {
+    for (const pair of multiSrc.split(",")) {
       const i = pair.indexOf(":");
       if (i < 1) continue;
       const name = pair.slice(0, i).trim();
       const pw = pair.slice(i + 1).trim();
-      if (USER_RE.test(name) && pw) map.set(name, pw);
+      const lower = name.toLowerCase();
+      if (USER_RE.test(name) && pw && lower !== "admin" && lower !== "default") map.set(name, pw);
     }
-    return { map, multi: true };
   }
   const single = env.get("EDITOR_PASSWORD");
-  if (single) map.set("default", single);
-  return { map, multi: false };
+  if (single) { map.set("admin", single); map.set("default", single); }
+  return { map, multi: !!multiSrc };
 }
 
 async function tokenFor(user, password) {
@@ -132,7 +139,7 @@ export default async (request, context) => {
 
   // Handle a sign-in submission.
   if (request.method === "POST") {
-    let user = "default", supplied = "";
+    let user = "admin", supplied = "";
     try {
       const form = await request.formData();
       supplied = String(form.get("password") || "");

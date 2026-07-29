@@ -7,9 +7,12 @@
 //                    token is a SHA-256 derived from that user's password.
 //                    Each user's decks live under a "user:<name>:" namespace;
 //                    one user can never list, read or write another's decks.
-//   EDITOR_PASSWORD  the original shared password — legacy plain-token cookie
-//                    and the original unnamespaced keys, so existing deployed
-//                    data keeps working untouched.
+//                    EDITOR_PASSWORD is the reserved "admin" account's
+//                    password; admin owns the original unnamespaced keys, so
+//                    the site's pre-existing decks belong to the admin.
+//   EDITOR_PASSWORD  alone (no EDITOR_USERS) — the admin-only legacy mode:
+//                    plain-token cookie and the original unnamespaced keys,
+//                    so existing deployed data keeps working untouched.
 //
 //   GET    /api/decks          → { items: [{id, title, updatedAt, deleted?}] }
 //   GET    /api/decks?id=X     → { deck }
@@ -25,6 +28,8 @@ const ID_RE = /^[a-z0-9_-]{1,64}$/i;
 const USER_RE = /^[a-z0-9_-]{1,32}$/i;
 
 // → Map<user, password> when EDITOR_USERS is set, else null (shared mode).
+// "admin" is reserved: never read from EDITOR_USERS, and present exactly when
+// EDITOR_PASSWORD is set — that password IS the admin credential.
 function parseUsers() {
   const multi = process.env.EDITOR_USERS;
   if (!multi) return null;
@@ -34,8 +39,10 @@ function parseUsers() {
     if (i < 1) continue;
     const name = pair.slice(0, i).trim();
     const pw = pair.slice(i + 1).trim();
-    if (USER_RE.test(name) && pw) map.set(name, pw);
+    if (USER_RE.test(name) && pw && name.toLowerCase() !== "admin") map.set(name, pw);
   }
+  const adminPw = process.env.EDITOR_PASSWORD;
+  if (adminPw) map.set("admin", adminPw);
   return map.size ? map : null;
 }
 
@@ -44,7 +51,7 @@ const safeEq = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.
 
 // → { prefix } for the authenticated caller, or null. Shared mode uses the
 // original unnamespaced keys ("" prefix) so pre-existing decks stay visible.
-function authedPrefix(req) {
+export function authedPrefix(req) {
   const part = (req.headers.get("cookie") || "").split(/; */).find((p) => p.trim().startsWith(COOKIE + "="));
   const raw = part ? decodeURIComponent(part.trim().slice(COOKIE.length + 1)) : "";
 
@@ -55,7 +62,9 @@ function authedPrefix(req) {
     const user = raw.slice(0, i), hash = raw.slice(i + 1);
     const pw = users.get(user);
     if (!pw) return null;
-    return safeEq(hash, sha256(`${PEPPER}:${user}:${pw}`)) ? { prefix: `user:${user}:` } : null;
+    if (!safeEq(hash, sha256(`${PEPPER}:${user}:${pw}`))) return null;
+    // Admin owns the original shared library (the unnamespaced keys).
+    return { prefix: user === "admin" ? "" : `user:${user}:` };
   }
 
   const password = process.env.EDITOR_PASSWORD;

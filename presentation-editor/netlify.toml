@@ -7,9 +7,10 @@
 #                       app detects it automatically — no env vars needed.
 #                       Leave EDITOR_USERS / EDITOR_PASSWORD unset.
 #   EDITOR_USERS        env var — small fixed user list as comma-separated
-#                       "username:password" pairs (e.g. "alice:pw1,bob:pw2").
-#   EDITOR_PASSWORD     env var — a single shared password (one shared deck
-#                       library). Ignored when EDITOR_USERS is set.
+#                       "username:password" pairs (e.g. "alice:pw1,bob:pw2");
+#                       "admin" and "default" are reserved names.
+#   EDITOR_PASSWORD     env var — the ADMIN credential: username "admin"
+#                       signs in with it, alongside EDITOR_USERS or alone.
 #   none of the above   the editor is public and decks stay device-local.
 #
 # Other environment variables:

@@ -4,7 +4,7 @@
 // from the .st-* classes injected in app.jsx.
 // ─────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from "react";
-import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, chartDefaults, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_OPTIONS, SLIDE_STATUSES, STATUS_COLORS } from "./model";
+import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, chartDefaults, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_GROUPS, SLIDE_STATUSES, STATUS_COLORS } from "./model";
 import { SlideView } from "./stage";
 import { measureOverflow, isBrandColor } from "./lint";
 
@@ -72,6 +72,88 @@ function Swatches({ value, onChange, onCheckpoint, allowNone }) {
     </div>
   );
 }
+/* ── Font picker ────────────────────────────────────────────────────────── */
+// Searchable dropdown over FONT_GROUPS (Telia theme roles + web-safe
+// families), each entry previewed in its own face. Where the browser supports
+// the Local Font Access API (Chromium), a "device fonts" section can list
+// every font installed on this machine — those render locally but fall back
+// to a generic family on machines that don't have them.
+const deviceFontStack = (family) => `'${family.replace(/['"\\]/g, "")}', sans-serif`;
+
+function fontLabelOf(value, deviceFonts) {
+  for (const g of FONT_GROUPS) for (const o of g.options) if (o.value === value) return o.label;
+  for (const o of deviceFonts || []) if (o.value === value) return o.label;
+  const first = String(value || "").split(",")[0].trim().replace(/^['"]|['"]$/g, "");
+  return first || "Font";
+}
+
+function FontSelect({ value, onChange, onCheckpoint }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const [device, setDevice] = useState(null); // null = not loaded yet
+  const [deviceErr, setDeviceErr] = useState(false);
+  const ref = useRef(null);
+  const canQuery = typeof window !== "undefined" && "queryLocalFonts" in window;
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [open]);
+
+  const loadDevice = async () => {
+    try {
+      const fonts = await window.queryLocalFonts(); // permission prompt on first use
+      const fams = [...new Set(fonts.map((f) => f.family))].sort((a, b) => a.localeCompare(b));
+      setDevice(fams.map((f) => ({ label: f, value: deviceFontStack(f) })));
+    } catch { setDevice([]); setDeviceErr(true); }
+  };
+
+  const needle = q.trim().toLowerCase();
+  const match = (o) => !needle || o.label.toLowerCase().includes(needle);
+  const pick = (v) => { onCheckpoint && onCheckpoint(); onChange(v); setOpen(false); setQ(""); };
+  const item = (o) => (
+    <button key={o.value} className={"st-fontsel-item" + (o.value === value ? " on" : "")}
+      style={{ fontFamily: o.value }} title={o.label} onClick={() => pick(o.value)}>{o.label}</button>
+  );
+
+  return (
+    <div className="st-fontsel" ref={ref}>
+      <button className="st-fontsel-btn" style={{ fontFamily: value || undefined }} title="Choose a font"
+        onClick={() => setOpen((v) => !v)}>{fontLabelOf(value, device)} ▾</button>
+      {open && (
+        <div className="st-fontsel-menu">
+          <input className="st-in st-fontsel-search" type="text" placeholder="Search fonts…" value={q} autoFocus
+            onChange={(e) => setQ(e.target.value)} />
+          {FONT_GROUPS.map((g) => {
+            const shown = g.options.filter(match);
+            if (!shown.length) return null;
+            return (
+              <div key={g.label}>
+                <div className="st-fontsel-group">{g.label}</div>
+                {shown.map(item)}
+              </div>
+            );
+          })}
+          <div className="st-fontsel-group">This device</div>
+          {device === null && canQuery && (
+            <button className="st-fontsel-item" onClick={loadDevice}>⤓ List fonts installed on this device…</button>
+          )}
+          {device === null && !canQuery && (
+            <div className="st-fontsel-note">Not supported by this browser (needs the Local Font Access API — Chrome or Edge).</div>
+          )}
+          {deviceErr && <div className="st-fontsel-note">Couldn't read device fonts (permission denied).</div>}
+          {device && device.length > 0 && device.filter(match).map(item)}
+          {device && device.length > 0 && !device.filter(match).length && needle && (
+            <div className="st-fontsel-note">No device font matches “{q}”.</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StringList({ items, onChange, onCheckpoint }) {
   const arr = items || [];
   const set = (i, v) => { const n = [...arr]; n[i] = v; onChange(n); };
@@ -163,7 +245,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
           <Field label="Letter sp."><Num value={s.letterSpacing} step={0.5} onCheckpoint={cp} onChange={(v) => setStyle("letterSpacing", v)} /></Field>
         </div>
         <Field label="Align"><Seg value={s.align} onCheckpoint={cp} onChange={(v) => setStyle("align", v)} options={ALIGN} /></Field>
-        <Field label="Font"><Select value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} options={FONT_OPTIONS} /></Field>
+        <Field label="Font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
         {colorField("Colour", "color")}
         {type === "heading" && <GradientCtl p={p} setProp={setProp} cp={cp} />}
       </Group>
@@ -178,6 +260,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
           <Field label="Letter sp."><Num value={s.letterSpacing} step={0.5} onCheckpoint={cp} onChange={(v) => setStyle("letterSpacing", v)} /></Field>
         </div>
         <Field label="Align"><Seg value={s.align} onCheckpoint={cp} onChange={(v) => setStyle("align", v)} options={ALIGN} /></Field>
+        <Field label="Font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
         {colorField("Colour", "color")}
       </Group>
     );
@@ -193,6 +276,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
         </div>
         <Field label="Label" wide><TextLine value={p.label} onCheckpoint={cp} onChange={(v) => setProp("label", v)} /></Field>
         <div className="st-grid2"><Field label="Size"><Num value={s.fontSize} onCheckpoint={cp} onChange={(v) => setStyle("fontSize", v)} /></Field>{colorField("Colour", "color")}</div>
+        <Field label="Font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
       </Group>
     );
   }
@@ -202,6 +286,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
         <Field label="Label" wide><TextLine value={p.label} onCheckpoint={cp} onChange={(v) => setProp("label", v)} /></Field>
         <Field label="Link (href)" wide><TextLine value={p.href} onCheckpoint={cp} onChange={(v) => setProp("href", v)} /></Field>
         <Field label="Style"><Seg value={p.variant} onCheckpoint={cp} onChange={(v) => setProp("variant", v)} options={[{ value: "primary", label: "Solid" }, { value: "ghost", label: "Ghost" }]} /></Field>
+        <Field label="Font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
         {colorField("Fill", "bg", true)}
         {colorField("Text", "color")}
       </Group>
@@ -216,6 +301,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
           <Field label="Gap"><Num value={s.gap} onCheckpoint={cp} onChange={(v) => setStyle("gap", v)} /></Field>
         </div>
         <Field label="Marker"><TextLine value={s.marker} onCheckpoint={cp} onChange={(v) => setStyle("marker", v)} /></Field>
+        <Field label="Font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
         {colorField("Accent", "accent")}
       </Group>
     );
@@ -230,6 +316,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
         <Field label="Title" wide><TextLine value={p.title} onCheckpoint={cp} onChange={(v) => setProp("title", v)} /></Field>
         <Field label="Body" wide><Area value={p.body} rows={3} onCheckpoint={cp} onChange={(v) => setProp("body", v)} /></Field>
         <Field label="Bullets" wide><StringList items={p.bullets} onCheckpoint={cp} onChange={(v) => setProp("bullets", v)} /></Field>
+        <Field label="Title font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
         {colorField("Accent", "accent")}
       </Group>
     );
@@ -275,6 +362,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
         <Field label="Quote" wide><Area value={p.text} rows={3} onCheckpoint={cp} onChange={(v) => setProp("text", v)} /></Field>
         <Field label="Attribution" wide><TextLine value={p.author} onCheckpoint={cp} onChange={(v) => setProp("author", v)} /></Field>
         <div className="st-grid2"><Field label="Size"><Num value={s.fontSize} onCheckpoint={cp} onChange={(v) => setStyle("fontSize", v)} /></Field><Field label="Align"><Seg value={s.align} onCheckpoint={cp} onChange={(v) => setStyle("align", v)} options={ALIGN} /></Field></div>
+        <Field label="Font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
         {colorField("Colour", "color")}
         {colorField("Accent", "accent")}
       </Group>
@@ -670,7 +758,7 @@ const CLOUD_LABELS = {
   unauth: ["sign in", "Session expired — reload and sign in to sync across devices"],
 };
 
-export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onSiteCopy, onReview, saved, cloud }) {
+export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onSiteCopy, onReview, onHelp, saved, cloud }) {
   const [cloudText, cloudTitle] = CLOUD_LABELS[cloud] || CLOUD_LABELS.off;
   return (
     <div className="st-toolbar">
@@ -715,6 +803,7 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
         <span className={"st-saved" + (saved ? " on" : "")} title={cloudTitle}>
           {saved ? "Saved ✓" : "Saving…"}<span className={"st-cloud " + (cloud || "off")}> · {cloudText}</span>
         </span>
+        <button className="st-btn" onClick={onHelp} title="How the editor works">?</button>
         <button className="st-btn" onClick={onReview} title="Lint every slide: text fit, projector-size fonts, contrast, density, alt text, off-brand colours">✓ Review</button>
         <Dropdown wrapClass="st-export" menuClass="st-export-menu" label="Export ▾" render={(close) => (
           <>

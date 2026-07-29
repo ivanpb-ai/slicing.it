@@ -84,7 +84,7 @@ function Text({ el }) {
 function Kicker({ el }) {
   const s = el.style;
   return (
-    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: justify(s.align), textAlign: s.align, color: s.color, fontFamily: FONTS.mono, fontSize: s.fontSize, letterSpacing: s.letterSpacing, textTransform: "uppercase" }}>
+    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: justify(s.align), textAlign: s.align, color: s.color, fontFamily: s.fontFamily || FONTS.mono, fontSize: s.fontSize, letterSpacing: s.letterSpacing, textTransform: "uppercase" }}>
       {el.props.text}
     </div>
   );
@@ -94,8 +94,8 @@ function Quote({ el }) {
   const s = el.style;
   return (
     <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", textAlign: s.align }}>
-      <div style={{ fontSize: s.fontSize * 1.6, lineHeight: 0, color: s.accent, fontFamily: FONTS.head, height: s.fontSize * 0.6 }}>“</div>
-      <div style={{ color: s.color, fontFamily: FONTS.head, fontWeight: 300, fontSize: s.fontSize, lineHeight: 1.25 }}>{el.props.text}</div>
+      <div style={{ fontSize: s.fontSize * 1.6, lineHeight: 0, color: s.accent, fontFamily: s.fontFamily || FONTS.head, height: s.fontSize * 0.6 }}>“</div>
+      <div style={{ color: s.color, fontFamily: s.fontFamily || FONTS.head, fontWeight: 300, fontSize: s.fontSize, lineHeight: 1.25 }}>{el.props.text}</div>
       {el.props.author ? <div style={{ marginTop: 14, color: s.accent, fontFamily: FONTS.mono, fontSize: Math.max(12, s.fontSize * 0.34), letterSpacing: 1 }}>{el.props.author}</div> : null}
     </div>
   );
@@ -109,7 +109,7 @@ function Counter({ el, mode, active }) {
   const s = el.style;
   return (
     <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-      <div style={{ fontFamily: FONTS.head, fontWeight: 300, fontSize: s.fontSize, color: s.color, letterSpacing: -1, lineHeight: 1 }}>
+      <div style={{ fontFamily: s.fontFamily || FONTS.head, fontWeight: 300, fontSize: s.fontSize, color: s.color, letterSpacing: -1, lineHeight: 1 }}>
         {el.props.prefix}{shown}{el.props.suffix}
       </div>
       {el.props.label ? <div style={{ marginTop: 10, fontSize: Math.max(11, s.fontSize * 0.2), color: P.muted, letterSpacing: 1, lineHeight: 1.35 }}>{el.props.label}</div> : null}
@@ -121,7 +121,7 @@ function Button({ el, mode }) {
   const s = el.style; const primary = el.props.variant !== "ghost";
   const style = {
     display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", height: "100%",
-    borderRadius: 999, textDecoration: "none", fontWeight: s.fontWeight || 500, fontSize: s.fontSize, fontFamily: FONTS.body,
+    borderRadius: 999, textDecoration: "none", fontWeight: s.fontWeight || 500, fontSize: s.fontSize, fontFamily: s.fontFamily || FONTS.body,
     boxSizing: "border-box", cursor: mode === "present" ? "pointer" : "default",
     color: s.color || (primary ? P.white : P.light),
     background: primary ? `linear-gradient(135deg, ${s.bg || P.purple}, ${P.magenta})` : "transparent",
@@ -135,7 +135,7 @@ function Button({ el, mode }) {
 function List({ el }) {
   const s = el.style;
   return (
-    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", gap: s.gap, color: s.color, fontFamily: FONTS.body, fontSize: s.fontSize, lineHeight: 1.45 }}>
+    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", gap: s.gap, color: s.color, fontFamily: s.fontFamily || FONTS.body, fontSize: s.fontSize, lineHeight: 1.45 }}>
       {(el.props.items || []).map((it, i) => (
         <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
           <span style={{ color: s.accent, fontSize: s.fontSize * 0.6, marginTop: s.fontSize * 0.28, flexShrink: 0 }}>{s.marker || "◆"}</span>
@@ -155,7 +155,7 @@ function Card({ el }) {
         <span style={{ fontSize: 28 }}>{p.icon}</span>
         {p.tag ? <span style={{ fontFamily: FONTS.mono, fontSize: 10, letterSpacing: 2, color: c, textTransform: "uppercase" }}>{p.tag}</span> : null}
       </div>
-      <div style={{ fontFamily: FONTS.head, fontWeight: 300, fontSize: 30, color: el.style.color || P.white, marginBottom: 10, letterSpacing: -0.5 }}>{p.title}</div>
+      <div style={{ fontFamily: el.style.fontFamily || FONTS.head, fontWeight: 300, fontSize: 30, color: el.style.color || P.white, marginBottom: 10, letterSpacing: -0.5 }}>{p.title}</div>
       {p.body ? <div style={{ fontSize: 13.5, color: P.dim, lineHeight: 1.6, marginBottom: 12 }}>{p.body}</div> : null}
       <div style={{ marginTop: "auto" }}>
         {(p.bullets || []).map((b, i) => (

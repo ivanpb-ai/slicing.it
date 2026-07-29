@@ -29,6 +29,50 @@ export const FONT_OPTIONS = [
   { label: "Mono", value: FONTS.mono },
 ];
 
+// The font picker's catalogue: the Telia theme roles plus web-safe families
+// that render practically everywhere. Values are full CSS stacks so decks
+// degrade gracefully on machines missing a family; the PowerPoint exporter
+// carries the first family name through as the run font. Fonts installed on
+// the user's device are appended at runtime via the Local Font Access API
+// (see FontSelect in panels.jsx).
+export const FONT_GROUPS = [
+  { label: "Theme", options: FONT_OPTIONS },
+  { label: "Sans-serif", options: [
+    { label: "Arial", value: "Arial, Helvetica, sans-serif" },
+    { label: "Helvetica", value: "'Helvetica Neue', Helvetica, Arial, sans-serif" },
+    { label: "Verdana", value: "Verdana, Geneva, sans-serif" },
+    { label: "Tahoma", value: "Tahoma, Geneva, sans-serif" },
+    { label: "Trebuchet MS", value: "'Trebuchet MS', Tahoma, sans-serif" },
+    { label: "Segoe UI", value: "'Segoe UI', system-ui, sans-serif" },
+    { label: "Calibri", value: "Calibri, 'Segoe UI', sans-serif" },
+    { label: "Gill Sans", value: "'Gill Sans', 'Gill Sans MT', Calibri, sans-serif" },
+    { label: "Century Gothic", value: "'Century Gothic', 'Apple Gothic', sans-serif" },
+    { label: "Optima", value: "Optima, Candara, 'Segoe UI', sans-serif" },
+  ] },
+  { label: "Serif", options: [
+    { label: "Georgia", value: "Georgia, 'Times New Roman', serif" },
+    { label: "Times New Roman", value: "'Times New Roman', Times, serif" },
+    { label: "Palatino", value: "'Palatino Linotype', Palatino, 'Book Antiqua', serif" },
+    { label: "Garamond", value: "Garamond, 'Times New Roman', serif" },
+    { label: "Cambria", value: "Cambria, Georgia, serif" },
+    { label: "Baskerville", value: "Baskerville, 'Times New Roman', serif" },
+    { label: "Didot", value: "Didot, 'Bodoni MT', 'Times New Roman', serif" },
+  ] },
+  { label: "Monospace", options: [
+    { label: "Courier New", value: "'Courier New', Courier, monospace" },
+    { label: "Consolas", value: "Consolas, Monaco, 'Courier New', monospace" },
+    { label: "Menlo", value: "Menlo, Consolas, monospace" },
+  ] },
+  { label: "Display & script", options: [
+    { label: "Impact", value: "Impact, 'Arial Black', sans-serif" },
+    { label: "Arial Black", value: "'Arial Black', Arial, sans-serif" },
+    { label: "Comic Sans MS", value: "'Comic Sans MS', 'Comic Sans', cursive" },
+    { label: "Brush Script MT", value: "'Brush Script MT', cursive" },
+    { label: "Copperplate", value: "Copperplate, 'Copperplate Gothic Light', fantasy" },
+    { label: "Papyrus", value: "Papyrus, fantasy" },
+  ] },
+];
+
 export const SWATCHES = Object.entries(P).map(([name, value]) => ({ name, value }));
 
 // Curated colour stops for quick gradients.

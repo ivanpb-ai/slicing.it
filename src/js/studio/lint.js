@@ -106,18 +106,18 @@ export function measureOverflow(el) {
       set(p.text, { fontFamily: s.fontFamily || FONTS.body, fontSize: (s.fontSize || 22) + "px", fontWeight: String(s.fontWeight || 400), lineHeight: String(s.lineHeight || 1.5), letterSpacing: (s.letterSpacing || 0) + "px" });
       break;
     case "kicker":
-      set(String(p.text || "").toUpperCase(), { fontFamily: FONTS.mono, fontSize: (s.fontSize || 13) + "px", letterSpacing: (s.letterSpacing || 0) + "px" });
+      set(String(p.text || "").toUpperCase(), { fontFamily: s.fontFamily || FONTS.mono, fontSize: (s.fontSize || 13) + "px", letterSpacing: (s.letterSpacing || 0) + "px" });
       break;
     case "quote":
-      set((p.text || "") + (p.author ? "\n" + p.author : ""), { fontFamily: FONTS.head, fontSize: (s.fontSize || 40) + "px", fontWeight: "300", lineHeight: "1.25" });
+      set((p.text || "") + (p.author ? "\n" + p.author : ""), { fontFamily: s.fontFamily || FONTS.head, fontSize: (s.fontSize || 40) + "px", fontWeight: "300", lineHeight: "1.25" });
       break;
     case "list":
-      set((p.items || []).join("\n"), { fontSize: (s.fontSize || 17) + "px", lineHeight: "1.45", padding: "0 0 0 " + Math.round((s.fontSize || 17) * 1.4) + "px" });
+      set((p.items || []).join("\n"), { fontFamily: s.fontFamily || FONTS.body, fontSize: (s.fontSize || 17) + "px", lineHeight: "1.45", padding: "0 0 0 " + Math.round((s.fontSize || 17) * 1.4) + "px" });
       m.style.height = "auto";
       // account for the per-item gap the List block adds
       return finish(el, m.scrollHeight + Math.max(0, (p.items || []).length - 1) * (s.gap || 14));
     case "button":
-      set(p.label, { fontSize: (s.fontSize || 15) + "px", fontWeight: "500", padding: "0 18px" });
+      set(p.label, { fontFamily: s.fontFamily || FONTS.body, fontSize: (s.fontSize || 15) + "px", fontWeight: "500", padding: "0 18px" });
       break;
     default:
       return null;

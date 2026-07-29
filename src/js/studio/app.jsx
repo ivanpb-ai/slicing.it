@@ -742,6 +742,8 @@ const STUDIO_CSS = `
 .st-deckrow:hover .st-deck-del,.st-deckrow.on .st-deck-del{opacity:1;}
 .st-decks-foot{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line);background:rgba(0,0,0,0.2);}
 .st-decks-foot .st-btn{flex:1;justify-content:center;}
+.st-decks-user{display:flex;align-items:center;gap:8px;padding:7px 10px;border-top:1px solid var(--line);font-size:11.5px;color:${P.dim};}
+.st-decks-user span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .st-sitecopy{display:flex;flex-direction:column;gap:2px;align-items:flex-start;width:100%;background:rgba(0,212,255,0.05);border:0;border-top:1px solid var(--line);color:#F4E0FF;padding:9px 12px;text-align:left;}
 .st-sitecopy:hover{background:rgba(0,212,255,0.12);}
 .st-sitecopy .st-deckname{color:${P.cyan};}

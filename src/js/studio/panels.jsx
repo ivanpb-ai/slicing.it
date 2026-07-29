@@ -4,7 +4,7 @@
 // from the .st-* classes injected in app.jsx.
 // ─────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from "react";
-import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, chartDefaults, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_GROUPS, SLIDE_STATUSES, STATUS_COLORS } from "./model";
+import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, chartDefaults, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_GROUPS, SLIDE_STATUSES, STATUS_COLORS, currentUser } from "./model";
 import { SlideView } from "./stage";
 import { measureOverflow, isBrandColor } from "./lint";
 
@@ -788,6 +788,12 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
               <span className="st-deckname">🌐 NorthStar site copy</span>
               <span className="st-deckdate">the live deck (copy.js) — edit & export</span>
             </button>
+            {currentUser && (
+              <div className="st-decks-user">
+                <span title="Only your own presentations are shown and synced">👤 {currentUser}</span>
+                <a className="st-btn sm" href="?signout=1" title="Sign out and switch user">Sign out</a>
+              </div>
+            )}
           </>
         )} />
         <input className="st-title" value={title} onFocus={onCheckpoint} onChange={(e) => onTitle(e.target.value)} title="Rename this presentation" />

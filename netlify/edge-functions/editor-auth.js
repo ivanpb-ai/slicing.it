@@ -1,5 +1,5 @@
-// Login gate for the editor tools (copy editor + presentation studio).
-// The rest of the site stays public.
+// Login gate for the editor tools (copy editor + presentation studio) and
+// the other protected NorthStar pages. The rest of the site stays public.
 //
 // Why a form + cookie instead of HTTP Basic Auth?
 // The native Basic-Auth popup is suppressed in many corporate environments:
@@ -7,21 +7,53 @@
 // renders a bare 401 body and never prompts), and some managed browsers disable
 // the Basic scheme by policy. A normal HTTPS form + cookie works everywhere.
 //
-// Configure in the Netlify site's environment variables:
-//   EDITOR_PASSWORD  (required) — the shared password. Unset → tools stay locked.
+// Configure in the Netlify site's environment variables (pick one):
+//   EDITOR_USERS     comma-separated "username:password" pairs, e.g.
+//                    "alice:s3cret,bob:hunter2". Each user signs in with their
+//                    own credentials; in the Presentation Studio each user
+//                    sees/edits only their own decks (netlify/functions/
+//                    decks.mjs). Usernames: letters, digits, "_" or "-",
+//                    max 32 chars. Sign out via any gated URL + ?signout=1.
+//   EDITOR_PASSWORD  the original single shared password — everyone shares
+//                    one deck library. Cookie format and storage keys are
+//                    unchanged from before EDITOR_USERS existed, so existing
+//                    sessions and decks keep working. Ignored when
+//                    EDITOR_USERS is set.
+//   Neither set → the gated pages stay locked (503).
 //
-// On success, a token (SHA-256 of the password + a static pepper) is stored in
-// an HttpOnly, Secure cookie; the password itself is never stored client-side.
+// On success a token is stored in an HttpOnly, Secure cookie — in shared mode
+// SHA-256 of the password + a static pepper (legacy format); in multi-user
+// mode "<user>:<SHA-256 of pepper+user+password>", plus a readable
+// ns_editor_user cookie so the Studio can scope its local storage per user.
+// The password itself is never stored client-side.
 
 const COOKIE = "ns_editor_auth";
+const USER_COOKIE = "ns_editor_user";
 const PEPPER = "northstar-editor-gate-v1";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+const USER_RE = /^[a-z0-9_-]{1,32}$/i;
 
-async function tokenFor(password) {
-  const bytes = new TextEncoder().encode(`${PEPPER}:${password}`);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
+// → Map<user, password> when EDITOR_USERS is set, else null (shared mode).
+function parseUsers(env) {
+  const multi = env.get("EDITOR_USERS");
+  if (!multi) return null;
+  const map = new Map();
+  for (const pair of multi.split(",")) {
+    const i = pair.indexOf(":");
+    if (i < 1) continue;
+    const name = pair.slice(0, i).trim();
+    const pw = pair.slice(i + 1).trim();
+    if (USER_RE.test(name) && pw) map.set(name, pw);
+  }
+  return map.size ? map : null;
+}
+
+async function sha256Hex(s) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
   return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
+const tokenShared = (password) => sha256Hex(`${PEPPER}:${password}`);          // legacy single-password format
+const tokenUser = (user, password) => sha256Hex(`${PEPPER}:${user}:${password}`);
 
 function constantEquals(a, b) {
   if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
@@ -39,7 +71,7 @@ function readCookie(header, name) {
 }
 
 // The form has no `action`, so it posts back to whatever gated path served it.
-function loginPage(failed) {
+function loginPage(multi, failed) {
   return `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="robots" content="noindex"/><title>NorthStar protected zone · Sign in</title>
@@ -61,9 +93,10 @@ body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:c
 <body>
  <form class="card" method="post" autocomplete="on">
   <div class="brand">◆ NorthStar protected zone</div>
-  <p class="sub">Enter password to continue.</p>
-  ${failed ? '<div class="err">Incorrect password — please try again.</div>' : ""}
-  <input class="pw" type="password" name="password" placeholder="Password" autofocus autocomplete="current-password" required/>
+  <p class="sub">${multi ? "Sign in to continue." : "Enter password to continue."}</p>
+  ${failed ? '<div class="err">Incorrect credentials — please try again.</div>' : ""}
+  ${multi ? '<input class="pw" type="text" name="username" placeholder="Username" autofocus autocomplete="username" required/>' : ""}
+  <input class="pw" type="password" name="password" placeholder="Password" ${multi ? "" : "autofocus"} autocomplete="current-password" required/>
   <button class="go" type="submit">Sign in</button>
  </form>
 </body></html>`;
@@ -72,34 +105,59 @@ body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:c
 const htmlHeaders = { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" };
 
 export default async (request, context) => {
+  const users = parseUsers(Netlify.env);
   const password = Netlify.env.get("EDITOR_PASSWORD");
-  if (!password) return new Response("Editor access is not configured.", { status: 503 });
+  if (!users && !password) return new Response("Editor access is not configured.", { status: 503 });
 
-  const expected = await tokenFor(password);
+  const url = new URL(request.url);
+
+  // Sign out: clear the cookies and reload the page without the parameter.
+  if (url.searchParams.has("signout")) {
+    url.searchParams.delete("signout");
+    const headers = new Headers({ "Location": url.pathname + url.search, "Cache-Control": "no-store" });
+    headers.append("Set-Cookie", `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);
+    headers.append("Set-Cookie", `${USER_COOKIE}=; Path=/; Secure; SameSite=Lax; Max-Age=0`);
+    return new Response(null, { status: 303, headers });
+  }
+
+  const raw = readCookie(request.headers.get("cookie"), COOKIE) || "";
 
   // Already signed in?
-  if (constantEquals(readCookie(request.headers.get("cookie"), COOKIE) || "", expected)) {
+  if (users) {
+    const i = raw.indexOf(":");
+    if (i > 0) {
+      const user = raw.slice(0, i);
+      const pw = users.get(user);
+      if (pw && constantEquals(raw.slice(i + 1), await tokenUser(user, pw))) return context.next();
+    }
+  } else if (constantEquals(raw, await tokenShared(password))) {
     return context.next();
   }
 
   // Handle a sign-in submission.
   if (request.method === "POST") {
-    let supplied = "";
-    try { supplied = String((await request.formData()).get("password") || ""); } catch { /* ignore */ }
-    if (supplied && constantEquals(await tokenFor(supplied), expected)) {
-      const url = new URL(request.url);
-      return new Response(null, {
-        status: 303,
-        headers: {
-          "Location": url.pathname + url.search,
-          "Set-Cookie": `${COOKIE}=${expected}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${MAX_AGE}`,
-          "Cache-Control": "no-store",
-        },
-      });
+    let username = "", supplied = "";
+    try {
+      const form = await request.formData();
+      supplied = String(form.get("password") || "");
+      username = String(form.get("username") || "").trim();
+    } catch { /* ignore */ }
+
+    const headers = new Headers({ "Location": url.pathname + url.search, "Cache-Control": "no-store" });
+    if (users) {
+      const pw = users.get(username);
+      if (pw && supplied && constantEquals(await tokenUser(username, supplied), await tokenUser(username, pw))) {
+        headers.append("Set-Cookie", `${COOKIE}=${encodeURIComponent(`${username}:${await tokenUser(username, pw)}`)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${MAX_AGE}`);
+        headers.append("Set-Cookie", `${USER_COOKIE}=${encodeURIComponent(username)}; Path=/; Secure; SameSite=Lax; Max-Age=${MAX_AGE}`);
+        return new Response(null, { status: 303, headers });
+      }
+    } else if (supplied && constantEquals(await tokenShared(supplied), await tokenShared(password))) {
+      headers.append("Set-Cookie", `${COOKIE}=${await tokenShared(password)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${MAX_AGE}`);
+      return new Response(null, { status: 303, headers });
     }
-    return new Response(loginPage(true), { status: 401, headers: htmlHeaders });
+    return new Response(loginPage(!!users, true), { status: 401, headers: htmlHeaders });
   }
 
   // Otherwise show the login form.
-  return new Response(loginPage(false), { status: 200, headers: htmlHeaders });
+  return new Response(loginPage(!!users, false), { status: 200, headers: htmlHeaders });
 };

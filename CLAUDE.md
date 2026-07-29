@@ -27,17 +27,27 @@ Telia-only (stays in `src/js/studio/`):
 - Slide Converter hand-over (`takeTransferredSlides`) and converter wording
 - NorthStar/Perplexity API endpoints on `northstar-program.com`
   (`generate-pages.js` has three modes here: none/northstar/generic)
-- Shared-password auth (`EDITOR_PASSWORD` only) and `netlify.toml` gating of
-  the other site pages
+- Auth specifics: `ns_editor_auth`/`ns_editor_user` cookie names, the
+  NorthStar pepper, the gate also covering the other protected site pages,
+  locked (503) when unconfigured, and `EDITOR_PASSWORD` shared mode keeping
+  the legacy plain-hash cookie and the original unnamespaced blob/local keys
+  (protects the live site's existing data)
 - NorthStar-themed starter deck and element seed content
 
 Generic-only (stays in the presentation-studio repo):
 - Neutral palette / system font stack ("Studio Display" heading marker)
-- `src/js/studio/auth.js`: Netlify Identity + per-user accounts
-  (`EDITOR_USERS`, per-user Blobs namespaces, per-user localStorage scope)
+- `src/js/studio/auth.js` + Netlify Identity (open self-registration,
+  JWT-validated decks API); open access when nothing is configured;
+  `EDITOR_PASSWORD` there maps to a namespaced "default" user
 - Self-hosted Perplexity proxy (`netlify/functions/perplexity.mjs`; the
   generic `generate-pages.js` has two modes: none/perplexity)
 - Generic starter deck, README/netlify.toml docs
+
+Synced in BOTH since 2026-07: the `EDITOR_USERS` multi-user cookie gate
+(comma-separated `user:password` pairs; per-user Netlify Blobs namespaces
+`user:<name>:`; per-user localStorage scope via the readable user cookie;
+"Signed in as … / Sign out" row in the Decks menu). Auth changes must be
+ported to both, translating the cookie/pepper names listed above.
 
 ### Porting mechanics
 

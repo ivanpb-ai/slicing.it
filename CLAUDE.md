@@ -31,7 +31,9 @@ Telia-only (stays in `src/js/studio/`):
   NorthStar pepper, the gate also covering the other protected site pages,
   locked (503) when unconfigured, and `EDITOR_PASSWORD` shared mode keeping
   the legacy plain-hash cookie and the original unnamespaced blob/local keys
-  (protects the live site's existing data)
+  (protects the live site's existing data); the Decks-menu Sign out row is
+  always shown (the gated page implies a signed-in visitor), plain in
+  shared mode
 - NorthStar-themed starter deck and element seed content
 
 Generic-only (stays in the presentation-studio repo):

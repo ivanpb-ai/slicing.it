@@ -258,7 +258,7 @@ const HELP_SECTIONS = [
   },
   {
     title: "🎛 Inspector (right)",
-    body: <>Shows the selected element's content, style, <b>Motion</b> (entrance effect, delay, duration, easing, idle loop) and <b>Layout</b> (position, size, rotation, opacity). With nothing selected it edits the slide itself: name, transition, review status, and one of 14 live animated backgrounds with its colours.</>,
+    body: <>Shows the selected element's content, style, <b>Motion</b> (entrance effect, delay, duration, easing, idle loop) and <b>Layout</b> (position, size, rotation, opacity). Text blocks have a <b>Font</b> picker: theme roles, a catalogue of web-safe families, and — in Chrome/Edge — every font installed on your device. With nothing selected it edits the slide itself: name, transition, review status, and one of 14 live animated backgrounds with its colours.</>,
   },
   {
     title: "🗂 Slides (left)",
@@ -791,6 +791,18 @@ const STUDIO_CSS = `
 .st-review-score.ok{color:${P.green};}
 .st-review-issue{display:block;width:100%;text-align:left;background:transparent;border:0;border-top:1px solid var(--line2);color:${P.dim};font-size:11.5px;padding:6px 11px 6px 24px;cursor:pointer;line-height:1.45;}
 .st-review-issue:hover{background:rgba(0,212,255,0.07);color:#fff;}
+
+/* font picker */
+.st-fontsel{position:relative;flex:1;min-width:0;}
+.st-fontsel-btn{width:100%;text-align:left;font-size:13px;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:var(--in);color:#E9ECFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.st-fontsel-btn:hover{border-color:${P.cyan};}
+.st-fontsel-menu{position:absolute;top:105%;left:0;right:0;z-index:45;background:#171F3A;border:1px solid var(--line);border-radius:10px;box-shadow:0 20px 50px rgba(0,0,0,.55);max-height:340px;overflow-y:auto;padding:6px;}
+.st-fontsel-search{margin-bottom:4px;font-size:12px;}
+.st-fontsel-group{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:${P.cyan};margin:8px 4px 3px;font-weight:600;}
+.st-fontsel-item{display:block;width:100%;text-align:left;background:transparent;border:0;color:#E9ECFF;border-radius:6px;padding:5px 8px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.st-fontsel-item:hover{background:rgba(0,212,255,0.08);}
+.st-fontsel-item.on{color:${P.cyan};}
+.st-fontsel-note{font-size:11px;color:${P.muted};padding:4px 8px;line-height:1.5;}
 
 /* help dialog */
 .st-help{width:min(720px,94vw);}

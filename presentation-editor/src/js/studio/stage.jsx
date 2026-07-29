@@ -27,10 +27,10 @@ function editorTextStyle(el) {
   const s = el.style; const center = { display: "flex", alignItems: "center" };
   const jc = s.align === "left" ? "flex-start" : s.align === "right" ? "flex-end" : "center";
   if (el.type === "heading") return { ...center, justifyContent: jc, textAlign: s.align, fontFamily: s.fontFamily || FONTS.head, fontWeight: s.fontWeight, fontSize: s.fontSize, lineHeight: s.lineHeight, letterSpacing: s.letterSpacing, color: s.color };
-  if (el.type === "kicker") return { ...center, justifyContent: jc, textAlign: s.align, fontFamily: FONTS.mono, fontSize: s.fontSize, letterSpacing: s.letterSpacing, textTransform: "uppercase", color: s.color };
-  if (el.type === "quote") return { display: "flex", flexDirection: "column", justifyContent: "center", textAlign: s.align, fontFamily: FONTS.head, fontWeight: 300, fontSize: s.fontSize, lineHeight: 1.25, color: s.color };
-  if (el.type === "button") return { display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONTS.body, fontWeight: 500, fontSize: s.fontSize, color: s.color || P.white };
-  if (el.type === "card") return { fontFamily: FONTS.head, fontWeight: 300, fontSize: 30, color: s.color || P.white, padding: "22px 20px", display: "flex", alignItems: "flex-start" };
+  if (el.type === "kicker") return { ...center, justifyContent: jc, textAlign: s.align, fontFamily: s.fontFamily || FONTS.mono, fontSize: s.fontSize, letterSpacing: s.letterSpacing, textTransform: "uppercase", color: s.color };
+  if (el.type === "quote") return { display: "flex", flexDirection: "column", justifyContent: "center", textAlign: s.align, fontFamily: s.fontFamily || FONTS.head, fontWeight: 300, fontSize: s.fontSize, lineHeight: 1.25, color: s.color };
+  if (el.type === "button") return { display: "flex", alignItems: "center", justifyContent: "center", fontFamily: s.fontFamily || FONTS.body, fontWeight: 500, fontSize: s.fontSize, color: s.color || P.white };
+  if (el.type === "card") return { fontFamily: s.fontFamily || FONTS.head, fontWeight: 300, fontSize: 30, color: s.color || P.white, padding: "22px 20px", display: "flex", alignItems: "flex-start" };
   if (el.type === "counter") return { display: "flex", alignItems: "flex-end", justifyContent: "center", textAlign: "center", fontSize: Math.max(12, s.fontSize * 0.2), color: P.muted, paddingBottom: 8 };
   return { ...center, justifyContent: jc, textAlign: s.align, fontFamily: s.fontFamily || FONTS.body, fontSize: s.fontSize, lineHeight: s.lineHeight, color: s.color };
 }

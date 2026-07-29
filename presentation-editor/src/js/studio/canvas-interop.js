@@ -1,14 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Canvas interop — bridges the Studio's deck model and the "canvas" HTML
-// format produced by slide-converter.html (one page per slide: a .canvas div
+// format used by the interactive-page export (one page per slide: a .canvas div
 // with absolutely-positioned .shp shapes, per-run <span data-pt> text styling
 // and an SVG connector layer, geometry expressed in EMU / % / cqw).
 //
 //   slideToCanvasHtml(slide)   Studio slide → converter-format HTML page.
-//                              Feeds the converter's HTML→PowerPoint function
+//                              Feeds the HTML→PowerPoint exporter
 //                              (export-pptx.js) and round-trips through
 //                              canvasHtmlToSlide.
-//   canvasHtmlToSlide(html)    Converter-generated page → editable Studio
+//   canvasHtmlToSlide(html)    Generated page → editable Studio
 //                              slide (null if the HTML isn't a canvas page).
 //
 // The Studio stage is 1280×720 px; a canvas page is 12192000×6858000 EMU
@@ -28,7 +28,7 @@ const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").
 const pctX = (px) => (px / STAGE_W * 100).toFixed(3);
 const pctY = (px) => (px / STAGE_H * 100).toFixed(3);
 const cqw = (px) => (px / STAGE_W * 100).toFixed(3); // container-query width units
-const HEAD_FAMILY = "'Telia Sans Heading', 'Telia Sans', system-ui, sans-serif";
+const HEAD_FAMILY = FONTS.head;
 
 // First solid colour of a fill that may be a palette gradient array.
 const solidOf = (grad, bg, fallback = P.purple) => (Array.isArray(grad) && grad.length ? grad[0] : bg || fallback);
@@ -43,8 +43,8 @@ function hexToRgba(hex, alpha) {
 // ── Studio slide → canvas HTML ──────────────────────────────────────────────
 // Returns the building blocks of a converter-format page: positioned shape
 // markup, the connector SVG, the background, and the click-to-explain label
-// entries ({key, title} per text-bearing shape — the same labels the Slide
-// Converter's Generate step enriches via the description APIs).
+// entries ({key, title} per text-bearing shape — the same labels the
+// interactive-page export enriches via the description API).
 export function slideToCanvasParts(slide) {
   let shapesHtml = "";
   let linesSvg = "";
@@ -128,7 +128,7 @@ export function slideToCanvasParts(slide) {
             para("left", span(`${p.icon || ""}  ${String(p.tag || "").toUpperCase()}`, { px: 15, color: c })) +
             para("left", span(p.title || "", { px: 30, color: s.color || P.white, family: s.fontFamily || HEAD_FAMILY })) +
             (p.body ? para("left", span(p.body, { px: 13.5, color: P.dim })) : "") +
-            (p.bullets || []).map((b) => para("left", span(`◆  ${b}`, { px: 12.5, color: "rgba(244,224,255,0.8)" }))).join(""),
+            (p.bullets || []).map((b) => para("left", span(`◆  ${b}`, { px: 12.5, color: "rgba(233,236,255,0.8)" }))).join(""),
         });
         break;
       }
@@ -182,15 +182,15 @@ export function slideToCanvasParts(slide) {
 }
 
 // Plain converter-format page (no click-to-explain chrome) — the input to the
-// PowerPoint exporter. Same skeleton slide-converter.html generates, so its
-// HTML→PowerPoint function — and this module's importer — read it unchanged.
+// PowerPoint exporter. Same skeleton the interactive-page export generates, so its
+// HTML→PowerPoint exporter — and this module's importer — read it unchanged.
 export function slideToCanvasHtml(slide) {
   const { shapesHtml, linesSvg, bg, name } = slideToCanvasParts(slide);
   return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n'
     + `<title>${esc(name)}</title>\n`
     + "<style>\n"
     + '* { margin: 0; padding: 0; box-sizing: border-box; }\n'
-    + 'html, body { width: 100%; min-height: 100vh; font-family: "Telia Sans", system-ui, sans-serif; background: #1a0029; }\n'
+    + 'html, body { width: 100%; min-height: 100vh; font-family: system-ui, sans-serif; background: #0B1026; }\n'
     + 'body { display: flex; align-items: center; justify-content: center; padding: 24px; }\n'
     + `.canvas { position: relative; width: min(100%, 1500px); aspect-ratio: ${CANVAS_W} / ${CANVAS_H}; background: ${bg}; container-type: inline-size; border-radius: 12px; overflow: hidden; }\n`
     + ".connectors { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }\n"
@@ -209,7 +209,7 @@ const cssLen = (v) => { const m = /(-?[\d.]+)/.exec(v || ""); return m ? parseFl
 
 function parseFamily(raw) {
   const fam = (raw || "").split(",")[0].trim().replace(/^["']|["']$/g, "");
-  return /telia sans heading/i.test(fam) ? "heading" : fam ? "body" : null;
+  return /studio display|heading/i.test(fam) ? "heading" : fam ? "body" : null;
 }
 
 // Extract a shape's paragraphs: [{ align, text, maxPt, color, bold, heading }]
@@ -337,26 +337,3 @@ export function canvasHtmlToSlide(htmlText) {
   });
 }
 
-// ── Automatic hand-over from slide-converter.html ───────────────────────────
-// The converter's "Edit in Presentation Studio" button stores its generated
-// pages under this key and navigates here; the Studio consumes them on load.
-const TRANSFER_KEY = "northstar.studio.transfer.v1";
-const TRANSFER_MAX_AGE = 10 * 60 * 1000; // ignore stale hand-overs
-
-export function takeTransferredSlides() {
-  let raw;
-  try {
-    raw = localStorage.getItem(TRANSFER_KEY);
-    if (raw) localStorage.removeItem(TRANSFER_KEY); // consume once
-  } catch { return null; }
-  if (!raw) return null;
-  try {
-    const t = JSON.parse(raw);
-    if (!Array.isArray(t.pages) || (t.ts && Date.now() - t.ts > TRANSFER_MAX_AGE)) return null;
-    const slides = t.pages.map((p) => { try { return canvasHtmlToSlide(p); } catch { return null; } }).filter(Boolean);
-    if (!slides.length) return null;
-    return { title: t.title || slides[0].name || "Converted slides", slides };
-  } catch {
-    return null;
-  }
-}

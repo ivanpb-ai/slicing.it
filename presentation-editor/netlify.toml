@@ -1,0 +1,31 @@
+# Presentation Studio — Netlify configuration.
+#
+# Accounts — pick ONE of:
+#   Netlify Identity    enable it in the Netlify UI (Site configuration →
+#                       Identity). Open self-registration, password resets,
+#                       many users; each user sees only their own decks. The
+#                       app detects it automatically — no env vars needed.
+#                       Leave EDITOR_USERS / EDITOR_PASSWORD unset.
+#   EDITOR_USERS        env var — small fixed user list as comma-separated
+#                       "username:password" pairs (e.g. "alice:pw1,bob:pw2").
+#   EDITOR_PASSWORD     env var — a single shared password (one shared deck
+#                       library). Ignored when EDITOR_USERS is set.
+#   none of the above   the editor is public and decks stay device-local.
+#
+# Other environment variables:
+#   PERPLEXITY_API_KEY  optional — enables AI-enriched "interactive pages"
+#                       export (netlify/functions/perplexity.mjs).
+#   PERPLEXITY_MODEL    optional — defaults to "sonar".
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Gate the editor behind the password (no-op while EDITOR_PASSWORD is unset).
+[[edge_functions]]
+  path = "/"
+  function = "editor-auth"
+
+[[edge_functions]]
+  path = "/index.html"
+  function = "editor-auth"

@@ -18,9 +18,13 @@ export { P };
 export const STAGE_W = 1280;
 export const STAGE_H = 720;
 
+// "Studio Display" is a deliberate non-existent first entry: it marks heading
+// text in exported/imported HTML (canvas-interop.js) and falls straight
+// through to the system font stack. Swap in your own font files by adding
+// @font-face rules in src/index.html and putting the family names first here.
 export const FONTS = {
-  head: "'Telia Sans Heading', 'Telia Sans', system-ui, sans-serif",
-  body: "'Telia Sans', system-ui, sans-serif",
+  head: "'Studio Display', system-ui, -apple-system, 'Segoe UI', sans-serif",
+  body: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
   mono: "'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace",
 };
 export const FONT_OPTIONS = [
@@ -29,11 +33,11 @@ export const FONT_OPTIONS = [
   { label: "Mono", value: FONTS.mono },
 ];
 
-// The font picker's catalogue: the Telia theme roles plus web-safe families
-// that render practically everywhere. Values are full CSS stacks so decks
-// degrade gracefully on machines missing a family; the PowerPoint exporter
-// carries the first family name through as the run font. Fonts installed on
-// the user's device are appended at runtime via the Local Font Access API
+// The font picker's catalogue: the theme roles plus web-safe families that
+// render practically everywhere. Values are full CSS stacks so decks degrade
+// gracefully on machines missing a family; the PowerPoint exporter carries
+// the first family name through as the run font. Fonts installed on the
+// user's device are appended at runtime via the Local Font Access API
 // (see FontSelect in panels.jsx).
 export const FONT_GROUPS = [
   { label: "Theme", options: FONT_OPTIONS },
@@ -93,7 +97,7 @@ export const IDLES = ["none", "float", "pulse", "glow", "spin", "sway", "breathe
 export const EASE_OPTIONS = ["out", "inout", "back", "linear"];
 export const TRANSITIONS = ["fade", "slide-left", "slide-up", "zoom", "flip", "none"];
 export const SLIDE_STATUSES = ["draft", "review", "final"];
-export const STATUS_COLORS = { draft: "rgba(244,224,255,0.35)", review: P.gold, final: P.green };
+export const STATUS_COLORS = { draft: "rgba(233,236,255,0.35)", review: P.gold, final: P.green };
 export const BACKGROUNDS = ["nebula", "aurora", "starfield", "grid", "mesh", "waves", "rain", "circuit", "rings", "beams", "bokeh", "map", "gradient", "solid"];
 export const ALIGN = ["left", "center", "right"];
 
@@ -138,12 +142,12 @@ export function chartDefaults(kind) {
     case "line":
     case "bar":
       return { props: { kind, xLabels: cats, axisMax: 6, series: three([4.3, 2.5, 3.5, 4.5], [2.4, 4.4, 1.8, 2.8], [2, 2, 3, 5]) } };
-    default: // area — the long-standing default seed
+    default: // area — the default seed
       return { props: { kind: "area", xLabels: ["2025", "2027", "2029", "2031", "2033", "2035"], axisMax: 200,
         series: [
-          { label: "Slices", color: P.cyan, values: [4, 18, 36, 62, 90, 118] },
-          { label: "APIs", color: P.magenta, values: [1, 6, 22, 56, 108, 168] },
-          { label: "Sensing", color: P.gold, values: [0, 1, 5, 18, 44, 84] },
+          { label: "Product A", color: P.cyan, values: [4, 18, 36, 62, 90, 118] },
+          { label: "Product B", color: P.magenta, values: [1, 6, 22, 56, 108, 168] },
+          { label: "Product C", color: P.gold, values: [0, 1, 5, 18, 44, 84] },
         ] } };
   }
 }
@@ -165,7 +169,7 @@ export const ELEMENT_TYPES = [
   { type: "chart", label: "Chart", icon: "▦" },
   { type: "orbit", label: "Orbit", icon: "✸" },
   { type: "radar", label: "Radar", icon: "◎" },
-  { type: "loop", label: "AI Loop", icon: "↻" },
+  { type: "loop", label: "Loop", icon: "↻" },
 ];
 
 export const cloneDeep = (v) => JSON.parse(JSON.stringify(v));
@@ -225,7 +229,7 @@ export function createElement(type, over = {}) {
       spec = {
         x: 440, y: 250, w: 460, h: 260,
         props: { items: ["First point worth making", "A second supporting point", "And a third to round it out"] },
-        style: { color: "rgba(244,224,255,0.82)", fontFamily: FONTS.body, fontSize: 17, accent: P.cyan, gap: 14, marker: "◆", opacity: 1 },
+        style: { color: "rgba(233,236,255,0.82)", fontFamily: FONTS.body, fontSize: 17, accent: P.cyan, gap: 14, marker: "◆", opacity: 1 },
         anim: baseAnim(),
       };
       break;
@@ -285,9 +289,9 @@ export function createElement(type, over = {}) {
           xLabels: ["2025", "2027", "2029", "2031", "2033", "2035"],
           axisMax: 200,
           series: [
-            { label: "Slices", color: P.cyan, values: [4, 18, 36, 62, 90, 118] },
-            { label: "APIs", color: P.magenta, values: [1, 6, 22, 56, 108, 168] },
-            { label: "Sensing", color: P.gold, values: [0, 1, 5, 18, 44, 84] },
+            { label: "Product A", color: P.cyan, values: [4, 18, 36, 62, 90, 118] },
+            { label: "Product B", color: P.magenta, values: [1, 6, 22, 56, 108, 168] },
+            { label: "Product C", color: P.gold, values: [0, 1, 5, 18, 44, 84] },
           ],
         },
         style: { axis: P.muted, grid: P.faint, legend: P.dim, axisSize: 10, legendSize: 11, opacity: 1 },
@@ -297,7 +301,7 @@ export function createElement(type, over = {}) {
     case "orbit":
       spec = {
         x: 470, y: 170, w: 380, h: 380,
-        props: { rings: 3, label: "NTN" },
+        props: { rings: 3, label: "ORBIT" },
         style: { planet: P.teal, accent: P.cyan, opacity: 1 },
         anim: baseAnim({ in: "zoom-in" }),
       };
@@ -306,12 +310,12 @@ export function createElement(type, over = {}) {
       spec = {
         x: 420, y: 180, w: 480, h: 360,
         props: {
-          label: "gNB · ISAC",
+          label: "SCAN",
           targets: [
-            { x: 30, y: 28, label: "Drone", color: P.cyan },
-            { x: 72, y: 24, label: "Vehicle", color: P.gold },
-            { x: 80, y: 62, label: "Person", color: P.green },
-            { x: 24, y: 70, label: "Weather", color: P.magenta },
+            { x: 30, y: 28, label: "Alpha", color: P.cyan },
+            { x: 72, y: 24, label: "Bravo", color: P.gold },
+            { x: 80, y: 62, label: "Charlie", color: P.green },
+            { x: 24, y: 70, label: "Delta", color: P.magenta },
           ],
         },
         style: { accent: P.cyan, opacity: 1 },
@@ -322,7 +326,7 @@ export function createElement(type, over = {}) {
       spec = {
         x: 360, y: 170, w: 560, h: 400,
         props: {
-          title: "AI Brain", sub: "NWDAF · TWIN",
+          title: "AI Loop", sub: "SENSE · ADAPT",
           stages: [
             { label: "OBSERVE", color: P.cyan },
             { label: "PREDICT", color: P.magenta },
@@ -379,49 +383,48 @@ export function starterDeck() {
         transition: "fade",
         elements: [
           el("kicker", { x: 240, y: 150, w: 800, props: { text: "PRESENTATION STUDIO · BUILD ANYTHING" }, style: { color: P.cyan, letterSpacing: 6 }, anim: baseAnim({ in: "fade" }) }),
-          el("heading", { x: 120, y: 222, w: 1040, h: 170, props: { text: "The Next Decade", gradient: [P.white, P.light, P.cyan, P.magenta] }, style: { fontSize: 120, letterSpacing: -3 }, anim: baseAnim({ in: "fade-up", delay: 0.1, idle: "shimmer" }) }),
+          el("heading", { x: 120, y: 222, w: 1040, h: 170, props: { text: "Make it move.", gradient: [P.white, P.light, P.cyan, P.magenta] }, style: { fontSize: 120, letterSpacing: -3 }, anim: baseAnim({ in: "fade-up", delay: 0.1, idle: "shimmer" }) }),
           el("text", { x: 290, y: 408, w: 700, h: 70, props: { text: "Compose interactive, animated decks — drag, style, animate, present." }, style: { fontSize: 24, color: P.dim }, anim: baseAnim({ delay: 0.25 }) }),
           el("counter", { x: 210, y: 506, w: 240, props: { value: 16, suffix: "+", label: "Animated block types" }, style: { fontSize: 58 }, anim: baseAnim({ in: "rise", delay: 0.4 }) }),
-          el("counter", { x: 520, y: 506, w: 240, props: { value: 7, suffix: "", label: "Live backgrounds" }, style: { fontSize: 58, color: P.cyan }, anim: baseAnim({ in: "rise", delay: 0.5 }) }),
+          el("counter", { x: 520, y: 506, w: 240, props: { value: 14, suffix: "", label: "Live backgrounds" }, style: { fontSize: 58, color: P.cyan }, anim: baseAnim({ in: "rise", delay: 0.5 }) }),
           el("counter", { x: 830, y: 506, w: 240, props: { value: 12, suffix: "", label: "Entrance effects" }, style: { fontSize: 58, color: P.magenta }, anim: baseAnim({ in: "rise", delay: 0.6 }) }),
         ],
       }),
-      // 2 · Three Waves
+      // 2 · Building blocks
       createSlide({
-        name: "Three Waves",
+        name: "Blocks",
         background: { type: "mesh", colors: [P.purple, P.magenta, P.cyan], variant: 0 },
         transition: "slide-left",
         elements: [
-          el("kicker", { x: 240, y: 96, w: 800, props: { text: "HOW THE DECADE UNFOLDS" } }),
-          el("heading", { x: 240, y: 134, w: 800, h: 90, props: { text: "Three Waves" }, style: { fontSize: 64 }, anim: baseAnim({ in: "fade-up", delay: 0.08 }) }),
-          el("card", { x: 90, y: 252, w: 348, h: 360, props: { icon: "⚙️", tag: "WAVE 1 · 2025–27", title: "Programmable", body: "Network as software — slices, APIs, edge breakout, on-demand QoS.", bullets: ["Slicing at scale", "CAMARA APIs", "L4S end-to-end"] }, style: { accent: P.cyan }, anim: baseAnim({ in: "rise", delay: 0.2 }) }),
-          el("card", { x: 466, y: 252, w: 348, h: 360, props: { icon: "🧠", tag: "WAVE 2 · 2027–30", title: "Cognitive", body: "Network as intelligence — AI inside RAN, core and the orchestration loop.", bullets: ["Closed-loop assurance", "Intent-based slicing", "Digital twin ops"] }, style: { accent: P.magenta }, anim: baseAnim({ in: "rise", delay: 0.32 }) }),
-          el("card", { x: 842, y: 252, w: 348, h: 360, props: { icon: "🌌", tag: "WAVE 3 · 2030–35+", title: "Ambient", body: "Network as nervous system — the air becomes a sensor, the sky a cell.", bullets: ["ISAC as a service", "Direct-to-device sat", "Ambient IoT"] }, style: { accent: P.gold }, anim: baseAnim({ in: "rise", delay: 0.44 }) }),
+          el("kicker", { x: 240, y: 96, w: 800, props: { text: "EVERYTHING IS A BLOCK" } }),
+          el("heading", { x: 240, y: 134, w: 800, h: 90, props: { text: "Build with blocks" }, style: { fontSize: 64 }, anim: baseAnim({ in: "fade-up", delay: 0.08 }) }),
+          el("card", { x: 90, y: 252, w: 348, h: 360, props: { icon: "🧩", tag: "COMPOSE", title: "Drag & drop", body: "Headings, text, cards, images, shapes, charts — place anything anywhere on the canvas.", bullets: ["Snap-to-align guides", "Inline text editing"] }, style: { accent: P.cyan }, anim: baseAnim({ in: "rise", delay: 0.2 }) }),
+          el("card", { x: 466, y: 252, w: 348, h: 360, props: { icon: "✨", tag: "ANIMATE", title: "Bring it alive", body: "Entrances, idle loops and animated backgrounds — tuned per element, no keyframes needed.", bullets: ["12 entrance effects", "Live canvas backgrounds"] }, style: { accent: P.magenta }, anim: baseAnim({ in: "rise", delay: 0.32 }) }),
+          el("card", { x: 842, y: 252, w: 348, h: 360, props: { icon: "📤", tag: "EXPORT", title: "Ship it", body: "Present in the browser, or export a single-file HTML deck or a native PowerPoint file.", bullets: ["Self-contained HTML", "Editable .pptx charts"] }, style: { accent: P.gold }, anim: baseAnim({ in: "rise", delay: 0.44 }) }),
         ],
       }),
-      // 3 · Cognitive loop
+      // 3 · Charts & data
       createSlide({
-        name: "AI-Native",
+        name: "Data",
         background: { type: "aurora", colors: [P.magenta, P.purple, P.cyan], variant: 0 },
         transition: "slide-up",
         elements: [
-          el("kicker", { x: 90, y: 96, w: 700, props: { text: "WAVE 2 · 2027–2030" }, style: { color: P.magenta, align: "left" } }),
-          el("heading", { x: 88, y: 132, w: 1000, h: 100, props: { text: "The network becomes cognitive", gradient: [P.light, P.magenta] }, style: { fontSize: 56, align: "left", letterSpacing: -1 }, anim: baseAnim({ in: "fade-right", delay: 0.08 }) }),
-          el("loop", { x: 70, y: 232, w: 600, h: 420, anim: baseAnim({ in: "fade", delay: 0.2 }) }),
-          el("list", { x: 740, y: 268, w: 460, h: 340, props: { items: ["Proactive SLA — predict degradation before users feel it", "Intent-based slicing — describe outcomes, not config", "Energy as a metric — 40% less power per Gbit", "Digital-twin ops — test against a live model first"] }, style: { accent: P.magenta, fontSize: 18, gap: 18 }, anim: baseAnim({ in: "fade-left", delay: 0.3 }) }),
+          el("kicker", { x: 90, y: 96, w: 700, props: { text: "SHOW THE NUMBERS" }, style: { color: P.magenta, align: "left" } }),
+          el("heading", { x: 88, y: 132, w: 1000, h: 100, props: { text: "Charts that stay editable", gradient: [P.light, P.magenta] }, style: { fontSize: 56, align: "left", letterSpacing: -1 }, anim: baseAnim({ in: "fade-right", delay: 0.08 }) }),
+          el("chart", { x: 70, y: 252, w: 620, h: 380, anim: baseAnim({ in: "fade", delay: 0.2 }) }),
+          el("list", { x: 740, y: 268, w: 460, h: 340, props: { items: ["The full PowerPoint chart family — column, line, area, pie, radar, waterfall and more", "Edit the data in a mini-table; the chart redraws live", "Exports become native, editable PowerPoint charts", "Reveal series one by one while presenting"] }, style: { accent: P.magenta, fontSize: 18, gap: 18 }, anim: baseAnim({ in: "fade-left", delay: 0.3 }) }),
         ],
       }),
-      // 4 · Vision / CTA
+      // 4 · CTA
       createSlide({
-        name: "Vision",
+        name: "Start",
         background: { type: "starfield", colors: [P.cyan, P.light], variant: 0 },
         transition: "zoom",
         elements: [
-          el("kicker", { x: 240, y: 188, w: 800, props: { text: "2036" } }),
-          el("heading", { x: 120, y: 232, w: 1040, h: 200, props: { text: "It will be everywhere you are.", gradient: [P.cyan, P.light, P.magenta, P.gold] }, style: { fontSize: 78, letterSpacing: -2 }, anim: baseAnim({ in: "blur-in", delay: 0.1, idle: "shimmer" }) }),
-          el("text", { x: 320, y: 450, w: 640, h: 70, props: { text: "Sensing the world. Healing itself. Carrying intent, not just packets." }, style: { fontSize: 19 }, anim: baseAnim({ delay: 0.3 }) }),
-          el("button", { x: 430, y: 548, w: 220, h: 56, props: { label: "Back to start →", href: "index.html", variant: "primary" }, anim: baseAnim({ in: "pop", delay: 0.45, ease: "back" }) }),
-          el("button", { x: 668, y: 548, w: 180, h: 56, props: { label: "Talk to us", href: "#", variant: "ghost" }, style: { color: P.light, bg: null }, anim: baseAnim({ in: "pop", delay: 0.55, ease: "back" }) }),
+          el("kicker", { x: 240, y: 188, w: 800, props: { text: "YOUR TURN" } }),
+          el("heading", { x: 120, y: 232, w: 1040, h: 200, props: { text: "Now tell your story.", gradient: [P.cyan, P.light, P.magenta, P.gold] }, style: { fontSize: 78, letterSpacing: -2 }, anim: baseAnim({ in: "blur-in", delay: 0.1, idle: "shimmer" }) }),
+          el("text", { x: 320, y: 450, w: 640, h: 70, props: { text: "Add a slide, drop in some blocks, hit Present. This deck is yours to remix." }, style: { fontSize: 19 }, anim: baseAnim({ delay: 0.3 }) }),
+          el("button", { x: 530, y: 548, w: 220, h: 56, props: { label: "Start building →", href: "#", variant: "primary" }, anim: baseAnim({ in: "pop", delay: 0.45, ease: "back" }) }),
         ],
       }),
     ],
@@ -429,7 +432,16 @@ export function starterDeck() {
 }
 
 // ── Persistence + import/export ────────────────────────────────────────────
-const STORE_KEY = "northstar.studio.deck.v1";
+// Per-user scope: auth.js resolves who is signed in (Netlify Identity user id
+// or the cookie-gate username); every localStorage key is namespaced by it,
+// so users sharing a browser each see only their own decks. Anonymous (open
+// or local-dev mode) uses the unscoped keys. Safe to read at module init:
+// studio-entry.jsx awaits initAuth() before importing any studio module.
+import { storageScope } from "./auth";
+const SCOPE = storageScope();
+const ns = (key) => (SCOPE ? `studio.${SCOPE}.${key}` : `studio.${key}`);
+
+const STORE_KEY = ns("deck.v1");
 
 export function loadDeck() {
   try {
@@ -511,8 +523,8 @@ export function downloadDeck(deck) {
 // A manifest lists every deck ({id,title,updatedAt}); each deck is stored under
 // its own key so autosave only rewrites the one being edited. A pre-existing
 // single deck (v1) is migrated into the library on first load.
-const MANIFEST_KEY = "northstar.studio.library.v1";
-const deckKey = (id) => "northstar.studio.deck." + id;
+const MANIFEST_KEY = ns("library.v1");
+const deckKey = (id) => ns("deck.") + id;
 
 const readJSON = (key) => { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch { return null; } };
 const writeJSON = (key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch { return false; } };
@@ -528,6 +540,20 @@ export function loadManifest() {
       m = { currentId: valid.id, items: [{ id: valid.id, title: valid.title, updatedAt: Date.now() }] };
       writeJSON(MANIFEST_KEY, m);
       clearDeck();
+    }
+  }
+  // Decks saved on this browser before accounts existed (unscoped keys) are
+  // adopted into the signed-in user's scope on first load, so nothing is lost
+  // when a deployment turns on per-user sign-in.
+  if (!m.items.length && SCOPE) {
+    const shared = readJSON("studio.library.v1");
+    if (shared && Array.isArray(shared.items) && shared.items.length) {
+      for (const it of shared.items) {
+        const d = readJSON("studio.deck." + it.id);
+        if (d) writeJSON(deckKey(it.id), d);
+      }
+      m = { currentId: shared.currentId || shared.items[0].id, items: shared.items.slice() };
+      writeJSON(MANIFEST_KEY, m);
     }
   }
   return m;

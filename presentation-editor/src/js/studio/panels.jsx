@@ -5,6 +5,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from "react";
 import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, chartDefaults, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_GROUPS, SLIDE_STATUSES, STATUS_COLORS } from "./model";
+import { userLabel, canSignOut, doSignOut } from "./auth";
 import { SlideView } from "./stage";
 import { measureOverflow, isBrandColor } from "./lint";
 
@@ -58,7 +59,7 @@ function Toggle({ value, onChange, onCheckpoint }) {
   return <button className={"st-toggle" + (value ? " on" : "")} onClick={() => { onCheckpoint && onCheckpoint(); onChange(!value); }}>{value ? "On" : "Off"}</button>;
 }
 function Swatches({ value, onChange, onCheckpoint, allowNone }) {
-  // Brand-token guard: a free hex value that isn't (a tint of) the Telia
+  // Palette guard: a free hex value that isn't (a tint of) the theme
   // palette gets flagged inline — the ✓ Review panel lists all of them.
   const offBrand = typeof value === "string" && !isBrandColor(value);
   return (
@@ -66,18 +67,18 @@ function Swatches({ value, onChange, onCheckpoint, allowNone }) {
       {allowNone && <button className={"st-sw none" + (value == null ? " on" : "")} title="None" onClick={() => { onCheckpoint && onCheckpoint(); onChange(null); }} />}
       {SWATCHES.map((s) => <button key={s.name} title={s.name} className={"st-sw" + (value === s.value ? " on" : "")} style={{ background: s.value }} onClick={() => { onCheckpoint && onCheckpoint(); onChange(s.value); }} />)}
       <input className={"st-hex" + (offBrand ? " offbrand" : "")} type="text" value={typeof value === "string" ? value : ""} placeholder="#hex"
-        title={offBrand ? "Off-brand colour — not in the Telia palette" : undefined}
+        title={offBrand ? "Colour is not in the theme palette" : undefined}
         onFocus={onCheckpoint} onChange={(e) => onChange(e.target.value)} />
-      {offBrand && <span className="st-offbrand-flag" title="Off-brand colour — not in the Telia palette">⚠</span>}
+      {offBrand && <span className="st-offbrand-flag" title="Colour is not in the theme palette">⚠</span>}
     </div>
   );
 }
 /* ── Font picker ────────────────────────────────────────────────────────── */
-// Searchable dropdown over FONT_GROUPS (Telia theme roles + web-safe
-// families), each entry previewed in its own face. Where the browser supports
-// the Local Font Access API (Chromium), a "device fonts" section can list
-// every font installed on this machine — those render locally but fall back
-// to a generic family on machines that don't have them.
+// Searchable dropdown over FONT_GROUPS (theme roles + web-safe families),
+// each entry previewed in its own face. Where the browser supports the Local
+// Font Access API (Chromium), a "device fonts" section can list every font
+// installed on this machine — those render locally but fall back to a generic
+// family on machines that don't have them.
 const deviceFontStack = (family) => `'${family.replace(/['"\\]/g, "")}', sans-serif`;
 
 function fontLabelOf(value, deviceFonts) {
@@ -426,7 +427,7 @@ function GradientCtl({ p, setProp, cp, label = "Gradient" }) {
 }
 
 // Chart data lives in an editable mini-table: X labels across the top, one
-// row per series (colour dot cycles the brand palette), numbers in the cells.
+// row per series (colour dot cycles the theme palette), numbers in the cells.
 // Every edit redraws the chart — no chart is ever "drawn" by hand.
 function ChartEditor({ p, s, setProp, setProps, setStyle, cp }) {
   const setSeries = (i, patch) => { const n = p.series.map((s, j) => (j === i ? { ...s, ...patch } : s)); setProp("series", n); };
@@ -481,7 +482,7 @@ function ChartEditor({ p, s, setProp, setProps, setStyle, cp }) {
               <tr key={i}>
                 <td>
                   <div className="st-series-cell">
-                    <button className="st-series-dot" style={{ background: sr.color }} title="Series colour — click to cycle the brand palette"
+                    <button className="st-series-dot" style={{ background: sr.color }} title="Series colour — click to cycle the theme palette"
                       onClick={() => { cp(); setSeries(i, { color: nextColor(sr.color) }); }} />
                     <input value={sr.label} onFocus={cp} onChange={(e) => setSeries(i, { label: e.target.value })} />
                   </div>
@@ -543,9 +544,9 @@ function LoopEditor({ p, setProp, cp }) {
 }
 
 // Sensible colour seeds per background type — used when the current colours
-// don't suit the type being switched to (e.g. a slide imported from the
-// Slide Converter carries a solid white; a white-based nebula just looks
-// washed out, which reads as "the animated backgrounds are broken").
+// don't suit the type being switched to (e.g. an imported slide carries a
+// solid white; a white-based nebula just looks washed out, which reads as
+// "the animated backgrounds are broken").
 const BG_SEED_COLORS = {
   nebula: [P.purple, P.deep], aurora: [P.purple, P.magenta, P.cyan], starfield: [P.cyan, P.light],
   grid: [P.cyan], mesh: [P.purple, P.magenta, P.cyan], gradient: [P.purple, P.deep],
@@ -758,7 +759,7 @@ const CLOUD_LABELS = {
   unauth: ["sign in", "Session expired — reload and sign in to sync across devices"],
 };
 
-export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onSiteCopy, onReview, onHelp, saved, cloud }) {
+export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onReview, onHelp, saved, cloud }) {
   const [cloudText, cloudTitle] = CLOUD_LABELS[cloud] || CLOUD_LABELS.off;
   return (
     <div className="st-toolbar">
@@ -781,13 +782,14 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
             <div className="st-decks-foot">
               <button className="st-btn sm" onClick={() => { onNewDeck(); close(); }}>+ New</button>
               <button className="st-btn sm" onClick={() => { onDuplicateDeck(); close(); }}>Duplicate</button>
-              <button className="st-btn sm" title="Import a Studio .json — or .html slides generated by the Slide Converter" onClick={() => { onImport(); close(); }}>Import…</button>
+              <button className="st-btn sm" title="Import a Studio .json — or .html pages exported from this editor" onClick={() => { onImport(); close(); }}>Import…</button>
             </div>
-            <button className="st-sitecopy" onClick={() => { onSiteCopy(); close(); }}
-              title="Edit the live NorthStar deck's text & colours, then export copy.js to commit">
-              <span className="st-deckname">🌐 NorthStar site copy</span>
-              <span className="st-deckdate">the live deck (copy.js) — edit & export</span>
-            </button>
+            {userLabel() && (
+              <div className="st-decks-user">
+                <span title="Only your own presentations are shown and synced">👤 {userLabel()}</span>
+                {canSignOut() && <button className="st-btn sm" onClick={doSignOut} title="Sign out and switch user">Sign out</button>}
+              </div>
+            )}
           </>
         )} />
         <input className="st-title" value={title} onFocus={onCheckpoint} onChange={(e) => onTitle(e.target.value)} title="Rename this presentation" />
@@ -804,7 +806,7 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
           {saved ? "Saved ✓" : "Saving…"}<span className={"st-cloud " + (cloud || "off")}> · {cloudText}</span>
         </span>
         <button className="st-btn" onClick={onHelp} title="How the editor works">?</button>
-        <button className="st-btn" onClick={onReview} title="Lint every slide: text fit, projector-size fonts, contrast, density, alt text, off-brand colours">✓ Review</button>
+        <button className="st-btn" onClick={onReview} title="Lint every slide: text fit, projector-size fonts, contrast, density, alt text, off-palette colours">✓ Review</button>
         <Dropdown wrapClass="st-export" menuClass="st-export-menu" label="Export ▾" render={(close) => (
           <>
             <button className="st-export-item" onClick={() => { onExportHtml(); close(); }}>
@@ -813,11 +815,11 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
             </button>
             <button className="st-export-item" onClick={() => { onExportPptx(); close(); }}>
               <b>PowerPoint (.pptx)</b>
-              <span>Native slides — built with the Slide Converter's HTML→PPT engine</span>
+              <span>Native slides, text runs, shapes and editable charts</span>
             </button>
             <button className="st-export-item" onClick={() => { onGeneratePages(); close(); }}>
               <b>Interactive pages (click-to-explain)</b>
-              <span>One page per slide with API-enriched explanations — the Slide Converter's Generate step</span>
+              <span>One standalone page per slide, with optional AI-enriched explanations</span>
             </button>
             <button className="st-export-item" onClick={() => { onExport(); close(); }}>
               <b>Studio JSON</b>

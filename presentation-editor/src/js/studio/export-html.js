@@ -4,8 +4,8 @@
 // The exported file embeds the deck JSON plus a dependency-free player that
 // mirrors present mode: live backgrounds, every block type, entrance + idle
 // animations, slide transitions and keyboard / click / dot navigation. It is
-// a single file — share it, open it from disk, or host it anywhere. Fonts
-// load from northstar-program.com when online and fall back to system fonts.
+// a single file — share it, open it from disk, or host it anywhere. It uses
+// system fonts, so it renders identically offline.
 //
 // The player is written below as a real function (PLAYER) and serialised into
 // the file with Function.toString(), so it stays plain readable JS here. It
@@ -24,8 +24,8 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
   var drawMap = MAKE_MAP(P);
   var TR_CSS = "opacity " + TRANS_DUR + "s cubic-bezier(0.16,1,0.3,1), transform " + TRANS_DUR + "s cubic-bezier(0.16,1,0.3,1)";
   var FONTS = {
-    head: "'Telia Sans Heading','Telia Sans',system-ui,sans-serif",
-    body: "'Telia Sans',system-ui,sans-serif",
+    head: "'Studio Display',system-ui,-apple-system,'Segoe UI',sans-serif",
+    body: "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif",
     mono: "'JetBrains Mono',ui-monospace,'SFMono-Regular',monospace",
   };
   var EASES = { out: "cubic-bezier(0.16,1,0.3,1)", inout: "cubic-bezier(0.65,0,0.35,1)", back: "cubic-bezier(0.34,1.56,0.64,1)", linear: "linear" };
@@ -196,7 +196,7 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
       if (p.body) div({ fontSize: 13.5, color: P.dim, lineHeight: 1.6, marginBottom: 12 }, box).textContent = p.body;
       var bl = div({ marginTop: "auto" }, box);
       (p.bullets || []).forEach(function (b) {
-        var row = div({ display: "flex", gap: 8, fontSize: 12.5, color: "rgba(244,224,255,0.8)", lineHeight: 1.5, marginBottom: 5 }, bl);
+        var row = div({ display: "flex", gap: 8, fontSize: 12.5, color: "rgba(233,236,255,0.8)", lineHeight: 1.5, marginBottom: 5 }, bl);
         var mark = document.createElement("span"); css(mark, { color: c, fontSize: 8, marginTop: 6, flexShrink: 0 }); mark.textContent = "◆";
         var txt = document.createElement("span"); txt.textContent = b;
         row.appendChild(mark); row.appendChild(txt);
@@ -454,14 +454,14 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
       var shoot = null, ts = 0;
       return canvasBg(function (ctx) {
         ts += 0.016;
-        ctx.fillStyle = "#0a0518"; ctx.fillRect(0, 0, STAGE_W, STAGE_H);
+        ctx.fillStyle = "#070A16"; ctx.fillRect(0, 0, STAGE_W, STAGE_H);
         var g = ctx.createRadialGradient(STAGE_W * 0.5, STAGE_H * 0.9, 60, STAGE_W * 0.5, STAGE_H * 0.9, STAGE_W * 0.8);
-        g.addColorStop(0, rgba(tint, 0.12)); g.addColorStop(1, "rgba(10,5,24,0)");
+        g.addColorStop(0, rgba(tint, 0.12)); g.addColorStop(1, "rgba(7,10,20,0)");
         ctx.fillStyle = g; ctx.fillRect(0, 0, STAGE_W, STAGE_H);
         stars.forEach(function (s) {
           s.x -= s.z * 0.25; if (s.x < 0) s.x = STAGE_W;
           var a = 0.4 + 0.6 * Math.abs(Math.sin(ts + s.tw));
-          ctx.fillStyle = "rgba(244,236,255," + a * s.z + ")";
+          ctx.fillStyle = "rgba(236,239,255," + a * s.z + ")";
           ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
         });
         if (!shoot && Math.random() < 0.012) shoot = { x: Math.random() * STAGE_W, y: Math.random() * STAGE_H * 0.5, life: 1 };
@@ -490,7 +490,7 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
     }
     if (type === "grid") {
       var line = colors[0] + "33";
-      var gr = div(Object.assign({}, fill, { background: "linear-gradient(180deg, " + P.deep + ", #15052b)" }));
+      var gr = div(Object.assign({}, fill, { background: "linear-gradient(180deg, " + P.deep + ", #101730)" }));
       div({
         position: "absolute", inset: "-20%", backgroundImage: "linear-gradient(" + line + " 1px, transparent 1px), linear-gradient(90deg, " + line + " 1px, transparent 1px)",
         backgroundSize: "60px 60px", transform: "perspective(420px) rotateX(58deg)", transformOrigin: "50% 100%",
@@ -505,7 +505,7 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
       return canvasBg(function (ctx) {
         wt += 0.008;
         var g = ctx.createLinearGradient(0, 0, 0, STAGE_H);
-        g.addColorStop(0, "#12031f"); g.addColorStop(1, rgba(wdeep, 1));
+        g.addColorStop(0, "#0A0E1F"); g.addColorStop(1, rgba(wdeep, 1));
         ctx.fillStyle = g; ctx.fillRect(0, 0, STAGE_W, STAGE_H);
         for (var k = 0; k < 3; k++) {
           var c = wcols[k], base = STAGE_H * (0.3 + 0.22 * k), amp = 44 + 16 * k;
@@ -530,7 +530,7 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
       for (var ri = 0; ri < Math.floor(STAGE_W / 26); ri++) streams.push({ x: ri * 26 + 10, y: Math.random() * STAGE_H * 1.6 - STAGE_H * 0.6, v: 1.6 + Math.random() * 3.4, len: 70 + Math.random() * 150, w: Math.random() < 0.25 ? 2 : 1.2 });
       return canvasBg(function (ctx) {
         var g = ctx.createLinearGradient(0, 0, 0, STAGE_H);
-        g.addColorStop(0, "#0a0518"); g.addColorStop(1, "#1c0530");
+        g.addColorStop(0, "#070A16"); g.addColorStop(1, "#121A33");
         ctx.fillStyle = g; ctx.fillRect(0, 0, STAGE_W, STAGE_H);
         streams.forEach(function (s) {
           s.y += s.v;
@@ -539,7 +539,7 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
           lg.addColorStop(0, rgba(rtint, 0)); lg.addColorStop(1, rgba(rtint, 0.45));
           ctx.strokeStyle = lg; ctx.lineWidth = s.w;
           ctx.beginPath(); ctx.moveTo(s.x, s.y - s.len); ctx.lineTo(s.x, s.y); ctx.stroke();
-          ctx.fillStyle = "rgba(244,240,255,0.85)";
+          ctx.fillStyle = "rgba(238,241,255,0.85)";
           ctx.beginPath(); ctx.arc(s.x, s.y, s.w, 0, Math.PI * 2); ctx.fill();
         });
       });
@@ -550,7 +550,7 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
       return canvasBg(function (ctx) {
         ct += 0.016;
         var g = ctx.createLinearGradient(0, 0, STAGE_W, STAGE_H);
-        g.addColorStop(0, "#0d0420"); g.addColorStop(1, rgba(hexToRgb(P.deep), 1));
+        g.addColorStop(0, "#080C1C"); g.addColorStop(1, rgba(hexToRgb(P.deep), 1));
         ctx.fillStyle = g; ctx.fillRect(0, 0, STAGE_W, STAGE_H);
         cpaths.forEach(function (p) {
           ctx.strokeStyle = rgba(ctrace, 0.20); ctx.lineWidth = 1.1;
@@ -589,7 +589,7 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
     }
     if (type === "beams") {
       var bc0 = colors[0] || P.purple, bc1 = colors[1] || P.cyan;
-      var bm = div(Object.assign({}, fill, { background: "linear-gradient(160deg, #12031f, " + P.deep + ")" }));
+      var bm = div(Object.assign({}, fill, { background: "linear-gradient(160deg, #0A0E1F, " + P.deep + ")" }));
       div({
         position: "absolute", left: "50%", top: "112%", width: 2800, height: 2800, marginLeft: -1400, marginTop: -1400, borderRadius: "50%",
         background: "conic-gradient(from 0deg, transparent 0deg, " + bc0 + "33 10deg, transparent 24deg, transparent 70deg, " + bc1 + "26 84deg, transparent 100deg, transparent 160deg, " + bc0 + "2b 174deg, transparent 190deg, transparent 260deg, " + bc1 + "20 274deg, transparent 290deg)",
@@ -600,7 +600,7 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
     }
     if (type === "bokeh") {
       var bcs = [colors[0] || P.purple, colors[1] || P.cyan, colors[2] || P.magenta];
-      var bk = div(Object.assign({}, fill, { background: "linear-gradient(180deg, #14032a, " + P.deep + ")" }));
+      var bk = div(Object.assign({}, fill, { background: "linear-gradient(180deg, #0D1328, " + P.deep + ")" }));
       BOKEH_DOTS.forEach(function (dot, i) {
         div({
           position: "absolute", left: dot[0] + "%", top: dot[1] + "%", width: dot[2], height: dot[2], borderRadius: "50%",
@@ -765,31 +765,30 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
 const PLAYER_CSS = `
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
-body { font-family: 'Telia Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #F4E0FF; }
+body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #E9ECFF; }
 #player { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 #bar { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px;
-  background: rgba(20,5,40,0.8); backdrop-filter: blur(8px); border: 1px solid rgba(244,224,255,0.14); border-radius: 999px;
+  background: rgba(12,17,36,0.8); backdrop-filter: blur(8px); border: 1px solid rgba(233,236,255,0.14); border-radius: 999px;
   padding: 6px 10px; cursor: default; z-index: 10; opacity: 0.25; transition: opacity .2s; }
 #bar:hover { opacity: 1; }
-#bar button { font: inherit; cursor: pointer; background: rgba(255,255,255,0.06); color: #F4E0FF;
-  border: 1px solid rgba(244,224,255,0.14); border-radius: 8px; padding: 7px 12px; transition: border-color .15s; }
+#bar button { font: inherit; cursor: pointer; background: rgba(255,255,255,0.06); color: #E9ECFF;
+  border: 1px solid rgba(233,236,255,0.14); border-radius: 8px; padding: 7px 12px; transition: border-color .15s; }
 #bar button:hover { border-color: ${P.cyan}; }
 #bar button:disabled { opacity: .35; cursor: default; }
 #count { font-family: ui-monospace, monospace; font-size: 12px; color: ${P.dim}; min-width: 54px; text-align: center; }
 #dots { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 7px; cursor: default; z-index: 10;
   opacity: 0.25; transition: opacity .2s; }
 #dots:hover { opacity: 1; }
-.pdot { width: 8px; height: 8px; border-radius: 50%; background: rgba(244,224,255,0.25); border: 0; padding: 0; cursor: pointer; }
+.pdot { width: 8px; height: 8px; border-radius: 50%; background: rgba(233,236,255,0.25); border: 0; padding: 0; cursor: pointer; }
 .pdot.on { background: ${P.cyan}; box-shadow: 0 0 10px ${P.cyan}; }
 `;
 
-// Telia fonts from the stable NorthStar host; system fonts take over offline.
-const FONT_CSS = `
-@font-face { font-family: "Telia Sans Heading"; src: url("https://northstar-program.com/fonts/TeliaSansHeading-Heading.woff2") format("woff2"); font-weight: 300; font-style: normal; font-display: swap; }
-@font-face { font-family: "Telia Sans"; src: url("https://northstar-program.com/fonts/TeliaSans-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face { font-family: "Telia Sans"; src: url("https://northstar-program.com/fonts/TeliaSans-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
-@font-face { font-family: "Telia Sans"; src: url("https://northstar-program.com/fonts/TeliaSans-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
-`;
+// Add @font-face rules here to embed custom fonts in exported decks.
+const FONT_CSS = "";
+
+// Same mark as src/assets/favicon.svg, inlined so exported files keep it.
+const FAVICON = "data:image/svg+xml," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6C5CE7"/><stop offset="1" stop-color="#00D4FF"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#g)"/><rect x="12" y="16" width="40" height="28" rx="4" fill="#0B1026" opacity="0.85"/><path d="M27 23l14 7-14 7z" fill="#FFFFFF"/><rect x="22" y="48" width="20" height="3.5" rx="1.75" fill="#0B1026" opacity="0.85"/></svg>');
 
 export function buildDeckHtml(deck) {
   // <-escape so user text can never terminate the <script> block early.
@@ -802,6 +801,7 @@ export function buildDeckHtml(deck) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${title.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</title>
+<link rel="icon" type="image/svg+xml" href="${FAVICON}">
 <style>${FONT_CSS}${KEYFRAMES}${PLAYER_CSS}</style>
 </head>
 <body>
@@ -814,7 +814,7 @@ export function buildDeckHtml(deck) {
   <button id="fs" title="Fullscreen (F)">⛶</button>
 </div>
 <script>
-/* Built with NorthStar Presentation Studio. Navigate with arrow keys, space or click. */
+/* Built with Presentation Studio. Navigate with arrow keys, space or click. */
 (${PLAYER.toString()})(${deckJson}, ${paletteJson}, ${makeChartMarkup.toString()}, ${makeMapRenderer.toString()});
 </script>
 </body>

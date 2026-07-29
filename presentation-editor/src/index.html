@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Presentation Studio</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
+  <style>
+    /* To use custom brand fonts, add @font-face rules here and list the
+       family names first in FONTS (src/js/studio/model.js). */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0A0F22; color: #E9ECFF;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    #studio-root { width: 100%; height: 100%; }
+    .st-boot { display: flex; align-items: center; justify-content: center; height: 100%; color: rgba(233,236,255,0.5); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div id="studio-root"><div class="st-boot">Loading Presentation Studio…</div></div>
+  <script src="./js/studio-entry.jsx" type="module"></script>
+</body>
+</html>

@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Deck linting — the consistency checks behind the ✓ Review panel:
 //
-//   scanDeviations(deck)   brand-token enforcement: every colour-like value
-//                          in the deck that isn't the Telia palette (or a
+//   scanDeviations(deck)   palette enforcement: every colour-like value
+//                          in the deck that isn't the theme palette (or a
 //                          tint/alpha of it) is reported with its location.
 //   measureOverflow(el)    DOM-measures whether an element's text fits its
 //                          box on the 1280×720 stage (truncation warning).

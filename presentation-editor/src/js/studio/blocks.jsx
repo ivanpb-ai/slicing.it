@@ -159,7 +159,7 @@ function Card({ el }) {
       {p.body ? <div style={{ fontSize: 13.5, color: P.dim, lineHeight: 1.6, marginBottom: 12 }}>{p.body}</div> : null}
       <div style={{ marginTop: "auto" }}>
         {(p.bullets || []).map((b, i) => (
-          <div key={i} style={{ display: "flex", gap: 8, fontSize: 12.5, color: "rgba(244,224,255,0.8)", lineHeight: 1.5, marginBottom: 5 }}>
+          <div key={i} style={{ display: "flex", gap: 8, fontSize: 12.5, color: "rgba(233,236,255,0.8)", lineHeight: 1.5, marginBottom: 5 }}>
             <span style={{ color: c, fontSize: 8, marginTop: 6, flexShrink: 0 }}>◆</span><span>{b}</span>
           </div>
         ))}

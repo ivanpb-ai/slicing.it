@@ -10,9 +10,7 @@ import { KEYFRAMES } from "./effects";
 import { downloadDeckHtml } from "./export-html";
 import { SlideStage, SlideView } from "./stage";
 import { Navigator, Inspector, Toolbar } from "./panels";
-import { mountCopyEditor } from "../copy-editor-core";
-import { COPY } from "../copy";
-import { canvasHtmlToSlide, takeTransferredSlides } from "./canvas-interop";
+import { canvasHtmlToSlide } from "./canvas-interop";
 import { exportDeckPptx } from "./export-pptx";
 import { API_MODES, generateDeckPages, downloadPage, downloadPagesZip } from "./generate-pages";
 import { lintDeck } from "./lint";
@@ -139,39 +137,6 @@ function Present({ deck, startIndex = 0, onClose }) {
   );
 }
 
-// ── Site copy editor overlay ───────────────────────────────────────────────
-// Hosts the mountable copy.js editor (copy-editor-core.js) over the Studio.
-// Studio presentations are edited on the canvas itself; this overlay exists
-// only for the live NorthStar deck's copy, which the canvas can't reach —
-// it exports an updated copy.js to commit.
-function SiteCopyOverlay({ onClose }) {
-  const ref = useRef(null);
-  useEffect(() => {
-    const inst = mountCopyEditor(ref.current, { data: COPY });
-    return () => inst.destroy();
-  }, []);
-  useEffect(() => {
-    const onKey = (e) => {
-      const ae = document.activeElement;
-      const editable = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.tagName === "SELECT" || ae.isContentEditable);
-      if (e.key === "Escape" && !editable) onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return (
-    <div className="st-copyed">
-      <div className="st-copyed-head">
-        <span className="st-brand">🌐 NorthStar site copy</span>
-        <span className="st-copyed-name">the live deck's text & colours (copy.js) — export & commit to deploy</span>
-        <button className="st-btn" onClick={onClose}>✕ Close</button>
-      </div>
-      <div className="st-copyed-scroll" ref={ref} />
-    </div>
-  );
-}
-
 // ── Review (slide lint) dialog ──────────────────────────────────────────────
 // Scores every slide against the consistency checklist: text fit, projector-
 // size fonts, contrast, text density, image alt text and off-brand colours.
@@ -193,7 +158,7 @@ function ReviewDialog({ deck, onClose, onGoto }) {
         </div>
         <p className="st-gen-sub">
           Every slide is checked for text that won't fit, fonts too small for a projector, low contrast,
-          text density, missing image alt text and off-brand (non-Telia-palette) colours. Click an issue to jump to it.
+          text density, missing image alt text and colours outside the theme palette. Click an issue to jump to it.
         </p>
         {results && results.map((r) => (
           <div key={r.slideIndex} className="st-review-slide">
@@ -225,7 +190,7 @@ function ReviewDialog({ deck, onClose, onGoto }) {
 
 // ── Generate interactive pages (the Slide Converter's step 3, on this deck) ─
 function GeneratePagesDialog({ deck, onClose }) {
-  const [mode, setMode] = useState("northstar");
+  const [mode, setMode] = useState("none");
   const [busy, setBusy] = useState(false);
   const [lines, setLines] = useState([]);
   const [pages, setPages] = useState(null);
@@ -253,9 +218,8 @@ function GeneratePagesDialog({ deck, onClose }) {
           <button className="st-icon" onClick={onClose}>✕</button>
         </div>
         <p className="st-gen-sub">
-          Turns every slide of “{deck.title || "Untitled"}” into a standalone click-to-explain HTML page —
-          the Slide Converter's Generate step, applied to this deck. Text labels can be enriched with
-          one-sentence descriptions:
+          Turns every slide of “{deck.title || "Untitled"}” into a standalone click-to-explain HTML page.
+          Text labels can be enriched with one-sentence descriptions:
         </p>
         {API_MODES.map((m) => (
           <label key={m.value} className={"st-gen-opt" + (mode === m.value ? " on" : "")}>
@@ -273,14 +237,14 @@ function GeneratePagesDialog({ deck, onClose }) {
           )}
         </div>
         {lines.length > 0 && <div className="st-gen-log">{lines.map((l, i) => <div key={i}>{l}</div>)}</div>}
-        {pages && <p className="st-gen-sub">Each page carries its own explanation-source switch (built-in / NorthStar / Perplexity). The pages re-import into the Studio, and the Slide Converter's Reverse step turns them into PowerPoint with the descriptions as speaker notes.</p>}
+        {pages && <p className="st-gen-sub">Each page carries its own explanation-source switch (built-in / live Perplexity). The pages re-import into the Studio via Decks → Import.</p>}
       </div>
     </div>
   );
 }
 
 // ── Help dialog ─────────────────────────────────────────────────────────────
-// A quick tour of the editor's tools, opened from the toolbar's "?" button.
+// A quick tour of the editor's tools, opened from the toolbar's "? Help".
 const Kbd = ({ k }) => <span className="st-kbd">{k}</span>;
 
 const HELP_SECTIONS = [
@@ -294,7 +258,7 @@ const HELP_SECTIONS = [
   },
   {
     title: "🎛 Inspector (right)",
-    body: <>Shows the selected element's content, style, <b>Motion</b> (entrance effect, delay, duration, easing, idle loop) and <b>Layout</b> (position, size, rotation, opacity). Text blocks have a <b>Font</b> picker: the Telia theme roles, a catalogue of web-safe families, and — in Chrome/Edge — every font installed on your device. With nothing selected it edits the slide itself: name, transition, review status, and one of 14 live animated backgrounds with its colours.</>,
+    body: <>Shows the selected element's content, style, <b>Motion</b> (entrance effect, delay, duration, easing, idle loop) and <b>Layout</b> (position, size, rotation, opacity). Text blocks have a <b>Font</b> picker: theme roles, a catalogue of web-safe families, and — in Chrome/Edge — every font installed on your device. With nothing selected it edits the slide itself: name, transition, review status, and one of 14 live animated backgrounds with its colours.</>,
   },
   {
     title: "🗂 Slides (left)",
@@ -302,15 +266,15 @@ const HELP_SECTIONS = [
   },
   {
     title: "▤ Decks",
-    body: <>Your presentation library — every deck autosaves as you edit. Create, duplicate, delete and switch decks, or <b>Import</b> a Studio <code>.json</code> file (or <code>.html</code> pages generated by the Slide Converter). The <b>NorthStar site copy</b> entry at the bottom opens the live deck's copy.js editor — edit, export and commit to deploy.</>,
+    body: <>Your presentation library — every deck autosaves as you edit. Create, duplicate, delete and switch decks, or <b>Import</b> a Studio <code>.json</code> file (or <code>.html</code> pages exported from this editor) as a new deck.</>,
   },
   {
     title: "✓ Review",
-    body: <>Lints every slide: text that overflows its box, fonts too small to project, low contrast, too much copy, images without alt text, and colours outside the Telia palette. Click an issue to jump straight to it.</>,
+    body: <>Lints every slide: text that overflows its box, fonts too small to project, low contrast, too much copy, images without alt text, and colours outside the theme palette. Click an issue to jump straight to it.</>,
   },
   {
     title: "⬇ Export",
-    body: <><b>HTML presentation</b> — one self-contained file with the full animated player. <b>PowerPoint (.pptx)</b> — native slides with editable charts, via the Slide Converter's HTML→PPT engine. <b>Interactive pages</b> — one click-to-explain page per slide, enriched via the NorthStar or generic Perplexity API. <b>Studio JSON</b> — the editable source, for backup or sharing.</>,
+    body: <><b>HTML presentation</b> — one self-contained file with the full animated player. <b>PowerPoint (.pptx)</b> — native slides with editable charts. <b>Interactive pages</b> — one click-to-explain page per slide, optionally enriched via the Perplexity API. <b>Studio JSON</b> — the editable source, for backup or sharing.</>,
   },
   {
     title: "▶ Present",
@@ -321,8 +285,8 @@ const HELP_SECTIONS = [
     body: <><Kbd k="Ctrl/⌘+Z" /> undo · <Kbd k="Ctrl/⌘+Shift+Z" /> / <Kbd k="Ctrl/⌘+Y" /> redo · <Kbd k="Ctrl/⌘+D" /> duplicate element · <Kbd k="Del" /> delete element · arrows nudge · <Kbd k="Esc" /> deselect.</>,
   },
   {
-    title: "💾 Saving",
-    body: <>Everything autosaves to this browser's local storage a moment after each change (“Saved ✓”). “☁ synced” means the library is also mirrored across devices via the editor sign-in; “this device” means it lives only here — use Export → Studio JSON for backups.</>,
+    title: "💾 Saving & accounts",
+    body: <>Everything autosaves to this browser's local storage a moment after each change (“Saved ✓”). When the optional server sync is configured, “☁ synced” means your library is also mirrored across your devices; “this device” means it lives only here — use Export → Studio JSON for backups. On sites with user accounts, each signed-in user sees and edits only their own presentations; the Decks menu shows who you are and offers Sign out.</>,
   },
 ];
 
@@ -351,16 +315,9 @@ function HelpDialog({ onClose }) {
   );
 }
 
-// Pick the deck to open on launch: slides handed over by the Slide Converter
-// take priority (they become a new deck in the library); otherwise last-edited,
-// else first in the library, else seed the starter deck.
+// Pick the deck to open on launch: last-edited, else first in the library,
+// else seed the starter deck.
 function initialDeck() {
-  const transfer = takeTransferredSlides();
-  if (transfer) {
-    const deck = createPresentation({ title: transfer.title, slides: transfer.slides });
-    saveDeckToLib(deck);
-    return deck;
-  }
   const m = loadManifest();
   for (const id of [m.currentId, m.items[0]?.id].filter(Boolean)) {
     const d = loadDeckById(id);
@@ -380,17 +337,9 @@ export default function StudioApp() {
   const [editingId, setEditingId] = useState(null);
   const [presenting, setPresenting] = useState(false);
   const [startAt, setStartAt] = useState(0);
-  // Site copy (copy.js) editor overlay. The old /copy-editor URL redirects
-  // here (netlify.toml) with #copy, which opens it directly.
-  const [siteCopy, setSiteCopy] = useState(() => window.location.hash === "#copy");
   const [genPages, setGenPages] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [helping, setHelping] = useState(false);
-  useEffect(() => {
-    const onHash = () => { if (window.location.hash === "#copy") setSiteCopy(true); };
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, []);
   const [saved, setSaved] = useState(true);
   // Cross-device sync state: "sync" | "ok" | "off" (API unreachable) | "unauth"
   const [cloud, setCloud] = useState("sync");
@@ -568,7 +517,7 @@ export default function StudioApp() {
   };
   const importDeck = () => fileRef.current?.click();
 
-  // Slide Converter pages (.html, one slide each) become a new editable deck.
+  // Generated interactive pages (.html, one slide each) become a new editable deck.
   const importConverterPages = async (files) => {
     const slides = [];
     for (const f of files) {
@@ -578,7 +527,7 @@ export default function StudioApp() {
       } catch { /* skip unreadable file */ }
     }
     if (!slides.length) {
-      window.alert("No slide canvas found in those files — import .html pages generated by the Slide Converter.");
+      window.alert("No slide canvas found in those files — import .html pages generated by this editor's Interactive pages export.");
       return;
     }
     persistCurrent();
@@ -601,7 +550,7 @@ export default function StudioApp() {
         persistCurrent();
         const imported = { ...parsed, id: uid("deck") }; // distinct library entry
         saveDeckToLib(imported); switchTo(imported);
-      } catch { window.alert("That file isn't a valid Studio presentation (.json) or Slide Converter page (.html)."); }
+      } catch { window.alert("That file isn't a valid Studio presentation (.json) or generated page (.html)."); }
     };
     reader.readAsText(files[0]);
   };
@@ -610,16 +559,10 @@ export default function StudioApp() {
   const exportPptx = () => exportDeckPptx(deckRef.current)
     .catch((err) => window.alert("PowerPoint export failed: " + (err?.message || err)));
 
-  // site copy editor overlay -------------------------------------------------
-  const closeSiteCopy = useCallback(() => {
-    setSiteCopy(false);
-    if (window.location.hash === "#copy") history.replaceState(null, "", window.location.pathname + window.location.search);
-  }, []);
-
   // keyboard shortcuts (editor only)
   useEffect(() => {
     const onKey = (e) => {
-      if (presenting || siteCopy || genPages || reviewing || helping) return;
+      if (presenting || genPages || reviewing || helping) return;
       const ae = document.activeElement;
       const editable = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable);
       const meta = e.metaKey || e.ctrlKey;
@@ -641,7 +584,7 @@ export default function StudioApp() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [presenting, siteCopy, genPages, reviewing, helping, selectedId, slide, checkpoint, changeElement, doUndo, doRedo]);
+  }, [presenting, genPages, reviewing, helping, selectedId, slide, checkpoint, changeElement, doUndo, doRedo]);
 
   return (
     <div className="st-root">
@@ -652,7 +595,7 @@ export default function StudioApp() {
         onInsert={insertElement} onUndo={doUndo} onRedo={doRedo} canUndo={undo.length > 0} canRedo={redo.length > 0}
         onPresent={() => { setStartAt(current); setPresenting(true); }}
         library={library} currentId={deck.id} onOpenDeck={openDeck} onNewDeck={newPresentation} onDuplicateDeck={duplicateCurrentDeck} onDeleteDeck={deleteDeck}
-        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onSiteCopy={() => setSiteCopy(true)} onReview={() => setReviewing(true)} onHelp={() => setHelping(true)} saved={saved} cloud={cloud}
+        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onReview={() => setReviewing(true)} onHelp={() => setHelping(true)} saved={saved} cloud={cloud}
       />
 
       <div className="st-body">
@@ -684,7 +627,6 @@ export default function StudioApp() {
         onGoto={(i, elId) => { setReviewing(false); setCurrent(i); setSelectedId(elId); setEditingId(null); }} />}
       {genPages && <GeneratePagesDialog deck={deck} onClose={() => setGenPages(false)} />}
       {helping && <HelpDialog onClose={() => setHelping(false)} />}
-      {siteCopy && <SiteCopyOverlay onClose={closeSiteCopy} />}
       {presenting && <Present deck={deck} startIndex={startAt} onClose={() => setPresenting(false)} />}
     </div>
   );
@@ -692,23 +634,23 @@ export default function StudioApp() {
 
 // ── chrome stylesheet ────────────────────────────────────────────────────────
 const STUDIO_CSS = `
-.st-root{--line:rgba(244,224,255,0.14);--line2:rgba(244,224,255,0.08);--bg:#160427;--panel:rgba(255,255,255,0.03);--in:rgba(0,0,0,0.3);
-  position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg);color:#F4E0FF;
-  font-family:'Telia Sans',system-ui,-apple-system,sans-serif;font-size:13px;overflow:hidden;}
+.st-root{--line:rgba(233,236,255,0.14);--line2:rgba(233,236,255,0.08);--bg:#0A0F22;--panel:rgba(255,255,255,0.03);--in:rgba(0,0,0,0.3);
+  position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg);color:#E9ECFF;
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:13px;overflow:hidden;}
 .st-root *{box-sizing:border-box;}
 .st-root button{font:inherit;cursor:pointer;}
-.st-btn{background:rgba(255,255,255,0.06);color:#F4E0FF;border:1px solid var(--line);border-radius:8px;padding:7px 12px;transition:border-color .15s,background .15s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+.st-btn{background:rgba(255,255,255,0.06);color:#E9ECFF;border:1px solid var(--line);border-radius:8px;padding:7px 12px;transition:border-color .15s,background .15s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
 .st-btn:hover{border-color:${P.cyan};}
 .st-btn:disabled{opacity:.35;cursor:default;}
 .st-btn.primary{background:${P.purple};border-color:${P.purple};color:#fff;font-weight:600;}
-.st-btn.primary:hover{background:#b01ff5;}
+.st-btn.primary:hover{background:#7D6EF5;}
 .st-btn.sm{padding:4px 9px;border-radius:7px;font-size:12px;}
-.st-icon{background:rgba(255,255,255,0.05);border:1px solid var(--line);color:#F4E0FF;border-radius:6px;padding:2px 7px;font-size:12px;line-height:1.4;}
+.st-icon{background:rgba(255,255,255,0.05);border:1px solid var(--line);color:#E9ECFF;border-radius:6px;padding:2px 7px;font-size:12px;line-height:1.4;}
 .st-icon:hover{border-color:${P.cyan};}
 .st-icon.danger:hover{border-color:${P.red};color:${P.red};}
 
 /* toolbar */
-.st-toolbar{height:52px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px;background:rgba(20,5,40,0.97);border-bottom:1px solid var(--line);z-index:5;}
+.st-toolbar{height:52px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px;background:rgba(12,17,36,0.97);border-bottom:1px solid var(--line);z-index:5;}
 .st-tb-left,.st-tb-center,.st-tb-right{display:flex;align-items:center;gap:8px;}
 .st-tb-left{flex:1 1 auto;min-width:0;}
 .st-tb-center,.st-tb-right{flex:none;}
@@ -722,19 +664,19 @@ const STUDIO_CSS = `
 .st-cloud.ok{color:${P.cyan};}
 .st-cloud.unauth{color:${P.gold};}
 .st-insert{position:relative;}
-.st-insert-menu{position:absolute;top:110%;left:0;z-index:20;background:#22093b;border:1px solid var(--line);border-radius:12px;padding:8px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px;width:280px;box-shadow:0 20px 50px rgba(0,0,0,.5);}
-.st-insert-item{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);color:#F4E0FF;border-radius:8px;padding:8px 10px;text-align:left;}
+.st-insert-menu{position:absolute;top:110%;left:0;z-index:20;background:#171F3A;border:1px solid var(--line);border-radius:12px;padding:8px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px;width:280px;box-shadow:0 20px 50px rgba(0,0,0,.5);}
+.st-insert-item{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);color:#E9ECFF;border-radius:8px;padding:8px 10px;text-align:left;}
 .st-insert-item:hover{border-color:${P.cyan};background:rgba(0,212,255,0.08);}
 .st-insert-ic{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:${P.cyan};font-weight:700;}
 
 /* decks menu */
 .st-decks{position:relative;}
-.st-decks-menu{position:absolute;top:120%;left:0;z-index:30;width:300px;background:#22093b;border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.5);overflow:hidden;}
+.st-decks-menu{position:absolute;top:120%;left:0;z-index:30;width:300px;background:#171F3A;border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.5);overflow:hidden;}
 .st-decks-list{max-height:320px;overflow-y:auto;padding:6px;display:flex;flex-direction:column;gap:4px;}
 .st-deckrow{display:flex;align-items:stretch;gap:4px;border-radius:8px;border:1px solid transparent;}
 .st-deckrow.on{background:rgba(0,212,255,0.08);border-color:${P.cyan}55;}
 .st-deckrow:hover{background:rgba(255,255,255,0.04);}
-.st-deckopen{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;align-items:flex-start;background:transparent;border:0;color:#F4E0FF;padding:8px 10px;text-align:left;}
+.st-deckopen{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;align-items:flex-start;background:transparent;border:0;color:#E9ECFF;padding:8px 10px;text-align:left;}
 .st-deckname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .st-deckdate{font-size:10.5px;color:${P.muted};font-family:ui-monospace,monospace;}
 .st-deckrow.on .st-deckname{color:${P.cyan};}
@@ -742,14 +684,13 @@ const STUDIO_CSS = `
 .st-deckrow:hover .st-deck-del,.st-deckrow.on .st-deck-del{opacity:1;}
 .st-decks-foot{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line);background:rgba(0,0,0,0.2);}
 .st-decks-foot .st-btn{flex:1;justify-content:center;}
-.st-sitecopy{display:flex;flex-direction:column;gap:2px;align-items:flex-start;width:100%;background:rgba(0,212,255,0.05);border:0;border-top:1px solid var(--line);color:#F4E0FF;padding:9px 12px;text-align:left;}
-.st-sitecopy:hover{background:rgba(0,212,255,0.12);}
-.st-sitecopy .st-deckname{color:${P.cyan};}
+.st-decks-user{display:flex;align-items:center;gap:8px;padding:7px 10px;border-top:1px solid var(--line);font-size:11.5px;color:${P.dim};}
+.st-decks-user span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* export menu */
 .st-export{position:relative;}
-.st-export-menu{position:absolute;top:110%;right:0;z-index:20;width:280px;background:#22093b;border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;box-shadow:0 20px 50px rgba(0,0,0,.5);}
-.st-export-item{display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;background:var(--panel);border:1px solid var(--line);color:#F4E0FF;border-radius:8px;padding:9px 11px;}
+.st-export-menu{position:absolute;top:110%;right:0;z-index:20;width:280px;background:#171F3A;border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;box-shadow:0 20px 50px rgba(0,0,0,.5);}
+.st-export-item{display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;background:var(--panel);border:1px solid var(--line);color:#E9ECFF;border-radius:8px;padding:9px 11px;}
 .st-export-item:hover{border-color:${P.cyan};background:rgba(0,212,255,0.08);}
 .st-export-item b{font-size:13px;}
 .st-export-item span{font-size:11px;color:${P.muted};line-height:1.4;}
@@ -764,21 +705,21 @@ const STUDIO_CSS = `
 .st-slide.on{border-color:${P.cyan};box-shadow:0 0 0 1px ${P.cyan};}
 .st-slide-top{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
 .st-slide-no{font-family:ui-monospace,monospace;font-size:11px;color:${P.muted};background:rgba(0,0,0,.3);border-radius:5px;padding:1px 6px;}
-.st-slide-name{font-size:12px;color:#F4E0FF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.st-slide-name{font-size:12px;color:#E9ECFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .st-thumb{position:relative;width:100%;aspect-ratio:${STAGE_W}/${STAGE_H};border-radius:6px;overflow:hidden;background:${P.deep};border:1px solid var(--line2);}
 .st-slide-ctrls{display:flex;gap:4px;margin-top:6px;opacity:0;transition:opacity .15s;}
 .st-slide:hover .st-slide-ctrls,.st-slide.on .st-slide-ctrls{opacity:1;}
 
 /* stage column */
-.st-stagecol{display:flex;flex-direction:column;min-width:0;background:radial-gradient(circle at 50% -10%,#22093e,#0e0420);}
+.st-stagecol{display:flex;flex-direction:column;min-width:0;background:radial-gradient(circle at 50% -10%,#171F3C,#090D1E);}
 .st-stagewrap{flex:1;display:flex;align-items:center;justify-content:center;padding:26px;overflow:auto;min-height:0;}
 .st-stagewrap>div{width:100%;max-width:1080px;}
-.st-stagebar{flex:none;height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-top:1px solid var(--line);font-size:12px;background:rgba(20,5,40,0.6);}
+.st-stagebar{flex:none;height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-top:1px solid var(--line);font-size:12px;background:rgba(12,17,36,0.6);}
 .st-muted{color:${P.muted};}
 
 /* inspector */
 .st-inspector{border-left:1px solid var(--line);overflow-y:auto;padding:0 0 40px;}
-.st-insp-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(20,5,40,0.96);border-bottom:1px solid var(--line);}
+.st-insp-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(12,17,36,0.96);border-bottom:1px solid var(--line);}
 .st-insp-type{font-weight:700;text-transform:capitalize;letter-spacing:.3px;}
 .st-insp-actions{display:flex;gap:4px;}
 .st-group{padding:12px;border-bottom:1px solid var(--line2);}
@@ -790,10 +731,10 @@ const STUDIO_CSS = `
 .st-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;}
 .st-grid2 .st-field{margin-bottom:2px;}
 .st-grid2 .st-label{min-width:52px;}
-.st-in,.st-area,.st-sel,.st-hex{width:100%;font:inherit;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:var(--in);color:#F4E0FF;}
+.st-in,.st-area,.st-sel,.st-hex{width:100%;font:inherit;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:var(--in);color:#E9ECFF;}
 .st-in:focus,.st-area:focus,.st-sel:focus,.st-hex:focus{outline:none;border-color:${P.cyan};}
 .st-area{resize:vertical;line-height:1.45;}
-.st-sel{appearance:none;cursor:pointer;padding-right:24px;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="9" height="6"><path d="M0 0l4.5 6L9 0z" fill="%23F4E0FF" opacity="0.55"/></svg>');background-repeat:no-repeat;background-position:right 9px center;}
+.st-sel{appearance:none;cursor:pointer;padding-right:24px;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="9" height="6"><path d="M0 0l4.5 6L9 0z" fill="%23E9ECFF" opacity="0.55"/></svg>');background-repeat:no-repeat;background-position:right 9px center;}
 .st-seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex:1;}
 .st-seg button{flex:1;background:transparent;color:${P.dim};border:0;padding:6px 4px;border-left:1px solid var(--line);text-transform:capitalize;}
 .st-seg button:first-child{border-left:0;}
@@ -819,7 +760,7 @@ const STUDIO_CSS = `
 .st-chart-table-wrap{overflow-x:auto;margin:2px 0 8px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,0.15);}
 .st-chart-table{border-collapse:collapse;font-size:11px;}
 .st-chart-table th,.st-chart-table td{border:1px solid var(--line2);padding:2px;text-align:center;vertical-align:middle;}
-.st-chart-table input{width:52px;font:inherit;font-size:11px;background:var(--in);border:1px solid transparent;border-radius:4px;color:#F4E0FF;padding:3px 4px;text-align:center;}
+.st-chart-table input{width:52px;font:inherit;font-size:11px;background:var(--in);border:1px solid transparent;border-radius:4px;color:#E9ECFF;padding:3px 4px;text-align:center;}
 .st-chart-table input:focus{outline:none;border-color:${P.cyan};}
 .st-series-cell{display:flex;align-items:center;gap:4px;padding:0 2px;}
 .st-series-cell input{width:62px;text-align:left;}
@@ -853,12 +794,12 @@ const STUDIO_CSS = `
 
 /* font picker */
 .st-fontsel{position:relative;flex:1;min-width:0;}
-.st-fontsel-btn{width:100%;text-align:left;font-size:13px;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:var(--in);color:#F4E0FF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.st-fontsel-btn{width:100%;text-align:left;font-size:13px;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:var(--in);color:#E9ECFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .st-fontsel-btn:hover{border-color:${P.cyan};}
-.st-fontsel-menu{position:absolute;top:105%;left:0;right:0;z-index:45;background:#22093b;border:1px solid var(--line);border-radius:10px;box-shadow:0 20px 50px rgba(0,0,0,.55);max-height:340px;overflow-y:auto;padding:6px;}
+.st-fontsel-menu{position:absolute;top:105%;left:0;right:0;z-index:45;background:#171F3A;border:1px solid var(--line);border-radius:10px;box-shadow:0 20px 50px rgba(0,0,0,.55);max-height:340px;overflow-y:auto;padding:6px;}
 .st-fontsel-search{margin-bottom:4px;font-size:12px;}
 .st-fontsel-group{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:${P.cyan};margin:8px 4px 3px;font-weight:600;}
-.st-fontsel-item{display:block;width:100%;text-align:left;background:transparent;border:0;color:#F4E0FF;border-radius:6px;padding:5px 8px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.st-fontsel-item{display:block;width:100%;text-align:left;background:transparent;border:0;color:#E9ECFF;border-radius:6px;padding:5px 8px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .st-fontsel-item:hover{background:rgba(0,212,255,0.08);}
 .st-fontsel-item.on{color:${P.cyan};}
 .st-fontsel-note{font-size:11px;color:${P.muted};padding:4px 8px;line-height:1.5;}
@@ -872,8 +813,8 @@ const STUDIO_CSS = `
 .st-kbd{display:inline-block;font-family:ui-monospace,monospace;font-size:10.5px;line-height:1.5;color:#fff;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 6px;background:rgba(0,0,0,0.35);white-space:nowrap;}
 
 /* generate interactive pages dialog */
-.st-gen-backdrop{position:fixed;inset:0;z-index:950;background:rgba(10,2,20,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;}
-.st-gen{width:min(600px,92vw);max-height:86vh;overflow-y:auto;background:#22093b;border:1px solid var(--line);border-radius:14px;padding:16px 18px 18px;box-shadow:0 24px 70px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:10px;}
+.st-gen-backdrop{position:fixed;inset:0;z-index:950;background:rgba(6,9,18,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;}
+.st-gen{width:min(600px,92vw);max-height:86vh;overflow-y:auto;background:#171F3A;border:1px solid var(--line);border-radius:14px;padding:16px 18px 18px;box-shadow:0 24px 70px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:10px;}
 .st-gen-head{display:flex;align-items:center;justify-content:space-between;font-size:15px;}
 .st-gen-sub{margin:0;font-size:12.5px;color:${P.dim};line-height:1.5;}
 .st-gen-opt{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:rgba(153,10,227,0.06);font-size:13px;line-height:1.4;cursor:pointer;}
@@ -883,17 +824,11 @@ const STUDIO_CSS = `
 .st-gen-actions{display:flex;gap:8px;flex-wrap:wrap;}
 .st-gen-log{font-family:ui-monospace,monospace;font-size:11.5px;color:${P.dim};background:rgba(0,0,0,0.3);border-radius:8px;padding:8px 10px;max-height:140px;overflow-y:auto;}
 
-/* site copy (copy.js) editor overlay */
-.st-copyed{position:fixed;inset:0;z-index:900;display:flex;flex-direction:column;background:#29003E;}
-.st-copyed-head{flex:none;height:52px;display:flex;align-items:center;gap:12px;padding:0 14px;background:rgba(20,5,40,0.97);border-bottom:1px solid var(--line);}
-.st-copyed-name{flex:1;min-width:0;font-size:12px;color:${P.muted};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.st-copyed-scroll{flex:1;min-height:0;overflow-y:auto;}
-
 /* present */
 .st-present{position:fixed;inset:0;z-index:1000;background:#000;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-.st-present-bar{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(20,5,40,0.8);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:999px;padding:6px 10px;cursor:default;}
+.st-present-bar{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(12,17,36,0.8);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:999px;padding:6px 10px;cursor:default;}
 .st-present-count{font-family:ui-monospace,monospace;font-size:12px;color:${P.dim};min-width:54px;text-align:center;}
 .st-present-dots{position:fixed;top:16px;left:50%;transform:translateX(-50%);display:flex;gap:7px;cursor:default;}
-.st-pdot{width:8px;height:8px;border-radius:50%;background:rgba(244,224,255,0.25);border:0;padding:0;}
+.st-pdot{width:8px;height:8px;border-radius:50%;background:rgba(233,236,255,0.25);border:0;padding:0;}
 .st-pdot.on{background:${P.cyan};box-shadow:0 0 10px ${P.cyan};}
 `;

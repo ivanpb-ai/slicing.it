@@ -64,3 +64,27 @@ export async function syncLibrary(currentId) {
 
   return { pulled };
 }
+
+// ── Welcome-deck template ──────────────────────────────────────────────────
+// Site-global default deck: any signed-in user reads it (a new library is
+// seeded from it); only admin (the EDITOR_PASSWORD account) can publish it.
+// Null when none is set or the API is unreachable — callers fall back to the
+// built-in starter.
+export async function cloudGetTemplate() {
+  try {
+    const r = await fetch(API + "?template=1", { credentials: "same-origin", headers: { ...(await authHeader()) } });
+    if (!r.ok) return null;
+    return (await r.json()).deck || null;
+  } catch { return null; }
+}
+
+export async function cloudPutTemplate(deck) {
+  const r = await fetch(API + "?template=1", {
+    method: "PUT",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json", ...(await authHeader()) },
+    body: JSON.stringify({ deck }),
+  });
+  if (!r.ok) { const e = new Error("HTTP " + r.status); e.status = r.status; throw e; }
+  return r.json();
+}

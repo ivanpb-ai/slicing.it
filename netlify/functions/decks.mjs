@@ -7,9 +7,12 @@
 //                    token is a SHA-256 derived from that user's password.
 //                    Each user's decks live under a "user:<name>:" namespace;
 //                    one user can never list, read or write another's decks.
-//   EDITOR_PASSWORD  the original shared password — legacy plain-token cookie
-//                    and the original unnamespaced keys, so existing deployed
-//                    data keeps working untouched.
+//                    EDITOR_PASSWORD is the reserved "admin" account's
+//                    password; admin owns the original unnamespaced keys, so
+//                    the site's pre-existing decks belong to the admin.
+//   EDITOR_PASSWORD  alone (no EDITOR_USERS) — the admin-only legacy mode:
+//                    plain-token cookie and the original unnamespaced keys,
+//                    so existing deployed data keeps working untouched.
 //
 //   GET    /api/decks          → { items: [{id, title, updatedAt, deleted?}] }
 //   GET    /api/decks?id=X     → { deck }
@@ -25,6 +28,8 @@ const ID_RE = /^[a-z0-9_-]{1,64}$/i;
 const USER_RE = /^[a-z0-9_-]{1,32}$/i;
 
 // → Map<user, password> when EDITOR_USERS is set, else null (shared mode).
+// "admin" is reserved: never read from EDITOR_USERS, and present exactly when
+// EDITOR_PASSWORD is set — that password IS the admin credential.
 function parseUsers() {
   const multi = process.env.EDITOR_USERS;
   if (!multi) return null;
@@ -34,17 +39,20 @@ function parseUsers() {
     if (i < 1) continue;
     const name = pair.slice(0, i).trim();
     const pw = pair.slice(i + 1).trim();
-    if (USER_RE.test(name) && pw) map.set(name, pw);
+    if (USER_RE.test(name) && pw && name.toLowerCase() !== "admin") map.set(name, pw);
   }
+  const adminPw = process.env.EDITOR_PASSWORD;
+  if (adminPw) map.set("admin", adminPw);
   return map.size ? map : null;
 }
 
 const sha256 = (s) => crypto.createHash("sha256").update(s).digest("hex");
 const safeEq = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
-// → { prefix } for the authenticated caller, or null. Shared mode uses the
-// original unnamespaced keys ("" prefix) so pre-existing decks stay visible.
-function authedPrefix(req) {
+// → { prefix, admin } for the authenticated caller, or null. Shared mode and
+// the admin account use the original unnamespaced keys ("" prefix) so
+// pre-existing decks stay visible.
+export function authedPrefix(req) {
   const part = (req.headers.get("cookie") || "").split(/; */).find((p) => p.trim().startsWith(COOKIE + "="));
   const raw = part ? decodeURIComponent(part.trim().slice(COOKIE.length + 1)) : "";
 
@@ -55,21 +63,46 @@ function authedPrefix(req) {
     const user = raw.slice(0, i), hash = raw.slice(i + 1);
     const pw = users.get(user);
     if (!pw) return null;
-    return safeEq(hash, sha256(`${PEPPER}:${user}:${pw}`)) ? { prefix: `user:${user}:` } : null;
+    if (!safeEq(hash, sha256(`${PEPPER}:${user}:${pw}`))) return null;
+    // Admin owns the original shared library (the unnamespaced keys).
+    return user === "admin" ? { prefix: "", admin: true } : { prefix: `user:${user}:`, admin: false };
   }
 
   const password = process.env.EDITOR_PASSWORD;
   if (!password) return null;
-  return safeEq(raw, sha256(`${PEPPER}:${password}`)) ? { prefix: "" } : null;
+  return safeEq(raw, sha256(`${PEPPER}:${password}`)) ? { prefix: "", admin: true } : null;
 }
 
 export default async (req) => {
   const auth = authedPrefix(req);
   if (!auth) return Response.json({ error: "unauthorized" }, { status: 401 });
 
+  const url = new URL(req.url);
+
+  // ── Welcome-deck template (site-global "__template__" key). Any signed-in
+  // user may read it (their first library is seeded from it); ONLY admin may
+  // change or remove it — admin alone controls the default deck.
+  if (url.searchParams.get("template")) {
+    if (req.method !== "GET" && !auth.admin) return Response.json({ error: "forbidden" }, { status: 403 });
+    const store = getStore("studio-decks");
+    if (req.method === "GET") {
+      const deck = await store.get("__template__", { type: "json" });
+      return deck ? Response.json({ deck }) : Response.json({ error: "not found" }, { status: 404 });
+    }
+    if (req.method === "PUT") {
+      let body;
+      try { body = await req.json(); } catch { body = null; }
+      if (!body || !body.deck || typeof body.deck !== "object") return Response.json({ error: "bad request" }, { status: 400 });
+      await store.setJSON("__template__", body.deck);
+      return Response.json({ ok: true });
+    }
+    if (req.method === "DELETE") { await store.delete("__template__"); return Response.json({ ok: true }); }
+    return Response.json({ error: "method not allowed" }, { status: 405 });
+  }
+
   const store = getStore("studio-decks");
   const k = (s) => auth.prefix + s;
-  const id = new URL(req.url).searchParams.get("id");
+  const id = url.searchParams.get("id");
   if (id && !ID_RE.test(id)) return Response.json({ error: "bad id" }, { status: 400 });
   const manifest = (await store.get(k(MANIFEST), { type: "json" })) || { items: [] };
 

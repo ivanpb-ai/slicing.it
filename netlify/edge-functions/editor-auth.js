@@ -7,18 +7,22 @@
 // renders a bare 401 body and never prompts), and some managed browsers disable
 // the Basic scheme by policy. A normal HTTPS form + cookie works everywhere.
 //
-// Configure in the Netlify site's environment variables (pick one):
+// Configure in the Netlify site's environment variables:
 //   EDITOR_USERS     comma-separated "username:password" pairs, e.g.
 //                    "alice:s3cret,bob:hunter2". Each user signs in with their
 //                    own credentials; in the Presentation Studio each user
 //                    sees/edits only their own decks (netlify/functions/
 //                    decks.mjs). Usernames: letters, digits, "_" or "-",
-//                    max 32 chars. Sign out via any gated URL + ?signout=1.
-//   EDITOR_PASSWORD  the original single shared password — everyone shares
-//                    one deck library. Cookie format and storage keys are
-//                    unchanged from before EDITOR_USERS existed, so existing
-//                    sessions and decks keep working. Ignored when
-//                    EDITOR_USERS is set.
+//                    max 32 chars ("admin" is reserved — entries with that
+//                    name are ignored). Sign out via any gated URL +
+//                    ?signout=1.
+//   EDITOR_PASSWORD  the ADMIN credential. With EDITOR_USERS set, signing in
+//                    as username "admin" with this password opens the admin
+//                    account, which owns the original shared deck library
+//                    (the legacy unnamespaced storage). Without EDITOR_USERS
+//                    it is the only account (password-only form, legacy
+//                    cookie format and storage keys unchanged, so existing
+//                    sessions and decks keep working).
 //   Neither set → the gated pages stay locked (503).
 //
 // On success a token is stored in an HttpOnly, Secure cookie — in shared mode
@@ -34,6 +38,8 @@ const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 const USER_RE = /^[a-z0-9_-]{1,32}$/i;
 
 // → Map<user, password> when EDITOR_USERS is set, else null (shared mode).
+// "admin" is reserved: it is never read from EDITOR_USERS, and exists exactly
+// when EDITOR_PASSWORD is set — that password IS the admin credential.
 function parseUsers(env) {
   const multi = env.get("EDITOR_USERS");
   if (!multi) return null;
@@ -43,8 +49,10 @@ function parseUsers(env) {
     if (i < 1) continue;
     const name = pair.slice(0, i).trim();
     const pw = pair.slice(i + 1).trim();
-    if (USER_RE.test(name) && pw) map.set(name, pw);
+    if (USER_RE.test(name) && pw && name.toLowerCase() !== "admin") map.set(name, pw);
   }
+  const adminPw = env.get("EDITOR_PASSWORD");
+  if (adminPw) map.set("admin", adminPw);
   return map.size ? map : null;
 }
 
@@ -153,6 +161,7 @@ export default async (request, context) => {
       }
     } else if (supplied && constantEquals(await tokenShared(supplied), await tokenShared(password))) {
       headers.append("Set-Cookie", `${COOKIE}=${await tokenShared(password)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${MAX_AGE}`);
+      headers.append("Set-Cookie", `${USER_COOKIE}=admin; Path=/; Secure; SameSite=Lax; Max-Age=${MAX_AGE}`);
       return new Response(null, { status: 303, headers });
     }
     return new Response(loginPage(!!users, true), { status: 401, headers: htmlHeaders });

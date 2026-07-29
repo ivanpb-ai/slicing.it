@@ -759,7 +759,7 @@ const CLOUD_LABELS = {
   unauth: ["sign in", "Session expired — reload and sign in to sync across devices"],
 };
 
-export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onReview, onHelp, saved, cloud }) {
+export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onReview, onHelp, onPublishTemplate, saved, cloud }) {
   const [cloudText, cloudTitle] = CLOUD_LABELS[cloud] || CLOUD_LABELS.off;
   return (
     <div className="st-toolbar">
@@ -784,6 +784,12 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
               <button className="st-btn sm" onClick={() => { onDuplicateDeck(); close(); }}>Duplicate</button>
               <button className="st-btn sm" title="Import a Studio .json — or .html pages exported from this editor" onClick={() => { onImport(); close(); }}>Import…</button>
             </div>
+            {onPublishTemplate && (
+              <div className="st-decks-foot">
+                <button className="st-btn sm" title="Admin: make the deck you are editing the welcome deck that every new user starts with"
+                  onClick={() => { onPublishTemplate(); close(); }}>★ Set as welcome deck</button>
+              </div>
+            )}
             {userLabel() && (
               <div className="st-decks-user">
                 <span title="Only your own presentations are shown and synced">👤 {userLabel()}</span>

@@ -442,7 +442,10 @@ function cookieUser() {
   } catch { return ""; }
 }
 export const currentUser = cookieUser();
-const ns = (key) => (currentUser ? `northstar.studio.${currentUser}.${key}` : `northstar.studio.${key}`);
+// Admin (the EDITOR_PASSWORD account) owns the original shared library — the
+// legacy unscoped keys — so the pre-account site decks are the admin's decks.
+const SCOPE = currentUser === "admin" ? "" : currentUser;
+const ns = (key) => (SCOPE ? `northstar.studio.${SCOPE}.${key}` : `northstar.studio.${key}`);
 
 const STORE_KEY = ns("deck.v1");
 
@@ -548,7 +551,7 @@ export function loadManifest() {
   // Decks saved on this browser before per-user accounts (unscoped keys) are
   // adopted into the signed-in user's scope on first load, so nothing is lost
   // when a deployment switches from EDITOR_PASSWORD to EDITOR_USERS.
-  if (!m.items.length && currentUser) {
+  if (!m.items.length && SCOPE) {
     const shared = readJSON("northstar.studio.library.v1");
     if (shared && Array.isArray(shared.items) && shared.items.length) {
       for (const it of shared.items) {

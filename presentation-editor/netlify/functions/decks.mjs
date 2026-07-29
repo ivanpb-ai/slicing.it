@@ -10,7 +10,8 @@
 //   2. Cookie gate — the sign-in cookie set by
 //      netlify/edge-functions/editor-auth.js holds "<user>:<token>" where the
 //      token is a SHA-256 derived from that user's password (EDITOR_USERS
-//      "alice:pw1,bob:pw2", or EDITOR_PASSWORD as one "default" user).
+//      "alice:pw1,bob:pw2"; EDITOR_PASSWORD is the reserved "admin"
+//      account's password).
 //
 //   GET    /api/decks          → { items: [{id, title, updatedAt, deleted?}] }
 //   GET    /api/decks?id=X     → { deck }
@@ -28,21 +29,23 @@ const MANIFEST = "__manifest__";
 const ID_RE = /^[a-z0-9_-]{1,64}$/i;
 const USER_RE = /^[a-z0-9_-]{1,32}$/i;
 
+// "admin"/"default" are reserved: never read from EDITOR_USERS.
+// EDITOR_PASSWORD is the admin credential; "default" is its legacy alias.
 function parseUsers() {
   const map = new Map();
-  const multi = process.env.EDITOR_USERS;
-  if (multi) {
-    for (const pair of multi.split(",")) {
+  const multiSrc = process.env.EDITOR_USERS;
+  if (multiSrc) {
+    for (const pair of multiSrc.split(",")) {
       const i = pair.indexOf(":");
       if (i < 1) continue;
       const name = pair.slice(0, i).trim();
       const pw = pair.slice(i + 1).trim();
-      if (USER_RE.test(name) && pw) map.set(name, pw);
+      const lower = name.toLowerCase();
+      if (USER_RE.test(name) && pw && lower !== "admin" && lower !== "default") map.set(name, pw);
     }
-    return map;
   }
   const single = process.env.EDITOR_PASSWORD;
-  if (single) map.set("default", single);
+  if (single) { map.set("admin", single); map.set("default", single); }
   return map;
 }
 
@@ -83,18 +86,43 @@ async function identityAuthedUser(req) {
 export default async (req) => {
   // Identity first (namespace prefixed "iduser:" so a UUID can never collide
   // with a cookie-gate username), then the cookie gate.
-  let prefix = null;
+  let prefix = null, isAdmin = false;
   const idUser = await identityAuthedUser(req);
   if (idUser) prefix = `iduser:${idUser}`;
   else {
     const cUser = cookieAuthedUser(req);
-    if (cUser) prefix = `user:${cUser}`;
+    // The admin account keeps the former "default" user's namespace so data
+    // from before the admin rename stays in place.
+    if (cUser) { prefix = `user:${cUser === "admin" ? "default" : cUser}`; isAdmin = cUser === "admin" || cUser === "default"; }
   }
   if (!prefix) return Response.json({ error: "unauthorized" }, { status: 401 });
 
+  const url = new URL(req.url);
+
+  // ── Welcome-deck template (site-global "__template__" key). Any signed-in
+  // user may read it (their first library is seeded from it); ONLY admin may
+  // change or remove it — admin alone controls the default deck.
+  if (url.searchParams.get("template")) {
+    if (req.method !== "GET" && !isAdmin) return Response.json({ error: "forbidden" }, { status: 403 });
+    const store = getStore("studio-decks");
+    if (req.method === "GET") {
+      const deck = await store.get("__template__", { type: "json" });
+      return deck ? Response.json({ deck }) : Response.json({ error: "not found" }, { status: 404 });
+    }
+    if (req.method === "PUT") {
+      let body;
+      try { body = await req.json(); } catch { body = null; }
+      if (!body || !body.deck || typeof body.deck !== "object") return Response.json({ error: "bad request" }, { status: 400 });
+      await store.setJSON("__template__", body.deck);
+      return Response.json({ ok: true });
+    }
+    if (req.method === "DELETE") { await store.delete("__template__"); return Response.json({ ok: true }); }
+    return Response.json({ error: "method not allowed" }, { status: 405 });
+  }
+
   const store = getStore("studio-decks");
   const k = (s) => `${prefix}:${s}`; // per-user namespace
-  const id = new URL(req.url).searchParams.get("id");
+  const id = url.searchParams.get("id");
   if (id && !ID_RE.test(id)) return Response.json({ error: "bad id" }, { status: 400 });
   const manifest = (await store.get(k(MANIFEST), { type: "json" })) || { items: [] };
 

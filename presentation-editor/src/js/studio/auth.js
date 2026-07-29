@@ -63,7 +63,8 @@ export function openLogin() { netlifyIdentity.open(); }
 // can never collide with a cookie-mode username.
 export function storageScope() {
   if (mode === "identity" && identityUser) return "id-" + identityUser.id;
-  if (mode === "cookie") return cookieUser();
+  // Admin keeps the former "default" user's scope for data continuity.
+  if (mode === "cookie") { const u = cookieUser(); return u === "admin" ? "default" : u; }
   return "";
 }
 
@@ -72,6 +73,14 @@ export function userLabel() {
   if (mode === "identity" && identityUser) return identityUser.user_metadata?.full_name || identityUser.email || "signed in";
   if (mode === "cookie") return cookieUser();
   return "";
+}
+
+// True for the EDITOR_PASSWORD (admin) account — cookie mode only; Identity
+// users are never admin.
+export function isAdmin() {
+  if (mode !== "cookie") return false;
+  const u = cookieUser();
+  return u === "admin" || u === "default";
 }
 
 export function canSignOut() { return (mode === "identity" && !!identityUser) || mode === "cookie"; }

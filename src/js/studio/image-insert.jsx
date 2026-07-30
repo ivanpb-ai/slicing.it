@@ -58,14 +58,27 @@ async function fitGeometry(src) {
 }
 
 async function searchOpenverse(q, page) {
-  const qs = `q=${encodeURIComponent(q)}&page_size=24&page=${page}`;
+  // The site passthrough first: server-to-server, so no CORS surprises and no
+  // per-browser anonymous rate limits — and it holds the site's optional
+  // Openverse API credentials.
+  let viaErr;
   try {
-    const r = await fetch(`https://api.openverse.org/v1/images/?${qs}`);
+    const r = await fetch(`${API}?ov_q=${encodeURIComponent(q)}&page=${page}`, { credentials: "same-origin" });
     if (r.ok) return r.json();
-  } catch { /* CORS / network — fall through to the site passthrough */ }
-  const r = await fetch(`${API}?ov_q=${encodeURIComponent(q)}&page=${page}`, { credentials: "same-origin" });
-  if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || `search failed (${r.status})`);
-  return r.json();
+    const d = await r.json().catch(() => null);
+    viaErr = new Error(
+      r.status === 401
+        ? "Sign in to the editor to search images."
+        : (d && d.error) || `search failed (${r.status})`,
+    );
+  } catch (e) { viaErr = e; }
+  // Fallback: straight from the browser, for when the site's functions are
+  // unreachable but Openverse accepts anonymous CORS calls.
+  try {
+    const r = await fetch(`https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&page_size=24&page=${page}`);
+    if (r.ok) return r.json();
+  } catch { /* keep the passthrough error — it has the useful message */ }
+  throw viaErr;
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

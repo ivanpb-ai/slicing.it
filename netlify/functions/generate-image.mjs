@@ -21,6 +21,30 @@ const MODEL = "black-forest-labs/flux-1.1-pro";
 const ASPECTS = new Set(["1:1", "16:9", "4:3", "3:4", "9:16", "21:9"]);
 const apiToken = () => process.env.REPLICATE_API_TOKEN || process.env.TEXT_TO_IMAGE;
 
+// Optional Openverse API credentials (register once at
+// https://api.openverse.org/v1/#tag/auth, then set OPENVERSE_CLIENT_ID and
+// OPENVERSE_CLIENT_SECRET) lift the tight anonymous rate limits and cover
+// deployments where Openverse rejects unauthenticated calls outright. The
+// client-credentials bearer token is cached across warm invocations.
+let ovToken = null, ovTokenExp = 0;
+async function openverseAuth() {
+  const id = process.env.OPENVERSE_CLIENT_ID, secret = process.env.OPENVERSE_CLIENT_SECRET;
+  if (!id || !secret) return {};
+  if (ovToken && Date.now() < ovTokenExp - 60000) return { Authorization: `Bearer ${ovToken}` };
+  try {
+    const r = await fetch("https://api.openverse.org/v1/auth_tokens/token/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }).toString(),
+    });
+    const d = r.ok ? await r.json() : null;
+    if (!d || !d.access_token) return {};
+    ovToken = d.access_token;
+    ovTokenExp = Date.now() + (Number(d.expires_in) || 600) * 1000;
+    return { Authorization: `Bearer ${ovToken}` };
+  } catch { return {}; }
+}
+
 // Turn a (possibly still-running) prediction into the client response.
 async function predictionResponse(pred) {
   if (pred.status === "failed" || pred.status === "canceled")
@@ -45,8 +69,18 @@ export default async (req) => {
     const page = Math.max(1, Math.min(20, Number(url.searchParams.get("page")) || 1));
     const r = await fetch(
       `https://api.openverse.org/v1/images/?q=${encodeURIComponent(ovq.slice(0, 200))}&page_size=24&page=${page}`,
-      { headers: { "User-Agent": "PresentationStudio/1.0" } },
+      { headers: { "User-Agent": "PresentationStudio/1.0 (image search)", ...(await openverseAuth()) } },
     );
+    // Translate Openverse's own auth/throttle rejections into messages the
+    // dialog can show — a forwarded 401 would read as a site sign-in problem.
+    if (r.status === 401 || r.status === 403) {
+      const hint = process.env.OPENVERSE_CLIENT_ID
+        ? "Openverse rejected this site's API credentials — check OPENVERSE_CLIENT_ID / OPENVERSE_CLIENT_SECRET."
+        : "Openverse rejected the unauthenticated search. Register free API credentials at https://api.openverse.org/v1/#tag/auth and set OPENVERSE_CLIENT_ID / OPENVERSE_CLIENT_SECRET on this site.";
+      return Response.json({ error: hint }, { status: 502 });
+    }
+    if (r.status === 429)
+      return Response.json({ error: "Openverse rate limit reached — try again in a minute." }, { status: 502 });
     return new Response(await r.text(), { status: r.status, headers: { "content-type": "application/json" } });
   }
 

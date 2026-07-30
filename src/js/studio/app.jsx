@@ -4,7 +4,7 @@
 // and hosts the fullscreen Present overlay. All chrome styling is the STUDIO_CSS
 // sheet injected below (KEYFRAMES drives every animation in effects.js).
 // ─────────────────────────────────────────────────────────────────────────
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { STAGE_W, STAGE_H, P, STATUS_COLORS, cloneDeep, uid, createElement, createSlide, createPresentation, starterDeck, chartDefaults, loadManifest, listDecks, loadDeckById, saveDeckToLib, deleteDeckFromLib, setCurrentDeckId, duplicateDeckObj, validateDeck, downloadDeck, currentUser } from "./model";
 import { KEYFRAMES } from "./effects";
 import { downloadDeckHtml } from "./export-html";
@@ -19,6 +19,7 @@ import { lintDeck } from "./lint";
 import { syncLibrary, cloudPut, cloudDelete, cloudGetTemplate, cloudPutTemplate } from "./cloud";
 
 const cloneSlide = (s) => ({ ...cloneDeep(s), id: uid("slide"), elements: s.elements.map((e) => ({ ...cloneDeep(e), id: uid("el") })) });
+const clampZoom = (z) => Math.min(4, Math.max(0.5, z));
 
 // ── Present overlay ────────────────────────────────────────────────────────
 const TRANS_DUR = 0.9; // seconds — slide transition speed
@@ -286,7 +287,7 @@ const Kbd = ({ k }) => <span className="st-kbd">{k}</span>;
 const HELP_SECTIONS = [
   {
     title: "🖼 Canvas (centre)",
-    body: <>Click an element to select it, drag to move (snap guides appear against other elements and the stage centre), drag a corner handle to resize. Double-click headings, text, kickers, quotes, buttons, card titles or counter labels to edit them in place. Nudge the selection with the arrow keys (<Kbd k="Shift" /> = 10&nbsp;px steps); <Kbd k="Esc" /> deselects.</>,
+    body: <>Click an element to select it, drag to move (snap guides appear against other elements and the stage centre), drag a corner handle to resize. Double-click headings, text, kickers, quotes, buttons, card titles or counter labels to edit them in place. Nudge the selection with the arrow keys (<Kbd k="Shift" /> = 10&nbsp;px steps); <Kbd k="Esc" /> deselects. Zoom with the −/＋ controls, <Kbd k="Ctrl" />+scroll, or a two-finger pinch on touch screens — when zoomed in, scroll to pan.</>,
   },
   {
     title: "✚ Insert",
@@ -391,6 +392,11 @@ export default function StudioApp() {
   // Mobile: the side panels become slide-in drawers toggled by the FABs.
   const [navOpen, setNavOpen] = useState(false);
   const [inspOpen, setInspOpen] = useState(false);
+  // Stage zoom: 1 = fit-to-width. Buttons, Ctrl+wheel and pinch all set it.
+  const [zoom, setZoom] = useState(1);
+  const zoomRef = useRef(1); zoomRef.current = zoom;
+  const prevZoomRef = useRef(1);
+  const stageWrapRef = useRef(null);
   useEffect(() => {
     const onHash = () => { if (window.location.hash === "#copy") setSiteCopy(true); };
     window.addEventListener("hashchange", onHash);
@@ -673,6 +679,48 @@ export default function StudioApp() {
     return () => window.removeEventListener("keydown", onKey);
   }, [presenting, siteCopy, genPages, reviewing, helping, selectedId, slide, checkpoint, changeElement, doUndo, doRedo]);
 
+  // Stage zoom via Ctrl+wheel (desktop) and two-finger pinch (touch).
+  useEffect(() => {
+    const el = stageWrapRef.current; if (!el) return;
+    const onWheel = (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setZoom((z) => clampZoom(z * (e.deltaY > 0 ? 0.9 : 1.1)));
+    };
+    let pinch = null;
+    const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    const onTouchStart = (e) => { if (e.touches.length === 2) pinch = { d: dist(e.touches), z: zoomRef.current }; };
+    const onTouchMove = (e) => {
+      if (!pinch || e.touches.length !== 2) return;
+      e.preventDefault(); // keep the browser from zooming the whole page
+      setZoom(clampZoom(pinch.z * (dist(e.touches) / pinch.d)));
+    };
+    const onTouchEnd = () => { pinch = null; };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
+    el.addEventListener("touchcancel", onTouchEnd);
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, []);
+
+  // Keep the viewport centred on the same stage point across zoom changes.
+  useLayoutEffect(() => {
+    const el = stageWrapRef.current; if (!el) return;
+    const r = zoom / prevZoomRef.current;
+    if (r !== 1) {
+      el.scrollLeft = (el.scrollLeft + el.clientWidth / 2) * r - el.clientWidth / 2;
+      el.scrollTop = (el.scrollTop + el.clientHeight / 2) * r - el.clientHeight / 2;
+    }
+    prevZoomRef.current = zoom;
+  }, [zoom]);
+
   return (
     <div className="st-root">
       <style>{KEYFRAMES + STUDIO_CSS}</style>
@@ -691,17 +739,24 @@ export default function StudioApp() {
           onStatus={(i, status) => { checkpoint(); patchSlide(i, (s) => ({ ...s, status })); }} />
 
         <div className="st-stagecol">
-          <div className="st-stagewrap">
+          <div className="st-stagewrap" ref={stageWrapRef}>
+            <div className="st-stagesizer" style={{ width: `${zoom * 100}%`, maxWidth: 1080 * zoom }}>
             <SlideStage
               slide={slide} selectedId={selectedId}
               onSelect={(id) => { setSelectedId(id); if (id !== editingId) setEditingId(null); }}
               onChange={changeElement} onCheckpoint={checkpoint}
               editingId={editingId} onStartEdit={(id) => { setSelectedId(id); setEditingId(id); }} onEndEdit={() => setEditingId(null)}
             />
+            </div>
           </div>
           <div className="st-stagebar">
             <span><b>{slide.name}</b> · {slide.elements.length} element{slide.elements.length === 1 ? "" : "s"}</span>
             <span className="st-muted">Drag to move · corner to resize · double-click text to edit · arrows nudge</span>
+            <div className="st-zoomctl">
+              <button className="st-icon" title="Zoom out (Ctrl+scroll)" onClick={() => setZoom((z) => clampZoom(z / 1.25))}>−</button>
+              <button className="st-zoom-val" title="Reset zoom to fit" onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
+              <button className="st-icon" title="Zoom in (Ctrl+scroll)" onClick={() => setZoom((z) => clampZoom(z * 1.25))}>＋</button>
+            </div>
           </div>
         </div>
 
@@ -713,6 +768,11 @@ export default function StudioApp() {
       {(navOpen || inspOpen) && <div className="st-drawer-backdrop" onClick={() => { setNavOpen(false); setInspOpen(false); }} />}
       <button className="st-fab left" onClick={() => { setNavOpen((v) => !v); setInspOpen(false); }}>▤ Slides</button>
       <button className="st-fab right" onClick={() => { setInspOpen((v) => !v); setNavOpen(false); }}>🎛 Edit</button>
+      <div className="st-fab zoom">
+        <button title="Zoom out" onClick={() => setZoom((z) => clampZoom(z / 1.25))}>−</button>
+        <button className="st-zoom-val" title="Reset zoom to fit" onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
+        <button title="Zoom in" onClick={() => setZoom((z) => clampZoom(z * 1.25))}>＋</button>
+      </div>
       <input ref={fileRef} type="file" accept="application/json,.json,.html,.htm" multiple style={{ display: "none" }} onChange={onFile} />
       {reviewing && <ReviewDialog deck={deck} onClose={() => setReviewing(false)}
         onGoto={(i, elId) => { setReviewing(false); setCurrent(i); setSelectedId(elId); setEditingId(null); }} />}
@@ -807,8 +867,11 @@ const STUDIO_CSS = `
 
 /* stage column */
 .st-stagecol{display:flex;flex-direction:column;min-width:0;background:radial-gradient(circle at 50% -10%,#22093e,#0e0420);}
-.st-stagewrap{flex:1;display:flex;align-items:center;justify-content:center;padding:26px;overflow:auto;min-height:0;}
-.st-stagewrap>div{width:100%;max-width:1080px;}
+.st-stagewrap{flex:1;display:flex;padding:26px;overflow:auto;min-height:0;touch-action:pan-x pan-y;}
+.st-stagewrap>div{flex:none;width:100%;max-width:1080px;margin:auto;}
+.st-zoomctl{display:flex;align-items:center;gap:4px;flex:none;}
+.st-zoom-val{background:transparent;border:1px solid transparent;border-radius:6px;color:inherit;font-family:ui-monospace,monospace;font-size:11px;min-width:46px;text-align:center;padding:2px 4px;cursor:pointer;}
+.st-zoom-val:hover{border-color:var(--line);}
 .st-stagebar{flex:none;height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-top:1px solid var(--line);font-size:12px;background:rgba(20,5,40,0.6);}
 .st-muted{color:${P.muted};}
 
@@ -944,6 +1007,9 @@ const STUDIO_CSS = `
   .st-fab{display:inline-flex;position:fixed;bottom:14px;z-index:130;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:#22093b;color:inherit;font:inherit;font-size:12.5px;box-shadow:0 8px 24px rgba(0,0,0,.45);}
   .st-fab.left{left:12px;}
   .st-fab.right{right:12px;}
+  .st-fab.zoom{left:50%;right:auto;transform:translateX(-50%);padding:2px 4px;gap:0;}
+  .st-fab.zoom button{background:transparent;border:0;color:inherit;font:inherit;padding:6px 8px;cursor:pointer;}
+  .st-fab.zoom .st-zoom-val{min-width:44px;}
   .st-stagewrap{padding:10px;}
   .st-stagebar{display:none;}
 }

@@ -343,6 +343,9 @@ export default function StudioApp() {
   const [genPages, setGenPages] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [helping, setHelping] = useState(false);
+  // Mobile: the side panels become slide-in drawers toggled by the FABs.
+  const [navOpen, setNavOpen] = useState(false);
+  const [inspOpen, setInspOpen] = useState(false);
   const [saved, setSaved] = useState(true);
   // Cross-device sync state: "sync" | "ok" | "off" (API unreachable) | "unauth"
   const [cloud, setCloud] = useState("sync");
@@ -635,8 +638,8 @@ export default function StudioApp() {
         onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onReview={() => setReviewing(true)} onHelp={() => setHelping(true)} onPublishTemplate={canAdmin ? publishTemplate : null} saved={saved} cloud={cloud}
       />
 
-      <div className="st-body">
-        <Navigator slides={deck.slides} current={current} onSelect={(i) => { setCurrent(i); setSelectedId(null); setEditingId(null); }}
+      <div className={"st-body" + (navOpen ? " nav-open" : "") + (inspOpen ? " insp-open" : "")}>
+        <Navigator slides={deck.slides} current={current} onSelect={(i) => { setCurrent(i); setSelectedId(null); setEditingId(null); setNavOpen(false); }}
           onAdd={addSlide} onDuplicate={duplicateSlide} onDelete={deleteSlide} onMove={moveSlide}
           onStatus={(i, status) => { checkpoint(); patchSlide(i, (s) => ({ ...s, status })); }} />
 
@@ -659,6 +662,10 @@ export default function StudioApp() {
           onCheckpoint={checkpoint} onLayer={layer} onDuplicate={duplicateElement} onDelete={deleteElement} />
       </div>
 
+      {/* Mobile: drawer backdrop + toggles (hidden on desktop via CSS) */}
+      {(navOpen || inspOpen) && <div className="st-drawer-backdrop" onClick={() => { setNavOpen(false); setInspOpen(false); }} />}
+      <button className="st-fab left" onClick={() => { setNavOpen((v) => !v); setInspOpen(false); }}>▤ Slides</button>
+      <button className="st-fab right" onClick={() => { setInspOpen((v) => !v); setNavOpen(false); }}>🎛 Edit</button>
       <input ref={fileRef} type="file" accept="application/json,.json,.html,.htm" multiple style={{ display: "none" }} onChange={onFile} />
       {reviewing && <ReviewDialog deck={deck} onClose={() => setReviewing(false)}
         onGoto={(i, elId) => { setReviewing(false); setCurrent(i); setSelectedId(elId); setEditingId(null); }} />}
@@ -860,6 +867,29 @@ const STUDIO_CSS = `
 .st-gen-opt input{accent-color:${P.purple};width:15px;height:15px;margin-top:2px;flex:none;}
 .st-gen-actions{display:flex;gap:8px;flex-wrap:wrap;}
 .st-gen-log{font-family:ui-monospace,monospace;font-size:11.5px;color:${P.dim};background:rgba(0,0,0,0.3);border-radius:8px;padding:8px 10px;max-height:140px;overflow-y:auto;}
+
+/* touch: dragging an element must not scroll the page */
+.st-hit,.st-handle{touch-action:none;}
+
+/* phones & small tablets: single-column stage, panels as slide-in drawers */
+.st-fab{display:none;}
+@media (max-width: 900px){
+  .st-toolbar{height:auto;min-height:52px;flex-wrap:wrap;row-gap:6px;padding:6px 10px;}
+  .st-tb-left,.st-tb-center,.st-tb-right{flex-wrap:wrap;row-gap:6px;}
+  .st-title{min-width:80px;}
+  .st-body{grid-template-columns:1fr;}
+  .st-nav,.st-inspector{position:fixed;top:0;bottom:0;z-index:120;background:var(--bg);width:min(85vw,320px);transition:transform .22s ease;box-shadow:0 0 40px rgba(0,0,0,.5);}
+  .st-nav{left:0;border-right:1px solid var(--line);transform:translateX(-105%);}
+  .st-inspector{right:0;border-left:1px solid var(--line);transform:translateX(105%);}
+  .st-body.nav-open .st-nav{transform:none;}
+  .st-body.insp-open .st-inspector{transform:none;}
+  .st-drawer-backdrop{position:fixed;inset:0;z-index:110;background:rgba(0,0,0,0.45);}
+  .st-fab{display:inline-flex;position:fixed;bottom:14px;z-index:130;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:#171F3A;color:inherit;font:inherit;font-size:12.5px;box-shadow:0 8px 24px rgba(0,0,0,.45);}
+  .st-fab.left{left:12px;}
+  .st-fab.right{right:12px;}
+  .st-stagewrap{padding:10px;}
+  .st-stagebar{display:none;}
+}
 
 /* present */
 .st-present{position:fixed;inset:0;z-index:1000;background:#000;display:flex;align-items:center;justify-content:center;cursor:pointer;}

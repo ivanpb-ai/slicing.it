@@ -8,9 +8,11 @@ The Presentation Studio editor exists in two codebases:
    `src/presentation-studio.html` + `src/js/studio-entry.jsx`), with Telia
    branding and NorthStar-site integrations.
 2. **Generic editor** — the standalone repo
-   `github.com/ivanpb-ai/presentation-studio` (its working copy during
-   extraction also lives under `presentation-editor/` on the extraction
-   branch). Same architecture, debranded, for use by anyone.
+   `github.com/ivanpb-ai/presentation-studio`. Same architecture,
+   debranded, for use by anyone. It lives ONLY in that repo (deployed as
+   its own standalone site): the `presentation-editor/` working copy that
+   existed in this repo during extraction has been removed — to port a
+   change, clone the generic repo and commit/push there directly.
 
 **Sync policy (user requirement): every change merged into one of these
 codebases must also be ported to the other, unless it concerns

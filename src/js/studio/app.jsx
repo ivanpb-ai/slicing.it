@@ -16,6 +16,7 @@ import { canvasHtmlToSlide, takeTransferredSlides } from "./canvas-interop";
 import { exportDeckPptx } from "./export-pptx";
 import { API_MODES, generateDeckPages, downloadPage, downloadPagesZip } from "./generate-pages";
 import { lintDeck } from "./lint";
+import { arrangeElements } from "./auto-arrange";
 import { syncLibrary, cloudPut, cloudDelete, cloudGetTemplate, cloudPutTemplate } from "./cloud";
 
 const cloneSlide = (s) => ({ ...cloneDeep(s), id: uid("slide"), elements: s.elements.map((e) => ({ ...cloneDeep(e), id: uid("el") })) });
@@ -294,6 +295,10 @@ const HELP_SECTIONS = [
     body: <>Adds a block to the current slide: headings, text, kickers, counters, buttons, lists, cards, icons, images, shapes, quotes, progress rings, orbit/radar/loop visuals — and charts. “Chart” opens a picker with the full PowerPoint chart family (column, bar, line, area, combo, pie, doughnut, radar, bubble, waterfall); the data is edited in a mini-table in the Inspector and the chart redraws live.</>,
   },
   {
+    title: "✦ Arrange",
+    body: <>One click tidies the current slide: kickers, headings and the intro text are stacked and centred at the top, buttons drop into a row at the bottom, and everything else — cards, counters, images, lists, visuals — is re-sized and laid out on a balanced grid with even spacing. Charts, quotes and AI loops get a full-width row of their own. It's a starting point, not a straitjacket: drag anything afterwards, or press <Kbd k="Ctrl/⌘+Z" /> to undo the whole arrangement in one step.</>,
+  },
+  {
     title: "🎛 Inspector (right)",
     body: <>Shows the selected element's content, style, <b>Motion</b> (entrance effect, delay, duration, easing, idle loop) and <b>Layout</b> (position, size, rotation, opacity). Text blocks have a <b>Font</b> picker: the Telia theme roles, a catalogue of web-safe families, and — in Chrome/Edge — every font installed on your device. With nothing selected it edits the slide itself: name, transition, review status, and one of 14 live animated backgrounds with its colours.</>,
   },
@@ -540,6 +545,12 @@ export default function StudioApp() {
       return { ...s, elements: arr };
     });
   };
+  const autoArrange = () => {
+    if (!slide.elements.length) return;
+    checkpoint();
+    patchSlide(current, (s) => ({ ...s, elements: arrangeElements(s.elements) }));
+    setEditingId(null);
+  };
 
   // slide ops
   const addSlide = () => {
@@ -727,7 +738,7 @@ export default function StudioApp() {
 
       <Toolbar
         title={deck.title} onTitle={(v) => setDeck((d) => ({ ...d, title: v }))} onCheckpoint={checkpoint}
-        onInsert={insertElement} onUndo={doUndo} onRedo={doRedo} canUndo={undo.length > 0} canRedo={redo.length > 0}
+        onInsert={insertElement} onUndo={doUndo} onRedo={doRedo} canUndo={undo.length > 0} canRedo={redo.length > 0} onAutoArrange={autoArrange}
         onPresent={() => { setStartAt(current); setPresenting(true); }}
         library={library} currentId={deck.id} onOpenDeck={openDeck} onNewDeck={newPresentation} onDuplicateDeck={duplicateCurrentDeck} onDeleteDeck={deleteDeck}
         onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onSiteCopy={() => setSiteCopy(true)} onReview={() => setReviewing(true)} onHelp={() => setHelping(true)} onPublishTemplate={currentUser === "admin" ? publishTemplate : null} saved={saved} cloud={cloud}

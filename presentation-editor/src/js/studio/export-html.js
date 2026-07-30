@@ -133,7 +133,7 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
     },
     kicker: function (el) {
       var s = el.style;
-      var box = div({ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: justify(s.align), textAlign: s.align, color: s.color, fontFamily: s.fontFamily || FONTS.mono, fontSize: s.fontSize, letterSpacing: s.letterSpacing, textTransform: "uppercase" });
+      var box = div({ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: justify(s.align), textAlign: s.align, color: s.color, fontFamily: s.fontFamily || FONTS.mono, fontSize: s.fontSize, letterSpacing: s.letterSpacing, fontStyle: s.italic ? "italic" : "normal", textTransform: "uppercase" });
       box.textContent = el.props.text || "";
       return { node: box };
     },
@@ -141,14 +141,14 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
       var s = el.style;
       var box = div({ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", textAlign: s.align });
       div({ fontSize: s.fontSize * 1.6, lineHeight: 0, color: s.accent, fontFamily: s.fontFamily || FONTS.head, height: s.fontSize * 0.6 }, box).textContent = "“";
-      div({ color: s.color, fontFamily: s.fontFamily || FONTS.head, fontWeight: 300, fontSize: s.fontSize, lineHeight: 1.25 }, box).textContent = el.props.text || "";
+      div({ color: s.color, fontFamily: s.fontFamily || FONTS.head, fontWeight: 300, fontSize: s.fontSize, lineHeight: 1.25, fontStyle: s.italic ? "italic" : "normal" }, box).textContent = el.props.text || "";
       if (el.props.author) div({ marginTop: 14, color: s.accent, fontFamily: FONTS.mono, fontSize: Math.max(12, s.fontSize * 0.34), letterSpacing: 1 }, box).textContent = el.props.author;
       return { node: box };
     },
     counter: function (el) {
       var s = el.style, p = el.props, d = p.decimals || 0;
       var box = div({ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" });
-      var big = div({ fontFamily: s.fontFamily || FONTS.head, fontWeight: 300, fontSize: s.fontSize, color: s.color, letterSpacing: -1, lineHeight: 1 }, box);
+      var big = div({ fontFamily: s.fontFamily || FONTS.head, fontWeight: 300, fontSize: s.fontSize, color: s.color, letterSpacing: -1, lineHeight: 1, fontStyle: s.italic ? "italic" : "normal" }, box);
       var fmt = function (v) { return (p.prefix || "") + (d > 0 ? v.toFixed(d) : Math.round(v).toLocaleString()) + (p.suffix || ""); };
       big.textContent = fmt(0);
       if (p.label) div({ marginTop: 10, fontSize: Math.max(11, s.fontSize * 0.2), color: P.muted, letterSpacing: 1, lineHeight: 1.35 }, box).textContent = p.label;
@@ -161,7 +161,7 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
       a.textContent = el.props.label || "";
       css(a, {
         display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", height: "100%",
-        borderRadius: 999, textDecoration: "none", fontWeight: s.fontWeight || 500, fontSize: s.fontSize, fontFamily: s.fontFamily || FONTS.body,
+        borderRadius: 999, textDecoration: "none", fontWeight: s.fontWeight || 500, fontSize: s.fontSize, fontFamily: s.fontFamily || FONTS.body, fontStyle: s.italic ? "italic" : "normal",
         boxSizing: "border-box", cursor: "pointer",
         color: s.color || (primary ? P.white : P.light),
         background: primary ? "linear-gradient(135deg, " + (s.bg || P.purple) + ", " + P.magenta + ")" : "transparent",
@@ -173,7 +173,7 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
     },
     list: function (el) {
       var s = el.style;
-      var box = div({ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", gap: s.gap, color: s.color, fontFamily: s.fontFamily || FONTS.body, fontSize: s.fontSize, lineHeight: 1.45 });
+      var box = div({ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", gap: s.gap, color: s.color, fontFamily: s.fontFamily || FONTS.body, fontSize: s.fontSize, lineHeight: 1.45, fontStyle: s.italic ? "italic" : "normal" });
       (el.props.items || []).forEach(function (it) {
         var row = div({ display: "flex", gap: 12, alignItems: "flex-start" }, box);
         var mark = document.createElement("span");
@@ -192,7 +192,7 @@ function PLAYER(DECK, P, MAKE_CHART, MAKE_MAP) {
       var head = div({ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }, box);
       var ic = document.createElement("span"); ic.style.fontSize = "28px"; ic.textContent = p.icon || ""; head.appendChild(ic);
       if (p.tag) { var tg = document.createElement("span"); css(tg, { fontFamily: FONTS.mono, fontSize: 10, letterSpacing: 2, color: c, textTransform: "uppercase" }); tg.textContent = p.tag; head.appendChild(tg); }
-      div({ fontFamily: el.style.fontFamily || FONTS.head, fontWeight: 300, fontSize: 30, color: el.style.color || P.white, marginBottom: 10, letterSpacing: -0.5 }, box).textContent = p.title || "";
+      div({ fontFamily: el.style.fontFamily || FONTS.head, fontWeight: 300, fontSize: 30, color: el.style.color || P.white, marginBottom: 10, letterSpacing: -0.5, fontStyle: el.style.italic ? "italic" : "normal" }, box).textContent = p.title || "";
       if (p.body) div({ fontSize: 13.5, color: P.dim, lineHeight: 1.6, marginBottom: 12 }, box).textContent = p.body;
       var bl = div({ marginTop: "auto" }, box);
       (p.bullets || []).forEach(function (b) {

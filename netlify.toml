@@ -6,6 +6,10 @@
 # token enabling the Studio's AI image generation (Insert → Image → Generate,
 # flux-1.1-pro) via netlify/functions/generate-image.mjs. The token is only
 # ever read server-side — never commit it to the repo.
+# Optional OPENVERSE_CLIENT_ID / OPENVERSE_CLIENT_SECRET: free Openverse API
+# credentials (https://api.openverse.org/v1/#tag/auth) for the Insert → Image
+# photo search — without them Openverse's anonymous rate limits apply and
+# some deployments are rejected outright.
 
 # The copy editor now lives inside the Presentation Studio (its "Copy editor"
 # overlay; #copy opens straight onto the live-deck editor). Redirect the old
@@ -65,14 +69,18 @@
   path = "/roadmap"
   function = "editor-auth"
 
-# The Slide Converter is an authoring tool — gate it the same way.
-[[edge_functions]]
-  path = "/slide-converter.html"
-  function = "editor-auth"
+# The Slide Converter now lives inside the Presentation Studio (Decks →
+# Import… accepts .pptx directly). Redirect the old URLs so bookmarks keep
+# working — the Studio itself is gated above.
+[[redirects]]
+  from = "/slide-converter.html"
+  to = "/presentation-studio.html"
+  status = 301
 
-[[edge_functions]]
-  path = "/slide-converter"
-  function = "editor-auth"
+[[redirects]]
+  from = "/slide-converter"
+  to = "/presentation-studio.html"
+  status = 301
 
 # The Digital Arena developer portal mockup — gated the same way.
 [[edge_functions]]

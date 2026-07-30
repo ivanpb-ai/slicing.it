@@ -26,7 +26,10 @@ so in the commit/PR; if a change is intentionally not ported, state why.
 Telia-only (stays in `src/js/studio/`):
 - Telia palette values (`src/js/palette.js`) and Telia Sans fonts
 - NorthStar site-copy overlay (`copy.js` editor) and its Decks-menu entry
-- Slide Converter hand-over (`takeTransferredSlides`) and converter wording
+- Converter-era wording (export menus referencing the Slide Converter's
+  HTML→PPT engine); the standalone slide-converter page and its
+  `takeTransferredSlides` hand-over were removed 2026-07 — .pptx import
+  now lives in the Studio itself (synced, below)
 - NorthStar/Perplexity API endpoints on `northstar-program.com`
   (`generate-pages.js` has three modes here: none/northstar/generic)
 - Auth specifics: `ns_editor_auth`/`ns_editor_user` cookie names, the
@@ -59,8 +62,14 @@ never by regular users, with "admin" ignored in EDITOR_USERS; the
 admin-published welcome-deck template — site-global "__template__" blob,
 readable by any signed-in user to seed a new library, writable by admin
 only via Decks → "★ Set as welcome deck", built-in starter as fallback;
-the Insert → Image dialog — upload from device, Openverse search with an
-`?ov_q=` server passthrough fallback, and Replicate flux-1.1-pro
+the .pptx importer — `src/js/studio/import-pptx.js` (the converter's
+browser PPTX engine mapped onto Studio elements: titles→headings,
+text boxes→text, pictures→images as data URIs, boxes/connectors→shapes,
+EMU→stage scaling with letterboxing, slide background kept), reachable
+via Decks → Import… accepting `.pptx`;
+the Insert → Image dialog — upload from device, Openverse search through
+the `?ov_q=` server passthrough (optional `OPENVERSE_CLIENT_ID`/`SECRET`
+credentials; direct browser call as fallback), and Replicate flux-1.1-pro
 generation via `netlify/functions/generate-image.mjs`, token in
 `REPLICATE_API_TOKEN`/`TEXT_TO_IMAGE` read server-side only, the function
 gated by each site's own auth: Telia reuses decks' `authedPrefix`,

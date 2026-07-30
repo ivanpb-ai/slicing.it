@@ -69,14 +69,18 @@
   path = "/roadmap"
   function = "editor-auth"
 
-# The Slide Converter is an authoring tool — gate it the same way.
-[[edge_functions]]
-  path = "/slide-converter.html"
-  function = "editor-auth"
+# The Slide Converter now lives inside the Presentation Studio (Decks →
+# Import… accepts .pptx directly). Redirect the old URLs so bookmarks keep
+# working — the Studio itself is gated above.
+[[redirects]]
+  from = "/slide-converter.html"
+  to = "/presentation-studio.html"
+  status = 301
 
-[[edge_functions]]
-  path = "/slide-converter"
-  function = "editor-auth"
+[[redirects]]
+  from = "/slide-converter"
+  to = "/presentation-studio.html"
+  status = 301
 
 # The Digital Arena developer portal mockup — gated the same way.
 [[edge_functions]]

@@ -45,7 +45,7 @@ async function parsePptx(file) {
     // Embedded chart parts (ppt/charts/chartN.xml) referenced by graphicFrames.
     const charts = {};
     for (const [id, target] of Object.entries(rels)) {
-      if (!/charts?\/chart\d*\.xml$/.test(target)) continue;
+      if (!/charts?\/chart(Ex)?\d*\.xml$/i.test(target)) continue;
       const f = zip.file(partPath(target));
       if (f) charts[id] = await f.async("string");
     }
@@ -359,10 +359,10 @@ function buildSlide(xml, layoutXml, masterXml, slideW, slideH, theme, embeds, ch
         const fx = blk.xml.match(/<p:xfrm[^>]*>([\s\S]*?)<\/p:xfrm>/);
         const off = fx && fx[1].match(/<a:off\s+x="(-?\d+)"\s+y="(-?\d+)"/);
         const ext = fx && fx[1].match(/<a:ext\s+cx="(\d+)"\s+cy="(\d+)"/);
-        const relId = (blk.xml.match(/<c:chart[^>]*r:id="([^"]+)"/) || [])[1];
+        const relId = (blk.xml.match(/<(?:c|cx):chart[^>]*r:id="([^"]+)"/) || [])[1];
         const chartXml = relId && charts[relId];
         if (off && ext && chartXml) {
-          const chart = parseChartXml(chartXml, theme);
+          const chart = chartXml.includes("<cx:") ? parseChartExXml(chartXml, theme) : parseChartXml(chartXml, theme);
           if (chart) {
             shapes.push({
               kind: "chart",
@@ -549,6 +549,9 @@ function parseChartXml(xml, theme) {
     ordered = [...groups.filter((g) => g.kind !== "line"), ...groups.filter((g) => g.kind === "line")];
   }
 
+  // Stacked / percent-stacked grouping carries over as the stacked flag.
+  const stacked = ordered.some((g) => /<c:grouping\s+val="(?:percent)?[sS]tacked"/.test(g.xml));
+
   const series = [];
   let xLabels = null;
   for (const g of ordered) {
@@ -560,9 +563,58 @@ function parseChartXml(xml, theme) {
 
   const n = Math.max(...series.map((s) => s.values.length));
   if (!xLabels) xLabels = Array.from({ length: n }, (_, i) => String(i + 1));
-  const maxVal = Math.max(...series.flatMap((s) => s.values.map((v) => Math.abs(v))));
+  // Stacked axes must cover the tallest pile, not the tallest single value.
+  const maxVal = stacked
+    ? Math.max(...Array.from({ length: n }, (_, j) => series.reduce((a, s) => a + Math.max(0, s.values[j] || 0), 0)))
+    : Math.max(...series.flatMap((s) => s.values.map((v) => Math.abs(v))));
   const axisMax = kind === "pie" || kind === "doughnut" || kind === "waterfall" ? 0 : niceMax(maxVal);
-  return { kind, xLabels, axisMax, series };
+  return { kind, ...(stacked ? { stacked: true } : {}), xLabels, axisMax, series };
+}
+
+// ── Modern chart format (cx: namespace, ppt/charts/chartExN.xml) ───────────
+// PowerPoint 2016+ stores waterfall (and funnel/treemap/…) charts in the
+// "chartEx" format: data lives in <cx:data> dimension blocks and each
+// <cx:series> points at a data id. Waterfalls map straight onto the Studio's
+// waterfall kind (values are deltas); subtotal points are dropped because
+// their stored value repeats the running sum and the Studio appends its own
+// Total bar. Funnels come in as horizontal bars; other layouts are skipped.
+function chartExPoints(block, numeric) {
+  const out = [];
+  if (!block) return out;
+  for (const m of block.matchAll(/<cx:pt\s+idx="(\d+)"[^>]*>([\s\S]*?)<\/cx:pt>/g)) {
+    out[+m[1]] = numeric ? (Number(m[2]) || 0) : xmlDecode(m[2]);
+  }
+  for (let i = 0; i < out.length; i++) if (out[i] === undefined) out[i] = numeric ? 0 : "";
+  return out;
+}
+
+function parseChartExXml(xml, theme) {
+  const ser = (xml.match(/<cx:series\b[\s\S]*?<\/cx:series>/) || [xml])[0];
+  const layout = (ser.match(/layoutId="([^"]+)"/) || [])[1] || "";
+  const dataId = (ser.match(/<cx:dataId\s+val="(\d+)"/) || [])[1];
+  const data = dataId !== undefined
+    ? (xml.match(new RegExp(`<cx:data\\s+id="${dataId}"[\\s\\S]*?</cx:data>`)) || [xml])[0]
+    : xml;
+  const cats = chartExPoints((data.match(/<cx:strDim[\s\S]*?<\/cx:strDim>/) || [])[0], false);
+  const vals = chartExPoints((data.match(/<cx:numDim[\s\S]*?<\/cx:numDim>/) || [])[0], true);
+  if (!vals.length) return null;
+  const label = xmlDecode(((ser.match(/<cx:tx>[\s\S]*?<cx:v>([\s\S]*?)<\/cx:v>/) || [])[1] || "Series 1"));
+  const fill = (ser.match(/<a:solidFill>[\s\S]*?<\/a:solidFill>/) || [""])[0];
+  const color = resolveColor(fill, theme) || SERIES_COLORS[0];
+
+  if (layout === "waterfall") {
+    const subtotals = new Set(
+      [...ser.matchAll(/<cx:subtotals>[\s\S]*?<\/cx:subtotals>/g)]
+        .flatMap((m) => [...m[0].matchAll(/<cx:idx\s+val="(\d+)"/g)].map((x) => +x[1])),
+    );
+    const kept = vals.map((v, i) => ({ v, l: cats[i] || String(i + 1) })).filter((_, i) => !subtotals.has(i));
+    if (!kept.length) return null;
+    return { kind: "waterfall", xLabels: kept.map((k) => k.l), axisMax: 0, series: [{ label, color, values: kept.map((k) => k.v) }] };
+  }
+  if (layout === "funnel") {
+    return { kind: "barh", xLabels: vals.map((_, i) => cats[i] || String(i + 1)), axisMax: niceMax(Math.max(...vals.map(Math.abs))), series: [{ label, color, values: vals }] };
+  }
+  return null; // treemap/sunburst/histogram/boxWhisker have no Studio analogue
 }
 
 // ── Mapping onto Studio slides ─────────────────────────────────────────────
@@ -599,7 +651,7 @@ function parsedToSlide(ps, i) {
     if (s.kind === "chart") {
       elements.push(createElement("chart", {
         x: X(s.x), y: Y(s.y), w: Math.max(120, px(s.w)), h: Math.max(90, px(s.h)), rotation: 0,
-        props: { kind: s.chart.kind, xLabels: s.chart.xLabels, axisMax: s.chart.axisMax, series: s.chart.series },
+        props: { kind: s.chart.kind, ...(s.chart.stacked ? { stacked: true } : {}), xLabels: s.chart.xLabels, axisMax: s.chart.axisMax, series: s.chart.series },
         style: {
           // Imported decks usually sit on light backgrounds — keep axes readable.
           ...(light ? { axis: "#667", grid: "rgba(0,0,0,0.14)", legend: "#334" } : {}),

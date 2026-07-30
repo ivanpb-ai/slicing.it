@@ -22,6 +22,12 @@ import { syncLibrary, cloudPut, cloudDelete, cloudGetTemplate, cloudPutTemplate 
 const cloneSlide = (s) => ({ ...cloneDeep(s), id: uid("slide"), elements: s.elements.map((e) => ({ ...cloneDeep(e), id: uid("el") })) });
 const clampZoom = (z) => Math.min(4, Math.max(0.5, z));
 
+// Resizable side panels (desktop): widths persist per device.
+const PANELW_KEY = "northstar.studio.panelw";
+const PANELW_DEFAULT = { nav: 248, insp: 332 };
+const clampNavW = (w) => Math.min(460, Math.max(160, Math.round(Number(w) || PANELW_DEFAULT.nav)));
+const clampInspW = (w) => Math.min(560, Math.max(240, Math.round(Number(w) || PANELW_DEFAULT.insp)));
+
 // ── Present overlay ────────────────────────────────────────────────────────
 const TRANS_DUR = 0.9; // seconds — slide transition speed
 const TR_CSS = `opacity ${TRANS_DUR}s cubic-bezier(0.16,1,0.3,1), transform ${TRANS_DUR}s cubic-bezier(0.16,1,0.3,1)`;
@@ -288,7 +294,7 @@ const Kbd = ({ k }) => <span className="st-kbd">{k}</span>;
 const HELP_SECTIONS = [
   {
     title: "🖼 Canvas (centre)",
-    body: <>Click an element to select it, drag to move (snap guides appear against other elements and the stage centre), drag a corner handle to resize. Double-click headings, text, kickers, quotes, buttons, card titles or counter labels to edit them in place. Nudge the selection with the arrow keys (<Kbd k="Shift" /> = 10&nbsp;px steps); <Kbd k="Esc" /> deselects. Zoom with the −/＋ controls, <Kbd k="Ctrl" />+scroll, or a two-finger pinch on touch screens — when zoomed in, scroll to pan.</>,
+    body: <>Click an element to select it, drag to move (snap guides appear against other elements and the stage centre), drag a corner handle to resize. Double-click headings, text, kickers, quotes, buttons, card titles or counter labels to edit them in place. Nudge the selection with the arrow keys (<Kbd k="Shift" /> = 10&nbsp;px steps); <Kbd k="Esc" /> deselects. Zoom with the −/＋ controls, <Kbd k="Ctrl" />+scroll, or a two-finger pinch on touch screens — when zoomed in, scroll to pan. On desktop, drag the thin dividers either side of the canvas to resize the slide list and the inspector (double-click a divider to reset).</>,
   },
   {
     title: "✚ Insert",
@@ -402,6 +408,36 @@ export default function StudioApp() {
   const zoomRef = useRef(1); zoomRef.current = zoom;
   const prevZoomRef = useRef(1);
   const stageWrapRef = useRef(null);
+  // Desktop: the slide list and inspector are resizable via drag splitters.
+  const [panelW, setPanelW] = useState(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem(PANELW_KEY) || "");
+      return { nav: clampNavW(v.nav), insp: clampInspW(v.insp) };
+    } catch { return { nav: PANELW_DEFAULT.nav, insp: PANELW_DEFAULT.insp }; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(PANELW_KEY, JSON.stringify(panelW)); } catch { /* private mode */ }
+  }, [panelW]);
+  const dragSplitter = (side) => (e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const start = panelW[side];
+    const clamp = side === "nav" ? clampNavW : clampInspW;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    const onMove = (ev) => {
+      const d = ev.clientX - startX;
+      setPanelW((p) => ({ ...p, [side]: clamp(side === "nav" ? start + d : start - d) }));
+    };
+    const onUp = () => {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
   useEffect(() => {
     const onHash = () => { if (window.location.hash === "#copy") setSiteCopy(true); };
     window.addEventListener("hashchange", onHash);
@@ -744,10 +780,13 @@ export default function StudioApp() {
         onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onSiteCopy={() => setSiteCopy(true)} onReview={() => setReviewing(true)} onHelp={() => setHelping(true)} onPublishTemplate={currentUser === "admin" ? publishTemplate : null} saved={saved} cloud={cloud}
       />
 
-      <div className={"st-body" + (navOpen ? " nav-open" : "") + (inspOpen ? " insp-open" : "")}>
+      <div className={"st-body" + (navOpen ? " nav-open" : "") + (inspOpen ? " insp-open" : "")}
+        style={{ "--navw": `${panelW.nav}px`, "--inspw": `${panelW.insp}px` }}>
         <Navigator slides={deck.slides} current={current} onSelect={(i) => { setCurrent(i); setSelectedId(null); setEditingId(null); setNavOpen(false); }}
           onAdd={addSlide} onDuplicate={duplicateSlide} onDelete={deleteSlide} onMove={moveSlide}
           onStatus={(i, status) => { checkpoint(); patchSlide(i, (s) => ({ ...s, status })); }} />
+        <div className="st-split" title="Drag to resize the slide list — double-click to reset"
+          onPointerDown={dragSplitter("nav")} onDoubleClick={() => setPanelW((p) => ({ ...p, nav: PANELW_DEFAULT.nav }))} />
 
         <div className="st-stagecol">
           <div className="st-stagewrap" ref={stageWrapRef}>
@@ -771,6 +810,8 @@ export default function StudioApp() {
           </div>
         </div>
 
+        <div className="st-split" title="Drag to resize the inspector — double-click to reset"
+          onPointerDown={dragSplitter("insp")} onDoubleClick={() => setPanelW((p) => ({ ...p, insp: PANELW_DEFAULT.insp }))} />
         <Inspector element={selected} slide={slide} onChangeElement={changeElement} onChangeSlide={changeSlide}
           onCheckpoint={checkpoint} onLayer={layer} onDuplicate={duplicateElement} onDelete={deleteElement} />
       </div>
@@ -862,7 +903,10 @@ const STUDIO_CSS = `
 .st-export-item span{font-size:11px;color:${P.muted};line-height:1.4;}
 
 /* body */
-.st-body{flex:1;display:grid;grid-template-columns:248px 1fr 332px;min-height:0;}
+.st-body{flex:1;display:grid;grid-template-columns:var(--navw,248px) 6px minmax(0,1fr) 6px var(--inspw,332px);min-height:0;}
+.st-split{cursor:col-resize;position:relative;z-index:6;touch-action:none;}
+.st-split::after{content:"";position:absolute;inset:0 1px;border-radius:2px;background:transparent;transition:background .15s;}
+.st-split:hover::after,.st-split:active::after{background:rgba(153,10,227,0.5);}
 .st-nav{border-right:1px solid var(--line);overflow-y:auto;padding:10px;}
 .st-nav-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-weight:600;}
 .st-nav-list{display:flex;flex-direction:column;gap:10px;}
@@ -1009,6 +1053,7 @@ const STUDIO_CSS = `
   .st-tb-left,.st-tb-center,.st-tb-right{flex-wrap:wrap;row-gap:6px;}
   .st-title{min-width:80px;}
   .st-body{grid-template-columns:1fr;}
+  .st-split{display:none;}
   .st-nav,.st-inspector{position:fixed;top:0;bottom:0;z-index:120;background:var(--bg);width:min(85vw,320px);transition:transform .22s ease;box-shadow:0 0 40px rgba(0,0,0,.5);}
   .st-nav{left:0;border-right:1px solid var(--line);transform:translateX(-105%);}
   .st-inspector{right:0;border-left:1px solid var(--line);transform:translateX(105%);}

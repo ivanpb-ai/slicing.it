@@ -8,12 +8,12 @@
 // elements (media embedded as data URIs), filled boxes and connectors become
 // shapes. Positions/sizes are scaled from EMU onto the 1280×720 stage
 // (letterboxed for non-16:9 decks) and the slide background colour is kept.
-import { createSlide, createElement } from "./model";
+import { createSlide, createElement, P } from "./model";
 
 const EMU_PER_PT = 12700;
 const MIME = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", svg: "image/svg+xml", webp: "image/webp" };
 const SCHEME_MAP = { tx1: "dk1", bg1: "lt1", tx2: "dk2", bg2: "lt2" };
-const CHILD_TAGS = ["sp", "pic", "cxnSp", "grpSp"];
+const CHILD_TAGS = ["sp", "pic", "cxnSp", "grpSp", "graphicFrame"];
 
 // ── PPTX parsing (from the converter, verbatim except for the JSZip import) ──
 
@@ -42,6 +42,14 @@ async function parsePptx(file) {
     const rels = await readRels(zip, sf);
     const embeds = await readEmbeds(zip, rels);
 
+    // Embedded chart parts (ppt/charts/chartN.xml) referenced by graphicFrames.
+    const charts = {};
+    for (const [id, target] of Object.entries(rels)) {
+      if (!/charts?\/chart\d*\.xml$/.test(target)) continue;
+      const f = zip.file(partPath(target));
+      if (f) charts[id] = await f.async("string");
+    }
+
     let layoutXml = "", masterXml = "";
     const layoutTarget = Object.values(rels).find((t) => /slideLayout/.test(t));
     if (layoutTarget) {
@@ -53,12 +61,17 @@ async function parsePptx(file) {
         masterXml = (await zip.file("ppt/" + masterTarget.replace(/^(\.\.\/)+/, ""))?.async("string")) || "";
       }
     }
-    slides.push(buildSlide(xml, layoutXml, masterXml, slideW, slideH, theme, embeds));
+    slides.push(buildSlide(xml, layoutXml, masterXml, slideW, slideH, theme, embeds, charts));
   }
   return slides;
 }
 
 function slideNum(s) { return parseInt(s.match(/slide(\d+)/)[1], 10); }
+
+// Relationship targets come as "../media/x.png" (relative to ppt/) or as
+// package-absolute "/ppt/charts/chart1.xml" — normalise both to a zip path.
+const partPath = (target) =>
+  target.startsWith("/") ? target.slice(1) : "ppt/" + target.replace(/^(\.\.\/)+/, "");
 
 async function readRels(zip, path) {
   const parts = path.split("/");
@@ -76,7 +89,7 @@ async function readEmbeds(zip, rels) {
   for (const [id, target] of Object.entries(rels)) {
     const mime = MIME[target.split(".").pop().toLowerCase()];
     if (!mime) continue;
-    const f = zip.file("ppt/" + target.replace(/^(\.\.\/)+/, ""));
+    const f = zip.file(partPath(target));
     if (!f) continue;
     embeds[id] = "data:" + mime + ";base64," + await f.async("base64");
   }
@@ -310,7 +323,7 @@ function between(xml, startTag, endTag) {
   return xml.slice(i, j + endTag.length);
 }
 
-function buildSlide(xml, layoutXml, masterXml, slideW, slideH, theme, embeds) {
+function buildSlide(xml, layoutXml, masterXml, slideW, slideH, theme, embeds, charts = {}) {
   const spTree = between(xml, "<p:spTree", "</p:spTree>") || xml;
   const phLayout = placeholderXfrms(layoutXml);
   const phMaster = placeholderXfrms(masterXml);
@@ -338,6 +351,28 @@ function buildSlide(xml, layoutXml, masterXml, slideW, slideH, theme, embeds) {
           sx: ctx.sx * (xf.ext.cx / xf.chExt.cx),
           sy: ctx.sy * (xf.ext.cy / xf.chExt.cy),
         });
+        continue;
+      }
+
+      if (blk.tag === "graphicFrame") {
+        // Charts (and tables) live in graphicFrames with a plain <p:xfrm>.
+        const fx = blk.xml.match(/<p:xfrm[^>]*>([\s\S]*?)<\/p:xfrm>/);
+        const off = fx && fx[1].match(/<a:off\s+x="(-?\d+)"\s+y="(-?\d+)"/);
+        const ext = fx && fx[1].match(/<a:ext\s+cx="(\d+)"\s+cy="(\d+)"/);
+        const relId = (blk.xml.match(/<c:chart[^>]*r:id="([^"]+)"/) || [])[1];
+        const chartXml = relId && charts[relId];
+        if (off && ext && chartXml) {
+          const chart = parseChartXml(chartXml, theme);
+          if (chart) {
+            shapes.push({
+              kind: "chart",
+              x: ctx.offX + (+off[1] - ctx.chOffX) * ctx.sx,
+              y: ctx.offY + (+off[2] - ctx.chOffY) * ctx.sy,
+              w: +ext[1] * ctx.sx, h: +ext[2] * ctx.sy,
+              chart,
+            });
+          }
+        }
         continue;
       }
 
@@ -431,6 +466,105 @@ function buildSlide(xml, layoutXml, masterXml, slideW, slideH, theme, embeds) {
   return { title, width: slideW, height: slideH, bg, shapes };
 }
 
+// ── Chart XML (DrawingML c: namespace) → Studio chart props ────────────────
+
+// PowerPoint chart-group tag → Studio chart kind. Bar direction and combos
+// are resolved separately; 3D variants map to their flat kind.
+const CHART_TAG_KIND = [
+  ["barChart", "bar"], ["bar3DChart", "bar"],
+  ["lineChart", "line"], ["line3DChart", "line"], ["stockChart", "line"], ["scatterChart", "line"],
+  ["areaChart", "area"], ["area3DChart", "area"],
+  ["pieChart", "pie"], ["pie3DChart", "pie"], ["ofPieChart", "pie"],
+  ["doughnutChart", "doughnut"],
+  ["radarChart", "radar"],
+  ["bubbleChart", "bubble"],
+];
+const SERIES_COLORS = [P.cyan, P.magenta, P.gold, P.green, P.orange, P.teal];
+
+// Round up to a "nice" axis ceiling (1/2/2.5/5 × 10ⁿ above the data max).
+function niceMax(max) {
+  if (!(max > 0)) return 0;
+  const m = max * 1.05;
+  const pow = Math.pow(10, Math.floor(Math.log10(m)));
+  for (const f of [1, 2, 2.5, 5, 10]) if (f * pow >= m) return +(f * pow).toFixed(4);
+  return +(10 * pow).toFixed(4);
+}
+
+// Ordered <c:pt idx=… ><c:v>…</c:v></c:pt> values from a c:cat/c:val/c:yVal block.
+function chartPoints(block, numeric) {
+  const out = [];
+  if (!block) return out;
+  for (const m of block.matchAll(/<c:pt\s+idx="(\d+)"[^>]*>[\s\S]*?<c:v>([\s\S]*?)<\/c:v>/g)) {
+    out[+m[1]] = numeric ? (Number(m[2]) || 0) : xmlDecode(m[2]);
+  }
+  for (let i = 0; i < out.length; i++) if (out[i] === undefined) out[i] = numeric ? 0 : "";
+  return out;
+}
+
+function chartSeries(groupXml, theme, colorOffset) {
+  const series = [];
+  let cats = null;
+  let si = 0;
+  for (const sm of groupXml.matchAll(/<c:ser>[\s\S]*?<\/c:ser>/g)) {
+    const ser = sm[0];
+    const label = xmlDecode(((ser.match(/<c:tx>[\s\S]*?<c:v>([\s\S]*?)<\/c:v>/) || [])[1] || `Series ${colorOffset + si + 1}`));
+    const spPr = (ser.match(/<c:spPr>[\s\S]*?<\/c:spPr>/) || [""])[0];
+    const fill = (spPr.match(/<a:solidFill>[\s\S]*?<\/a:solidFill>/) || [""])[0];
+    const color = resolveColor(fill, theme) || SERIES_COLORS[(colorOffset + si) % SERIES_COLORS.length];
+    const catBlock = (ser.match(/<c:cat>[\s\S]*?<\/c:cat>/) || [])[0];
+    const valBlock = (ser.match(/<c:val>[\s\S]*?<\/c:val>/) || ser.match(/<c:yVal>[\s\S]*?<\/c:yVal>/) || [])[0];
+    const values = chartPoints(valBlock, true);
+    if (!values.length) { si++; continue; }
+    if (!cats && catBlock) {
+      const c = chartPoints(catBlock, false).map(String);
+      if (c.some((v) => v !== "")) cats = c;
+    }
+    series.push({ label, color, values });
+    si++;
+  }
+  return { series, cats };
+}
+
+// → { kind, xLabels, axisMax, series } or null when no chart group is found.
+function parseChartXml(xml, theme) {
+  const plot = between(xml, "<c:plotArea", "</c:plotArea>") || xml;
+  const groups = [];
+  for (const [tag, kind] of CHART_TAG_KIND) {
+    for (const gm of plot.matchAll(new RegExp(`<c:${tag}>[\\s\\S]*?</c:${tag}>`, "g"))) {
+      let k = kind;
+      if (tag.startsWith("bar")) {
+        const dir = (gm[0].match(/<c:barDir\s+val="([^"]+)"/) || [])[1];
+        k = dir === "bar" ? "barh" : "bar";
+      }
+      groups.push({ kind: k, xml: gm[0] });
+    }
+  }
+  if (!groups.length) return null;
+
+  // A column group plus a line group in one plot area is the classic combo.
+  let kind = groups[0].kind;
+  let ordered = groups;
+  if (groups.length > 1 && groups.some((g) => g.kind === "bar") && groups.some((g) => g.kind === "line")) {
+    kind = "combo";
+    ordered = [...groups.filter((g) => g.kind !== "line"), ...groups.filter((g) => g.kind === "line")];
+  }
+
+  const series = [];
+  let xLabels = null;
+  for (const g of ordered) {
+    const { series: s, cats } = chartSeries(g.xml, theme, series.length);
+    series.push(...s);
+    if (!xLabels && cats) xLabels = cats;
+  }
+  if (!series.length) return null;
+
+  const n = Math.max(...series.map((s) => s.values.length));
+  if (!xLabels) xLabels = Array.from({ length: n }, (_, i) => String(i + 1));
+  const maxVal = Math.max(...series.flatMap((s) => s.values.map((v) => Math.abs(v))));
+  const axisMax = kind === "pie" || kind === "doughnut" || kind === "waterfall" ? 0 : niceMax(maxVal);
+  return { kind, xLabels, axisMax, series };
+}
+
 // ── Mapping onto Studio slides ─────────────────────────────────────────────
 
 const isLight = (c) => {
@@ -458,6 +592,20 @@ function parsedToSlide(ps, i) {
         x: X(s.x), y: Y(s.y), w: Math.max(8, px(s.w)), h: Math.max(8, px(s.h)), rotation: Math.round(s.rot || 0),
         props: { src: s.image.dataUri, alt: s.image.alt || "", fit: "cover" },
         style: { borderRadius: 0, borderColor: null, borderWidth: 0, opacity: 1 },
+      }));
+      continue;
+    }
+
+    if (s.kind === "chart") {
+      elements.push(createElement("chart", {
+        x: X(s.x), y: Y(s.y), w: Math.max(120, px(s.w)), h: Math.max(90, px(s.h)), rotation: 0,
+        props: { kind: s.chart.kind, xLabels: s.chart.xLabels, axisMax: s.chart.axisMax, series: s.chart.series },
+        style: {
+          // Imported decks usually sit on light backgrounds — keep axes readable.
+          ...(light ? { axis: "#667", grid: "rgba(0,0,0,0.14)", legend: "#334" } : {}),
+          // The doughnut hole should match the slide, not the theme's dark base.
+          ...(s.chart.kind === "doughnut" ? { hole: ps.bg || "#FFFFFF" } : {}),
+        },
       }));
       continue;
     }

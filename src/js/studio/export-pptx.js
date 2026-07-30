@@ -183,12 +183,15 @@ function addNativeChart(pptx, slide, c, pos, bgHex) {
     plotArea: { fill: { color: "29003E", transparency: 100 } },
   };
 
+  // props.stacked → native stacked grouping in PowerPoint (bar/barh/area/combo).
+  const grouping = c.stacked ? { barGrouping: "stacked" } : {};
+
   switch (kind) {
     case "bar":
-      slide.addChart(pptx.charts.BAR, seriesData, { ...common, barDir: "col", chartColors: seriesColors });
+      slide.addChart(pptx.charts.BAR, seriesData, { ...common, barDir: "col", chartColors: seriesColors, ...grouping });
       return;
     case "barh":
-      slide.addChart(pptx.charts.BAR, seriesData, { ...common, barDir: "bar", chartColors: seriesColors });
+      slide.addChart(pptx.charts.BAR, seriesData, { ...common, barDir: "bar", chartColors: seriesColors, ...grouping });
       return;
     case "line":
       slide.addChart(pptx.charts.LINE, seriesData, { ...common, chartColors: seriesColors, lineSize: 2.5 });
@@ -199,7 +202,7 @@ function addNativeChart(pptx, slide, c, pos, bgHex) {
       const cols = seriesData.slice(0, -1), lineS = seriesData.slice(-1);
       if (!cols.length || !lineS.length) break;
       slide.addChart([
-        { type: pptx.charts.BAR, data: cols, options: { barDir: "col", chartColors: seriesColors.slice(0, -1) } },
+        { type: pptx.charts.BAR, data: cols, options: { barDir: "col", chartColors: seriesColors.slice(0, -1), ...grouping } },
         { type: pptx.charts.LINE, data: lineS, options: { chartColors: seriesColors.slice(-1), lineSize: 2.5 } },
       ], common);
       return;
@@ -260,8 +263,8 @@ function addNativeChart(pptx, slide, c, pos, bgHex) {
     default:
       break;
   }
-  // Fallback (unknown kind / degenerate data): area chart of whatever we have.
-  slide.addChart(pptx.charts.AREA, seriesData, { ...common, chartColors: seriesColors });
+  // Fallback (area + unknown kinds / degenerate data): area chart of the data.
+  slide.addChart(pptx.charts.AREA, seriesData, { ...common, chartColors: seriesColors, ...grouping });
 }
 
 // ── Deck → .pptx download ───────────────────────────────────────────────────

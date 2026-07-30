@@ -113,6 +113,15 @@ export const CHART_KINDS = [
   { kind: "waterfall", label: "Waterfall", icon: "▜" },
 ];
 
+// The Insert → Chart picker: the real kinds plus stacked presets. The preset
+// entries are not kinds of their own — chartDefaults() maps them to the base
+// kind with props.stacked set (also toggleable per chart in the Inspector).
+export const CHART_PICKER = [
+  ...CHART_KINDS,
+  { kind: "barstack", label: "Column (stacked)", icon: "▧" },
+  { kind: "areastack", label: "Area (stacked)", icon: "◩" },
+];
+
 // Sensible seed data per chart kind, applied on insert.
 export function chartDefaults(kind) {
   const cats = ["Category 1", "Category 2", "Category 3", "Category 4"];
@@ -138,6 +147,15 @@ export function chartDefaults(kind) {
     case "line":
     case "bar":
       return { props: { kind, xLabels: cats, axisMax: 6, series: three([4.3, 2.5, 3.5, 4.5], [2.4, 4.4, 1.8, 2.8], [2, 2, 3, 5]) } };
+    case "barstack": // stacked column preset — a real "bar" with stacked on
+      return { props: { kind: "bar", stacked: true, xLabels: cats, axisMax: 12, series: three([4.3, 2.5, 3.5, 4.5], [2.4, 4.4, 1.8, 2.8], [2, 2, 3, 5]) } };
+    case "areastack": // stacked area preset
+      return { props: { kind: "area", stacked: true, xLabels: ["2025", "2027", "2029", "2031", "2033", "2035"], axisMax: 400,
+        series: [
+          { label: "Slices", color: P.cyan, values: [4, 18, 36, 62, 90, 118] },
+          { label: "APIs", color: P.magenta, values: [1, 6, 22, 56, 108, 168] },
+          { label: "Sensing", color: P.gold, values: [0, 1, 5, 18, 44, 84] },
+        ] } };
     default: // area — the long-standing default seed
       return { props: { kind: "area", xLabels: ["2025", "2027", "2029", "2031", "2033", "2035"], axisMax: 200,
         series: [

@@ -4,7 +4,7 @@
 // from the .st-* classes injected in app.jsx.
 // ─────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from "react";
-import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, chartDefaults, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_GROUPS, SLIDE_STATUSES, STATUS_COLORS, currentUser } from "./model";
+import { STAGE_W, STAGE_H, P, SWATCHES, GRADIENT_PRESETS, ELEMENT_TYPES, CHART_KINDS, CHART_PICKER, chartDefaults, ENTRANCES, IDLES, EASE_OPTIONS, TRANSITIONS, BACKGROUNDS, ALIGN, FONT_GROUPS, SLIDE_STATUSES, STATUS_COLORS, currentUser } from "./model";
 import { SlideView } from "./stage";
 import { measureOverflow, isBrandColor } from "./lint";
 
@@ -462,6 +462,9 @@ function ChartEditor({ p, s, setProp, setProps, setStyle, cp }) {
         <Field label="Rotate slowly"><Toggle value={!!p.rotate} onCheckpoint={cp} onChange={(v) => setProp("rotate", v)} /></Field>
         <Field label="Reveal 1-by-1"><Toggle value={!!p.reveal} onCheckpoint={cp} onChange={(v) => setProp("reveal", v)} /></Field>
       </div>
+      {["bar", "barh", "area", "combo"].includes(p.kind) && (
+        <Field label="Stacked"><Toggle value={!!p.stacked} onCheckpoint={cp} onChange={(v) => setProp("stacked", v)} /></Field>
+      )}
       <Field label="Legend text"><Swatches value={s.legend} onCheckpoint={cp} onChange={(v) => setStyle("legend", v)} /></Field>
       <Field label="Axis labels"><Swatches value={s.axis} onCheckpoint={cp} onChange={(v) => setStyle("axis", v)} /></Field>
       <Field label="Grid lines"><Swatches value={s.grid} onCheckpoint={cp} onChange={(v) => setStyle("grid", v)} /></Field>
@@ -742,7 +745,7 @@ function InsertMenu({ onInsert, close }) {
         <button className="st-insert-item st-insert-back" onClick={() => setChartsOpen(false)}>
           <span className="st-insert-ic">←</span>All elements
         </button>
-        {CHART_KINDS.map((k) => (
+        {CHART_PICKER.map((k) => (
           <button key={k.kind} className="st-insert-item" onClick={() => { onInsert("chart", k.kind); close(); }}>
             <span className="st-insert-ic">{k.icon}</span>{k.label}
           </button>

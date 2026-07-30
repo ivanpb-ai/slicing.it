@@ -73,28 +73,55 @@ export function makeChartMarkup(P) {
     return tick(x, H - 10, l);
   }).join("");
 
+  // Stacked mode (props.stacked): bars pile up per category and areas layer
+  // cumulatively, so the axis domain must cover the per-category sums.
+  const stacked = !!p.stacked;
+  const stackDomain = (list) => {
+    const pos = xLabels.map((_, j) => list.reduce((a, s) => a + Math.max(0, num(s.values[j])), 0));
+    const neg = xLabels.map((_, j) => list.reduce((a, s) => a + Math.min(0, num(s.values[j])), 0));
+    const lo = Math.min(0, ...neg);
+    return [lo, Math.max(p.axisMax || 0, ...pos, lo + 1, 1)];
+  };
+
   if (kind === "bar" || kind === "combo") {
-    const [lo, hi] = domain();
-    const yAt = (v) => (H - padB) - ((v - lo) / (hi - lo)) * plotH;
-    const n = Math.max(1, xLabels.length);
     const cols = kind === "combo" ? series.slice(0, -1) : series;
     const lineSeries = kind === "combo" ? series[series.length - 1] : null;
+    const [lo, hi] = stacked
+      ? (() => { const [l, h] = stackDomain(cols); return [l, Math.max(h, ...(lineSeries ? lineSeries.values : [0]))]; })()
+      : domain();
+    const yAt = (v) => (H - padB) - ((v - lo) / (hi - lo)) * plotH;
+    const n = Math.max(1, xLabels.length);
     body += yTicks(lo, hi) + xCats(true);
-    cols.forEach((s, i) => {
-      const bw = plotW / n * 0.6 / Math.max(1, cols.length);
-      body += s.values.map((v, j) => {
-        const cx = padL + ((j + 0.5) / n) * plotW;
-        const y0 = yAt(0), y1 = yAt(v);
-        return item(`<rect x="${cx - (cols.length * bw) / 2 + i * bw}" y="${Math.min(y0, y1)}" width="${bw * 0.85}" height="${Math.max(1, Math.abs(y0 - y1))}" fill="${esc(s.color)}" rx="2" opacity="0.9"/>`);
-      }).join("");
-    });
+    if (stacked) {
+      const bw = plotW / n * 0.6;
+      const posCum = xLabels.map(() => 0), negCum = xLabels.map(() => 0);
+      cols.forEach((s) => {
+        body += s.values.map((v, j) => {
+          if (!v) return "";
+          const from = v >= 0 ? posCum[j] : negCum[j];
+          const to = from + v;
+          if (v >= 0) posCum[j] = to; else negCum[j] = to;
+          const cx = padL + ((j + 0.5) / n) * plotW;
+          return item(`<rect x="${cx - bw / 2}" y="${Math.min(yAt(from), yAt(to))}" width="${bw}" height="${Math.max(1, Math.abs(yAt(from) - yAt(to)))}" fill="${esc(s.color)}" rx="1" opacity="0.9"/>`);
+        }).join("");
+      });
+    } else {
+      cols.forEach((s, i) => {
+        const bw = plotW / n * 0.6 / Math.max(1, cols.length);
+        body += s.values.map((v, j) => {
+          const cx = padL + ((j + 0.5) / n) * plotW;
+          const y0 = yAt(0), y1 = yAt(v);
+          return item(`<rect x="${cx - (cols.length * bw) / 2 + i * bw}" y="${Math.min(y0, y1)}" width="${bw * 0.85}" height="${Math.max(1, Math.abs(y0 - y1))}" fill="${esc(s.color)}" rx="2" opacity="0.9"/>`);
+        }).join("");
+      });
+    }
     if (lineSeries) {
       const pts = lineSeries.values.map((v, j) => `${padL + ((j + 0.5) / n) * plotW},${yAt(v)}`);
       body += item(`<polyline points="${pts.join(" ")}" fill="none" stroke="${esc(lineSeries.color)}" stroke-width="2.5"/>`
         + pts.map((pt) => { const [x, y] = pt.split(","); return `<circle cx="${x}" cy="${y}" r="4" fill="${esc(lineSeries.color)}"/>`; }).join(""));
     }
   } else if (kind === "barh") {
-    const [lo, hi] = domain();
+    const [lo, hi] = stacked ? stackDomain(series) : domain();
     const padL2 = 110;
     const plotW2 = W - padL2 - padR;
     const xAt = (v) => padL2 + ((v - lo) / (hi - lo)) * plotW2;
@@ -103,32 +130,62 @@ export function makeChartMarkup(P) {
       `<line y1="${padT}" y2="${H - padB}" x1="${padL2 + f * plotW2}" x2="${padL2 + f * plotW2}" stroke="${esc(gridCol)}" stroke-dasharray="2 4"/>` + tick(padL2 + f * plotW2, H - 10, String(Math.round(lo + f * (hi - lo))))
     ).join("");
     if (lo < 0) body += `<line y1="${padT}" y2="${H - padB}" x1="${xAt(0)}" x2="${xAt(0)}" stroke="${esc(axisCol)}" stroke-opacity="0.55"/>`;
-    series.forEach((s, i) => {
-      const bh = plotH / n * 0.6 / Math.max(1, series.length);
-      body += s.values.map((v, j) => {
-        const cy = padT + ((j + 0.5) / n) * plotH;
-        const x0 = xAt(0), x1 = xAt(v);
-        return item(`<rect x="${Math.min(x0, x1)}" y="${cy - (series.length * bh) / 2 + i * bh}" width="${Math.max(1, Math.abs(x1 - x0))}" height="${bh * 0.85}" fill="${esc(s.color)}" rx="2" opacity="0.9"/>`);
-      }).join("");
-    });
+    if (stacked) {
+      const bh = plotH / n * 0.6;
+      const posCum = xLabels.map(() => 0), negCum = xLabels.map(() => 0);
+      series.forEach((s) => {
+        body += s.values.map((v, j) => {
+          if (!v) return "";
+          const from = v >= 0 ? posCum[j] : negCum[j];
+          const to = from + v;
+          if (v >= 0) posCum[j] = to; else negCum[j] = to;
+          const cy = padT + ((j + 0.5) / n) * plotH;
+          return item(`<rect x="${Math.min(xAt(from), xAt(to))}" y="${cy - bh / 2}" width="${Math.max(1, Math.abs(xAt(to) - xAt(from)))}" height="${bh}" fill="${esc(s.color)}" rx="1" opacity="0.9"/>`);
+        }).join("");
+      });
+    } else {
+      series.forEach((s, i) => {
+        const bh = plotH / n * 0.6 / Math.max(1, series.length);
+        body += s.values.map((v, j) => {
+          const cy = padT + ((j + 0.5) / n) * plotH;
+          const x0 = xAt(0), x1 = xAt(v);
+          return item(`<rect x="${Math.min(x0, x1)}" y="${cy - (series.length * bh) / 2 + i * bh}" width="${Math.max(1, Math.abs(x1 - x0))}" height="${bh * 0.85}" fill="${esc(s.color)}" rx="2" opacity="0.9"/>`);
+        }).join("");
+      });
+    }
     body += xLabels.map((l, j) => tick(padL2 - 8, padT + ((j + 0.5) / n) * plotH + 4, l, "end")).join("");
   } else if (kind === "line" || kind === "area") {
-    const [lo, hi] = domain();
+    const [lo, hi] = kind === "area" && stacked ? stackDomain(series) : domain();
     const n = xLabels.length;
     const xAt = (i) => padL + (i / Math.max(1, n - 1)) * plotW;
     const yAt = (v) => (H - padB) - ((v - lo) / (hi - lo)) * plotH;
     const base = yAt(0); // areas fill to the zero baseline, not the plot floor
     const lineP = (vals) => vals.map((v, i) => `${i === 0 ? "M" : "L"} ${xAt(i)} ${yAt(v)}`).join(" ");
     body += yTicks(lo, hi) + xCats(false);
-    series.forEach((s, i) => {
-      let seg = "";
-      if (kind === "area") {
-        defs += `<linearGradient id="cg_${el.id}_${i}" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="${esc(s.color)}" stop-opacity="0.8"/><stop offset="100%" stop-color="${esc(s.color)}" stop-opacity="0.12"/></linearGradient>`;
-        seg += `<path d="${lineP(s.values)} L ${xAt(n - 1)} ${base} L ${xAt(0)} ${base} Z" fill="url(#cg_${el.id}_${i})" opacity="0.7"/>`;
-      }
-      seg += `<path d="${lineP(s.values)}" fill="none" stroke="${esc(s.color)}" stroke-width="2.5"/>`;
-      body += item(seg);
-    });
+    if (kind === "area" && stacked) {
+      // Each series is a band between the running sum below it and the sum
+      // including it (negative values are ignored — stacks are additive).
+      let below = xLabels.map(() => 0);
+      series.forEach((s, i) => {
+        const top = below.map((b, j) => b + Math.max(0, num(s.values[j])));
+        defs += `<linearGradient id="cg_${el.id}_${i}" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="${esc(s.color)}" stop-opacity="0.85"/><stop offset="100%" stop-color="${esc(s.color)}" stop-opacity="0.25"/></linearGradient>`;
+        const topP = top.map((v, j) => `${j === 0 ? "M" : "L"} ${xAt(j)} ${yAt(v)}`).join(" ");
+        const belowRev = [...below.keys()].reverse().map((j) => `L ${xAt(j)} ${yAt(below[j])}`).join(" ");
+        body += item(`<path d="${topP} ${belowRev} Z" fill="url(#cg_${el.id}_${i})"/>`
+          + `<path d="${topP}" fill="none" stroke="${esc(s.color)}" stroke-width="2"/>`);
+        below = top;
+      });
+    } else {
+      series.forEach((s, i) => {
+        let seg = "";
+        if (kind === "area") {
+          defs += `<linearGradient id="cg_${el.id}_${i}" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="${esc(s.color)}" stop-opacity="0.8"/><stop offset="100%" stop-color="${esc(s.color)}" stop-opacity="0.12"/></linearGradient>`;
+          seg += `<path d="${lineP(s.values)} L ${xAt(n - 1)} ${base} L ${xAt(0)} ${base} Z" fill="url(#cg_${el.id}_${i})" opacity="0.7"/>`;
+        }
+        seg += `<path d="${lineP(s.values)}" fill="none" stroke="${esc(s.color)}" stroke-width="2.5"/>`;
+        body += item(seg);
+      });
+    }
   } else if (kind === "pie" || kind === "doughnut") {
     const cx = W / 2, cy = (H - 8) / 2, R = Math.min(W, H) / 2 - 22;
     const vals = s0.values.slice(0, xLabels.length);

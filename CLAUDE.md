@@ -65,7 +65,8 @@ only via Decks → "★ Set as welcome deck", built-in starter as fallback;
 the .pptx importer — `src/js/studio/import-pptx.js` (the converter's
 browser PPTX engine mapped onto Studio elements: titles→headings,
 text boxes→text, pictures→images as data URIs, boxes/connectors→shapes, embedded charts→native
-chart elements (kind/series/categories/colours from the chart XML),
+chart elements (kind/series/categories/colours from the chart XML,
+stacked groupings kept, modern chartEx waterfalls/funnels included),
 EMU→stage scaling with letterboxing, slide background kept), reachable
 via Decks → Import… accepting `.pptx`;
 the Insert → Image dialog — upload from device, Openverse search through

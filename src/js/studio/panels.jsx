@@ -765,7 +765,7 @@ const CLOUD_LABELS = {
   unauth: ["sign in", "Session expired — reload and sign in to sync across devices"],
 };
 
-export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onSiteCopy, onReview, onHelp, onPublishTemplate, saved, cloud }) {
+export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo, canUndo, canRedo, onAutoArrange, onPresent, library, currentId, onOpenDeck, onNewDeck, onDuplicateDeck, onDeleteDeck, onImport, onExport, onExportHtml, onExportPptx, onGeneratePages, onSiteCopy, onReview, onHelp, onPublishTemplate, saved, cloud }) {
   const [cloudText, cloudTitle] = CLOUD_LABELS[cloud] || CLOUD_LABELS.off;
   return (
     <div className="st-toolbar">
@@ -820,6 +820,7 @@ export function Toolbar({ title, onTitle, onCheckpoint, onInsert, onUndo, onRedo
         )} />
         <button className="st-btn" disabled={!canUndo} onClick={onUndo} title="Undo (Ctrl+Z)">↶</button>
         <button className="st-btn" disabled={!canRedo} onClick={onRedo} title="Redo (Ctrl+Shift+Z)">↷</button>
+        <button className="st-btn" onClick={onAutoArrange} title="Auto-arrange: re-position and re-size everything on this slide into a clean, balanced layout (Ctrl+Z undoes it)">✦ Arrange</button>
       </div>
       <div className="st-tb-right">
         <span className={"st-saved" + (saved ? " on" : "")} title={cloudTitle}>

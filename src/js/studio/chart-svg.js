@@ -62,9 +62,9 @@ export function makeChartMarkup(P) {
   // axisMax (e.g. carried over from another chart kind) must not push bars
   // outside the plot.
   const domain = () => [dataMin, Math.max(p.axisMax || 0, dataMax, dataMin + 1, 1)];
-  const yTicks = (lo, hi) => [0, 0.25, 0.5, 0.75, 1].map((f) => {
+  const yTicks = (lo, hi, suf = "") => [0, 0.25, 0.5, 0.75, 1].map((f) => {
     const y = (H - padB) - f * plotH;
-    return `<line x1="${padL}" x2="${W - padR}" y1="${y}" y2="${y}" stroke="${esc(gridCol)}" stroke-dasharray="2 4"/>` + tick(padL - 8, y + 4, String(Math.round(lo + f * (hi - lo))), "end");
+    return `<line x1="${padL}" x2="${W - padR}" y1="${y}" y2="${y}" stroke="${esc(gridCol)}" stroke-dasharray="2 4"/>` + tick(padL - 8, y + 4, String(Math.round(lo + f * (hi - lo))) + suf, "end");
   }).join("") + (lo < 0
     ? (() => { const zy = (H - padB) - (-lo / (hi - lo)) * plotH; return `<line x1="${padL}" x2="${W - padR}" y1="${zy}" y2="${zy}" stroke="${esc(axisCol)}" stroke-opacity="0.55"/>`; })()
     : "");
@@ -75,23 +75,34 @@ export function makeChartMarkup(P) {
 
   // Stacked mode (props.stacked): bars pile up per category and areas layer
   // cumulatively, so the axis domain must cover the per-category sums.
+  // 100% mode (props.percent, only with stacked): every category is
+  // normalised to 100 — each value becomes its share of the category's
+  // absolute total, and the axis is pinned at 100 with a % suffix.
   const stacked = !!p.stacked;
+  const percent = stacked && !!p.percent;
+  const pctSuf = percent ? "%" : "";
+  const toPercent = (list) => {
+    const totals = xLabels.map((_, j) => list.reduce((a, s) => a + Math.abs(num(s.values[j])), 0));
+    return list.map((s) => ({ ...s, values: s.values.map((v, j) => (totals[j] ? (num(v) / totals[j]) * 100 : 0)) }));
+  };
   const stackDomain = (list) => {
     const pos = xLabels.map((_, j) => list.reduce((a, s) => a + Math.max(0, num(s.values[j])), 0));
     const neg = xLabels.map((_, j) => list.reduce((a, s) => a + Math.min(0, num(s.values[j])), 0));
     const lo = Math.min(0, ...neg);
+    if (percent) return [lo, 100];
     return [lo, Math.max(p.axisMax || 0, ...pos, lo + 1, 1)];
   };
 
   if (kind === "bar" || kind === "combo") {
-    const cols = kind === "combo" ? series.slice(0, -1) : series;
+    const rawCols = kind === "combo" ? series.slice(0, -1) : series;
+    const cols = percent ? toPercent(rawCols) : rawCols;
     const lineSeries = kind === "combo" ? series[series.length - 1] : null;
     const [lo, hi] = stacked
       ? (() => { const [l, h] = stackDomain(cols); return [l, Math.max(h, ...(lineSeries ? lineSeries.values : [0]))]; })()
       : domain();
     const yAt = (v) => (H - padB) - ((v - lo) / (hi - lo)) * plotH;
     const n = Math.max(1, xLabels.length);
-    body += yTicks(lo, hi) + xCats(true);
+    body += yTicks(lo, hi, pctSuf) + xCats(true);
     if (stacked) {
       const bw = plotW / n * 0.6;
       const posCum = xLabels.map(() => 0), negCum = xLabels.map(() => 0);
@@ -121,19 +132,20 @@ export function makeChartMarkup(P) {
         + pts.map((pt) => { const [x, y] = pt.split(","); return `<circle cx="${x}" cy="${y}" r="4" fill="${esc(lineSeries.color)}"/>`; }).join(""));
     }
   } else if (kind === "barh") {
-    const [lo, hi] = stacked ? stackDomain(series) : domain();
+    const rows = stacked && percent ? toPercent(series) : series;
+    const [lo, hi] = stacked ? stackDomain(rows) : domain();
     const padL2 = 110;
     const plotW2 = W - padL2 - padR;
     const xAt = (v) => padL2 + ((v - lo) / (hi - lo)) * plotW2;
     const n = Math.max(1, xLabels.length);
     body += [0, 0.25, 0.5, 0.75, 1].map((f) =>
-      `<line y1="${padT}" y2="${H - padB}" x1="${padL2 + f * plotW2}" x2="${padL2 + f * plotW2}" stroke="${esc(gridCol)}" stroke-dasharray="2 4"/>` + tick(padL2 + f * plotW2, H - 10, String(Math.round(lo + f * (hi - lo))))
+      `<line y1="${padT}" y2="${H - padB}" x1="${padL2 + f * plotW2}" x2="${padL2 + f * plotW2}" stroke="${esc(gridCol)}" stroke-dasharray="2 4"/>` + tick(padL2 + f * plotW2, H - 10, String(Math.round(lo + f * (hi - lo))) + pctSuf)
     ).join("");
     if (lo < 0) body += `<line y1="${padT}" y2="${H - padB}" x1="${xAt(0)}" x2="${xAt(0)}" stroke="${esc(axisCol)}" stroke-opacity="0.55"/>`;
     if (stacked) {
       const bh = plotH / n * 0.6;
       const posCum = xLabels.map(() => 0), negCum = xLabels.map(() => 0);
-      series.forEach((s) => {
+      rows.forEach((s) => {
         body += s.values.map((v, j) => {
           if (!v) return "";
           const from = v >= 0 ? posCum[j] : negCum[j];
@@ -155,18 +167,19 @@ export function makeChartMarkup(P) {
     }
     body += xLabels.map((l, j) => tick(padL2 - 8, padT + ((j + 0.5) / n) * plotH + 4, l, "end")).join("");
   } else if (kind === "line" || kind === "area") {
-    const [lo, hi] = kind === "area" && stacked ? stackDomain(series) : domain();
+    const bands = kind === "area" && stacked && percent ? toPercent(series) : series;
+    const [lo, hi] = kind === "area" && stacked ? stackDomain(bands) : domain();
     const n = xLabels.length;
     const xAt = (i) => padL + (i / Math.max(1, n - 1)) * plotW;
     const yAt = (v) => (H - padB) - ((v - lo) / (hi - lo)) * plotH;
     const base = yAt(0); // areas fill to the zero baseline, not the plot floor
     const lineP = (vals) => vals.map((v, i) => `${i === 0 ? "M" : "L"} ${xAt(i)} ${yAt(v)}`).join(" ");
-    body += yTicks(lo, hi) + xCats(false);
+    body += yTicks(lo, hi, pctSuf) + xCats(false);
     if (kind === "area" && stacked) {
       // Each series is a band between the running sum below it and the sum
       // including it (negative values are ignored — stacks are additive).
       let below = xLabels.map(() => 0);
-      series.forEach((s, i) => {
+      bands.forEach((s, i) => {
         const top = below.map((b, j) => b + Math.max(0, num(s.values[j])));
         defs += `<linearGradient id="cg_${el.id}_${i}" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="${esc(s.color)}" stop-opacity="0.85"/><stop offset="100%" stop-color="${esc(s.color)}" stop-opacity="0.25"/></linearGradient>`;
         const topP = top.map((v, j) => `${j === 0 ? "M" : "L"} ${xAt(j)} ${yAt(v)}`).join(" ");

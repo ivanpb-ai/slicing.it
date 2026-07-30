@@ -463,7 +463,10 @@ function ChartEditor({ p, s, setProp, setProps, setStyle, cp }) {
         <Field label="Reveal 1-by-1"><Toggle value={!!p.reveal} onCheckpoint={cp} onChange={(v) => setProp("reveal", v)} /></Field>
       </div>
       {["bar", "barh", "area", "combo"].includes(p.kind) && (
-        <Field label="Stacked"><Toggle value={!!p.stacked} onCheckpoint={cp} onChange={(v) => setProp("stacked", v)} /></Field>
+        <div className="st-grid2">
+          <Field label="Stacked"><Toggle value={!!p.stacked} onCheckpoint={cp} onChange={(v) => setProps({ stacked: v, ...(v ? {} : { percent: false }) })} /></Field>
+          {p.stacked && <Field label="100 %"><Toggle value={!!p.percent} onCheckpoint={cp} onChange={(v) => setProp("percent", v)} /></Field>}
+        </div>
       )}
       <Field label="Legend text"><Swatches value={s.legend} onCheckpoint={cp} onChange={(v) => setStyle("legend", v)} /></Field>
       <Field label="Axis labels"><Swatches value={s.axis} onCheckpoint={cp} onChange={(v) => setStyle("axis", v)} /></Field>

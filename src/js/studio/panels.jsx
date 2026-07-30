@@ -245,6 +245,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
           <Field label="Letter sp."><Num value={s.letterSpacing} step={0.5} onCheckpoint={cp} onChange={(v) => setStyle("letterSpacing", v)} /></Field>
         </div>
         <Field label="Align"><Seg value={s.align} onCheckpoint={cp} onChange={(v) => setStyle("align", v)} options={ALIGN} /></Field>
+        <Field label="Italic"><Toggle value={!!s.italic} onCheckpoint={cp} onChange={(v) => setStyle("italic", v)} /></Field>
         <Field label="Font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
         {colorField("Colour", "color")}
         {type === "heading" && <GradientCtl p={p} setProp={setProp} cp={cp} />}
@@ -260,6 +261,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
           <Field label="Letter sp."><Num value={s.letterSpacing} step={0.5} onCheckpoint={cp} onChange={(v) => setStyle("letterSpacing", v)} /></Field>
         </div>
         <Field label="Align"><Seg value={s.align} onCheckpoint={cp} onChange={(v) => setStyle("align", v)} options={ALIGN} /></Field>
+        <Field label="Italic"><Toggle value={!!s.italic} onCheckpoint={cp} onChange={(v) => setStyle("italic", v)} /></Field>
         <Field label="Font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
         {colorField("Colour", "color")}
       </Group>
@@ -277,6 +279,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
         <Field label="Label" wide><TextLine value={p.label} onCheckpoint={cp} onChange={(v) => setProp("label", v)} /></Field>
         <div className="st-grid2"><Field label="Size"><Num value={s.fontSize} onCheckpoint={cp} onChange={(v) => setStyle("fontSize", v)} /></Field>{colorField("Colour", "color")}</div>
         <Field label="Font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
+        <Field label="Italic"><Toggle value={!!s.italic} onCheckpoint={cp} onChange={(v) => setStyle("italic", v)} /></Field>
       </Group>
     );
   }
@@ -287,6 +290,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
         <Field label="Link (href)" wide><TextLine value={p.href} onCheckpoint={cp} onChange={(v) => setProp("href", v)} /></Field>
         <Field label="Style"><Seg value={p.variant} onCheckpoint={cp} onChange={(v) => setProp("variant", v)} options={[{ value: "primary", label: "Solid" }, { value: "ghost", label: "Ghost" }]} /></Field>
         <Field label="Font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
+        <Field label="Italic"><Toggle value={!!s.italic} onCheckpoint={cp} onChange={(v) => setStyle("italic", v)} /></Field>
         {colorField("Fill", "bg", true)}
         {colorField("Text", "color")}
       </Group>
@@ -302,6 +306,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
         </div>
         <Field label="Marker"><TextLine value={s.marker} onCheckpoint={cp} onChange={(v) => setStyle("marker", v)} /></Field>
         <Field label="Font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
+        <Field label="Italic"><Toggle value={!!s.italic} onCheckpoint={cp} onChange={(v) => setStyle("italic", v)} /></Field>
         {colorField("Accent", "accent")}
       </Group>
     );
@@ -317,6 +322,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
         <Field label="Body" wide><Area value={p.body} rows={3} onCheckpoint={cp} onChange={(v) => setProp("body", v)} /></Field>
         <Field label="Bullets" wide><StringList items={p.bullets} onCheckpoint={cp} onChange={(v) => setProp("bullets", v)} /></Field>
         <Field label="Title font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
+        <Field label="Title italic"><Toggle value={!!s.italic} onCheckpoint={cp} onChange={(v) => setStyle("italic", v)} /></Field>
         {colorField("Accent", "accent")}
       </Group>
     );
@@ -363,6 +369,7 @@ function Content({ type, p, s, setProp, setProps, setStyle, cp }) {
         <Field label="Attribution" wide><TextLine value={p.author} onCheckpoint={cp} onChange={(v) => setProp("author", v)} /></Field>
         <div className="st-grid2"><Field label="Size"><Num value={s.fontSize} onCheckpoint={cp} onChange={(v) => setStyle("fontSize", v)} /></Field><Field label="Align"><Seg value={s.align} onCheckpoint={cp} onChange={(v) => setStyle("align", v)} options={ALIGN} /></Field></div>
         <Field label="Font"><FontSelect value={s.fontFamily} onCheckpoint={cp} onChange={(v) => setStyle("fontFamily", v)} /></Field>
+        <Field label="Italic"><Toggle value={!!s.italic} onCheckpoint={cp} onChange={(v) => setStyle("italic", v)} /></Field>
         {colorField("Colour", "color")}
         {colorField("Accent", "accent")}
       </Group>

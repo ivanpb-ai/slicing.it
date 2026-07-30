@@ -135,6 +135,7 @@ export function addCanvasPageToPptx(pptx, htmlText) {
           fontSize,
           color: (cssColor(es.color || p.style.color) || { color: "121214" }).color,
           bold: weight === "700" || weight === "bold",
+          italic: (es.fontStyle || p.style.fontStyle) === "italic",
           align: p.style.textAlign || "left",
           breakLine: j === parts.length - 1,
         };

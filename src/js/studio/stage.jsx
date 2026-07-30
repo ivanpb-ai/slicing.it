@@ -22,22 +22,27 @@ export function SlideView({ slide, mode = "edit", active = true }) {
   );
 }
 
-// Text styles roughly mirroring the matching block, so inline editing looks WYSIWYG.
-function editorTextStyle(el) {
+// Text styles roughly mirroring the matching block, so inline editing looks
+// WYSIWYG. `field` picks a sub-text (card title vs body); `boxed` means the
+// overlay covers just that sub-text's rect, so block padding is dropped.
+function editorTextStyle(el, field, boxed) {
   const s = el.style; const center = { display: "flex", alignItems: "center" };
   const jc = s.align === "left" ? "flex-start" : s.align === "right" ? "flex-end" : "center";
-  if (el.type === "heading") return { ...center, justifyContent: jc, textAlign: s.align, fontFamily: s.fontFamily || FONTS.head, fontWeight: s.fontWeight, fontSize: s.fontSize, lineHeight: s.lineHeight, letterSpacing: s.letterSpacing, color: s.color };
-  if (el.type === "kicker") return { ...center, justifyContent: jc, textAlign: s.align, fontFamily: s.fontFamily || FONTS.mono, fontSize: s.fontSize, letterSpacing: s.letterSpacing, textTransform: "uppercase", color: s.color };
-  if (el.type === "quote") return { display: "flex", flexDirection: "column", justifyContent: "center", textAlign: s.align, fontFamily: s.fontFamily || FONTS.head, fontWeight: 300, fontSize: s.fontSize, lineHeight: 1.25, color: s.color };
-  if (el.type === "button") return { display: "flex", alignItems: "center", justifyContent: "center", fontFamily: s.fontFamily || FONTS.body, fontWeight: 500, fontSize: s.fontSize, color: s.color || P.white };
-  if (el.type === "card") return { fontFamily: s.fontFamily || FONTS.head, fontWeight: 300, fontSize: 30, color: s.color || P.white, padding: "22px 20px", display: "flex", alignItems: "flex-start" };
+  const italic = s.italic ? "italic" : "normal";
+  if (el.type === "heading") return { ...center, justifyContent: jc, textAlign: s.align, fontFamily: s.fontFamily || FONTS.head, fontWeight: s.fontWeight, fontSize: s.fontSize, lineHeight: s.lineHeight, letterSpacing: s.letterSpacing, fontStyle: italic, color: s.color };
+  if (el.type === "kicker") return { ...center, justifyContent: jc, textAlign: s.align, fontFamily: s.fontFamily || FONTS.mono, fontSize: s.fontSize, letterSpacing: s.letterSpacing, fontStyle: italic, textTransform: "uppercase", color: s.color };
+  if (el.type === "quote") return { display: "flex", flexDirection: "column", justifyContent: "center", textAlign: s.align, fontFamily: s.fontFamily || FONTS.head, fontWeight: 300, fontSize: s.fontSize, lineHeight: 1.25, fontStyle: italic, color: s.color };
+  if (el.type === "button") return { display: "flex", alignItems: "center", justifyContent: "center", fontFamily: s.fontFamily || FONTS.body, fontWeight: 500, fontSize: s.fontSize, fontStyle: italic, color: s.color || P.white };
+  if (el.type === "card") {
+    if (field === "body") return { fontFamily: FONTS.body, fontSize: 13.5, lineHeight: 1.6, color: P.dim, textAlign: "left", padding: boxed ? 0 : "22px 20px" };
+    return { fontFamily: s.fontFamily || FONTS.head, fontWeight: 300, fontSize: 30, fontStyle: italic, color: s.color || P.white, padding: boxed ? 0 : "22px 20px", display: "flex", alignItems: "flex-start" };
+  }
   if (el.type === "counter") return { display: "flex", alignItems: "flex-end", justifyContent: "center", textAlign: "center", fontSize: Math.max(12, s.fontSize * 0.2), color: P.muted, paddingBottom: 8 };
-  return { ...center, justifyContent: jc, textAlign: s.align, fontFamily: s.fontFamily || FONTS.body, fontSize: s.fontSize, lineHeight: s.lineHeight, color: s.color };
+  return { ...center, justifyContent: jc, textAlign: s.align, fontFamily: s.fontFamily || FONTS.body, fontSize: s.fontSize, lineHeight: s.lineHeight, fontStyle: italic, color: s.color };
 }
 
-function InlineEditor({ el, onCommit, onCancel }) {
+function InlineEditor({ el, field, box, onCommit, onCancel }) {
   const ref = useRef(null);
-  const field = PRIMARY[el.type];
   useEffect(() => {
     const node = ref.current; if (!node) return;
     node.textContent = el.props[field] || "";
@@ -46,6 +51,7 @@ function InlineEditor({ el, onCommit, onCancel }) {
     const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
   }, []); // eslint-disable-line
   const commit = () => onCommit(el.id, { props: { ...el.props, [field]: ref.current.textContent } });
+  const pos = box || { x: el.x, y: el.y, w: el.w, h: el.h };
   return (
     <div
       ref={ref} contentEditable suppressContentEditableWarning
@@ -56,9 +62,9 @@ function InlineEditor({ el, onCommit, onCancel }) {
         if (e.key === "Escape") { e.preventDefault(); onCancel(); }
       }}
       style={{
-        position: "absolute", left: el.x, top: el.y, width: el.w, height: el.h, boxSizing: "border-box",
+        position: "absolute", left: pos.x, top: pos.y, width: pos.w, height: pos.h, boxSizing: "border-box",
         outline: `2px solid ${P.cyan}`, background: "rgba(0,0,0,0.32)", borderRadius: 6, cursor: "text", zIndex: 60,
-        overflow: "hidden", ...editorTextStyle(el),
+        overflow: "hidden", ...editorTextStyle(el, field, !!box),
       }}
     />
   );
@@ -140,6 +146,30 @@ export function SlideStage({ slide, selectedId, onSelect, onChange, onCheckpoint
     window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
   };
 
+  const [editTarget, setEditTarget] = useState(null); // { field, box } of the active inline edit
+  // Cards contain several editable texts: pick the one under the double-click
+  // via the [data-edit] markers the block renders, and overlay just its rect.
+  const resolveField = (e, el) => {
+    if (el.type !== "card") return { field: PRIMARY[el.type], box: null };
+    const wrap = wrapRef.current;
+    if (wrap) {
+      const root = wrap.querySelector(`[data-elid="${el.id}"]`);
+      const s = scaleRef.current, w = wrap.getBoundingClientRect();
+      if (root) {
+        const nodes = [...root.querySelectorAll("[data-edit]")];
+        // Exact hit wins; otherwise the field whose top is above the click
+        // (i.e. the section the click landed in or after), else the first.
+        const hit = nodes.find((n) => { const r = n.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; });
+        const pick = hit || nodes.filter((n) => e.clientY >= n.getBoundingClientRect().top).pop() || nodes[0];
+        if (pick) {
+          const r = pick.getBoundingClientRect();
+          return { field: pick.getAttribute("data-edit"), box: { x: (r.left - w.left) / s, y: (r.top - w.top) / s, w: r.width / s, h: Math.max(28, r.height / s) } };
+        }
+      }
+    }
+    return { field: "title", box: null };
+  };
+
   const hs = 11 / scale; // constant on-screen handle size
   const ow = 1.5 / scale; // constant outline width
   const editingEl = editingId ? slide.elements.find((e) => e.id === editingId) : null;
@@ -166,7 +196,7 @@ export function SlideStage({ slide, selectedId, onSelect, onChange, onCheckpoint
               className={"st-hit" + (sel ? " sel" : "")} data-type={el.type}
               onPointerDown={(e) => startDrag(e, el)}
               onClick={(e) => { e.stopPropagation(); onSelect(el.id); }}
-              onDoubleClick={(e) => { e.stopPropagation(); if (isInlineEditable(el.type)) onStartEdit(el.id); }}
+              onDoubleClick={(e) => { e.stopPropagation(); if (!isInlineEditable(el.type)) return; setEditTarget(resolveField(e, el)); onStartEdit(el.id); }}
               style={{ position: "absolute", left: el.x, top: el.y, width: el.w, height: el.h, cursor: "move", outline: sel ? `${ow}px solid ${P.cyan}` : (`${ow}px solid transparent`), outlineOffset: 0, background: "transparent", zIndex: sel ? 40 : 10 }}
               title={isInlineEditable(el.type) ? "Double-click to edit text" : el.type}
             >
@@ -178,7 +208,9 @@ export function SlideStage({ slide, selectedId, onSelect, onChange, onCheckpoint
           );
         })}
 
-        {editingEl && <InlineEditor el={editingEl} onCommit={(id, patch) => { onChange(id, patch, true); onEndEdit(); }} onCancel={onEndEdit} />}
+        {editingEl && <InlineEditor el={editingEl}
+          field={(editTarget && editTarget.field) || PRIMARY[editingEl.type]} box={editTarget ? editTarget.box : null}
+          onCommit={(id, patch) => { onChange(id, patch, true); onEndEdit(); }} onCancel={onEndEdit} />}
       </div>
     </div>
   );

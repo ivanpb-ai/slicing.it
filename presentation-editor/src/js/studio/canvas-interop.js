@@ -59,9 +59,9 @@ export function slideToCanvasParts(slide) {
     return key;
   };
 
-  const span = (text, { px = 22, color = P.light, bold = false, family = null } = {}) =>
+  const span = (text, { px = 22, color = P.light, bold = false, italic = false, family = null } = {}) =>
     `<span data-pt="${(px * PT_PER_PX).toFixed(2)}" style="font-size:${cqw(px)}cqw;color:${color};` +
-    (bold ? "font-weight:700;" : "") + (family ? `font-family:${esc(family)};` : "") + `">${esc(text)}</span>`;
+    (bold ? "font-weight:700;" : "") + (italic ? "font-style:italic;" : "") + (family ? `font-family:${esc(family)};` : "") + `">${esc(text)}</span>`;
 
   const para = (align, spans) => `<div class="para" style="text-align:${align};">${spans}</div>`;
 
@@ -86,24 +86,24 @@ export function slideToCanvasParts(slide) {
     const align = s.align || "center";
     switch (el.type) {
       case "heading":
-        shp(el, { cls: "shp txt title", info: p.text, inner: para(align, span(p.text || "", { px: s.fontSize || 60, color: solidOf(p.gradient, s.color, P.white), family: s.fontFamily || HEAD_FAMILY })) });
+        shp(el, { cls: "shp txt title", info: p.text, inner: para(align, span(p.text || "", { px: s.fontSize || 60, color: solidOf(p.gradient, s.color, P.white), italic: !!s.italic, family: s.fontFamily || HEAD_FAMILY })) });
         break;
       case "text":
-        shp(el, { info: p.text, inner: (p.text || "").split("\n").map((t) => para(align, span(t, { px: s.fontSize || 22, color: s.color || P.dim, bold: s.fontWeight >= 700, family: s.fontFamily || null }))).join("") });
+        shp(el, { info: p.text, inner: (p.text || "").split("\n").map((t) => para(align, span(t, { px: s.fontSize || 22, color: s.color || P.dim, bold: s.fontWeight >= 700, italic: !!s.italic, family: s.fontFamily || null }))).join("") });
         break;
       case "kicker":
-        shp(el, { info: p.text, inner: para(align, span(String(p.text || "").toUpperCase(), { px: s.fontSize || 13, color: s.color || P.cyan, family: s.fontFamily || null })) });
+        shp(el, { info: p.text, inner: para(align, span(String(p.text || "").toUpperCase(), { px: s.fontSize || 13, color: s.color || P.cyan, italic: !!s.italic, family: s.fontFamily || null })) });
         break;
       case "quote":
         shp(el, { info: p.text, inner:
-          para(align, span("“" + (p.text || "") + "”", { px: s.fontSize || 40, color: s.color || P.white, family: s.fontFamily || HEAD_FAMILY })) +
+          para(align, span("“" + (p.text || "") + "”", { px: s.fontSize || 40, color: s.color || P.white, italic: !!s.italic, family: s.fontFamily || HEAD_FAMILY })) +
           (p.author ? para(align, span(p.author, { px: Math.max(16, (s.fontSize || 40) * 0.34), color: s.accent || P.cyan })) : "") });
         break;
       case "counter": {
         const d = p.decimals || 0;
         const val = d > 0 ? Number(p.value || 0).toFixed(d) : Math.round(p.value || 0).toLocaleString();
         shp(el, { info: p.label, inner:
-          para("center", span(`${p.prefix || ""}${val}${p.suffix || ""}`, { px: s.fontSize || 64, color: s.color || P.light, family: s.fontFamily || HEAD_FAMILY })) +
+          para("center", span(`${p.prefix || ""}${val}${p.suffix || ""}`, { px: s.fontSize || 64, color: s.color || P.light, italic: !!s.italic, family: s.fontFamily || HEAD_FAMILY })) +
           (p.label ? para("center", span(p.label, { px: Math.max(15, (s.fontSize || 64) * 0.2), color: P.muted })) : "") });
         break;
       }
@@ -113,12 +113,12 @@ export function slideToCanvasParts(slide) {
           fill: primary ? (s.bg || P.purple) : null,
           border: primary ? null : { w: 2, color: s.color || P.light },
           radiusPx: el.h / 2,
-          inner: para("center", span(p.label || "", { px: s.fontSize || 15, color: s.color || P.white, bold: true, family: s.fontFamily || null })),
+          inner: para("center", span(p.label || "", { px: s.fontSize || 15, color: s.color || P.white, bold: true, italic: !!s.italic, family: s.fontFamily || null })),
         });
         break;
       }
       case "list":
-        shp(el, { inner: (p.items || []).map((it) => para("left", span(`${s.marker || "◆"}  ${it}`, { px: s.fontSize || 17, color: s.color || P.light, family: s.fontFamily || null }))).join("") });
+        shp(el, { inner: (p.items || []).map((it) => para("left", span(`${s.marker || "◆"}  ${it}`, { px: s.fontSize || 17, color: s.color || P.light, italic: !!s.italic, family: s.fontFamily || null }))).join("") });
         break;
       case "card": {
         const c = s.accent || P.cyan;
@@ -126,7 +126,7 @@ export function slideToCanvasParts(slide) {
           fill: hexToRgba(c, 0.1), border: { w: 1.5, color: c }, radiusPx: 18, anchor: "flex-start", info: p.title,
           inner:
             para("left", span(`${p.icon || ""}  ${String(p.tag || "").toUpperCase()}`, { px: 15, color: c })) +
-            para("left", span(p.title || "", { px: 30, color: s.color || P.white, family: s.fontFamily || HEAD_FAMILY })) +
+            para("left", span(p.title || "", { px: 30, color: s.color || P.white, italic: !!s.italic, family: s.fontFamily || HEAD_FAMILY })) +
             (p.body ? para("left", span(p.body, { px: 13.5, color: P.dim })) : "") +
             (p.bullets || []).map((b) => para("left", span(`◆  ${b}`, { px: 12.5, color: "rgba(233,236,255,0.8)" }))).join(""),
         });
@@ -217,18 +217,19 @@ function readParas(shpEl) {
   return [...shpEl.querySelectorAll(".para")].map((pEl) => {
     const spans = [...pEl.querySelectorAll("span")];
     const parts = spans.length ? spans : [pEl];
-    let maxPt = 0, color = null, bold = false, heading = false;
+    let maxPt = 0, color = null, bold = false, italic = false, heading = false;
     for (const el of parts) {
       const pt = parseFloat(el.getAttribute?.("data-pt")) || cssLen(el.style?.fontSize) * STAGE_W / 100 * PT_PER_PX;
       if (pt > maxPt) maxPt = pt;
       if (!color && el.style?.color) color = el.style.color;
       if (el.style?.fontWeight === "700" || el.style?.fontWeight === "bold") bold = true;
+      if (el.style?.fontStyle === "italic") italic = true;
       if (parseFamily(el.style?.fontFamily) === "heading") heading = true;
     }
     return {
       align: pEl.style.textAlign || "left",
       text: parts.map((el) => el.textContent).join(""),
-      maxPt, color, bold, heading,
+      maxPt, color, bold, italic, heading,
     };
   }).filter((p) => p.text.trim());
 }
@@ -324,7 +325,7 @@ export function canvasHtmlToSlide(htmlText) {
         color, fontSize, align: paras[0].align === "justify" ? "left" : paras[0].align,
         fontFamily: isHeading ? FONTS.head : FONTS.body,
         fontWeight: paras.some((p) => p.bold) ? 700 : type === "heading" ? 300 : 400,
-        lineHeight: 1.25, letterSpacing: 0, italic: false, opacity: 1,
+        lineHeight: 1.25, letterSpacing: 0, italic: paras.some((p) => p.italic), opacity: 1,
       },
     });
   });

@@ -299,7 +299,7 @@ const HELP_SECTIONS = [
   },
   {
     title: "✚ Insert",
-    body: <>Adds a block to the current slide: headings, text, kickers, counters, buttons, lists, cards, icons, images, shapes, quotes, progress rings, orbit/radar/loop visuals — and charts. “Chart” opens a picker with the full PowerPoint chart family (column, bar, line, area, combo, pie, doughnut, radar, bubble, waterfall — with stacked column/bar/area variants via the picker or the Inspector's Stacked toggle); the data is edited in a mini-table in the Inspector and the chart redraws live. “Image” opens a picker with three sources: upload a file from your device, search free openly-licensed photos (Openverse), or generate one from a short text description with AI (flux-1.1-pro).</>,
+    body: <>Adds a block to the current slide: headings, text, kickers, counters, buttons, lists, cards, icons, images, shapes, quotes, progress rings, orbit/radar/loop visuals — and charts. “Chart” opens a picker with the full PowerPoint chart family (column, bar, line, area, combo, pie, doughnut, radar, bubble, waterfall — with stacked and true 100% column/bar/area variants via the picker or the Inspector's Stacked / 100 % toggles); the data is edited in a mini-table in the Inspector and the chart redraws live. “Image” opens a picker with three sources: upload a file from your device, search free openly-licensed photos (Openverse), or generate one from a short text description with AI (flux-1.1-pro).</>,
   },
   {
     title: "✦ Arrange",

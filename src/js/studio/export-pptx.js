@@ -183,8 +183,8 @@ function addNativeChart(pptx, slide, c, pos, bgHex) {
     plotArea: { fill: { color: "29003E", transparency: 100 } },
   };
 
-  // props.stacked → native stacked grouping in PowerPoint (bar/barh/area/combo).
-  const grouping = c.stacked ? { barGrouping: "stacked" } : {};
+  // props.stacked/percent → native (percent-)stacked grouping in PowerPoint.
+  const grouping = c.stacked ? { barGrouping: c.percent ? "percentStacked" : "stacked" } : {};
 
   switch (kind) {
     case "bar":

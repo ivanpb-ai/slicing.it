@@ -549,8 +549,10 @@ function parseChartXml(xml, theme) {
     ordered = [...groups.filter((g) => g.kind !== "line"), ...groups.filter((g) => g.kind === "line")];
   }
 
-  // Stacked / percent-stacked grouping carries over as the stacked flag.
+  // Stacked / percent-stacked grouping carries over as the stacked (+percent)
+  // flags — the Studio has a true 100% mode, so percentStacked round-trips.
   const stacked = ordered.some((g) => /<c:grouping\s+val="(?:percent)?[sS]tacked"/.test(g.xml));
+  const percent = ordered.some((g) => /<c:grouping\s+val="percentStacked"/.test(g.xml));
 
   const series = [];
   let xLabels = null;
@@ -567,8 +569,8 @@ function parseChartXml(xml, theme) {
   const maxVal = stacked
     ? Math.max(...Array.from({ length: n }, (_, j) => series.reduce((a, s) => a + Math.max(0, s.values[j] || 0), 0)))
     : Math.max(...series.flatMap((s) => s.values.map((v) => Math.abs(v))));
-  const axisMax = kind === "pie" || kind === "doughnut" || kind === "waterfall" ? 0 : niceMax(maxVal);
-  return { kind, ...(stacked ? { stacked: true } : {}), xLabels, axisMax, series };
+  const axisMax = kind === "pie" || kind === "doughnut" || kind === "waterfall" || percent ? 0 : niceMax(maxVal);
+  return { kind, ...(stacked ? { stacked: true } : {}), ...(percent ? { percent: true } : {}), xLabels, axisMax, series };
 }
 
 // ── Modern chart format (cx: namespace, ppt/charts/chartExN.xml) ───────────
@@ -651,7 +653,7 @@ function parsedToSlide(ps, i) {
     if (s.kind === "chart") {
       elements.push(createElement("chart", {
         x: X(s.x), y: Y(s.y), w: Math.max(120, px(s.w)), h: Math.max(90, px(s.h)), rotation: 0,
-        props: { kind: s.chart.kind, ...(s.chart.stacked ? { stacked: true } : {}), xLabels: s.chart.xLabels, axisMax: s.chart.axisMax, series: s.chart.series },
+        props: { kind: s.chart.kind, ...(s.chart.stacked ? { stacked: true } : {}), ...(s.chart.percent ? { percent: true } : {}), xLabels: s.chart.xLabels, axisMax: s.chart.axisMax, series: s.chart.series },
         style: {
           // Imported decks usually sit on light backgrounds — keep axes readable.
           ...(light ? { axis: "#667", grid: "rgba(0,0,0,0.14)", legend: "#334" } : {}),

@@ -14,7 +14,7 @@ import { canvasHtmlToSlide } from "./canvas-interop";
 import { exportDeckPptx } from "./export-pptx";
 import { API_MODES, generateDeckPages, downloadPage, downloadPagesZip } from "./generate-pages";
 import { lintDeck } from "./lint";
-import { syncLibrary, cloudPut, cloudDelete, cloudGetTemplate, cloudPutTemplate } from "./cloud";
+import { syncLibrary, cloudPut, cloudDelete, cloudGetTemplate, cloudPutTemplate, cloudMe } from "./cloud";
 import { isAdmin } from "./auth";
 
 const cloneSlide = (s) => ({ ...cloneDeep(s), id: uid("slide"), elements: s.elements.map((e) => ({ ...cloneDeep(e), id: uid("el") })) });
@@ -578,6 +578,15 @@ export default function StudioApp() {
   const exportPptx = () => exportDeckPptx(deckRef.current)
     .catch((err) => window.alert("PowerPoint export failed: " + (err?.message || err)));
 
+  // Admin rights: the cookie-gate admin is known synchronously; Identity
+  // admins (ADMIN_EMAILS env var) are confirmed by the decks API.
+  const [canAdmin, setCanAdmin] = useState(() => isAdmin());
+  useEffect(() => {
+    let on = true;
+    cloudMe().then((me) => { if (on && me?.admin) setCanAdmin(true); });
+    return () => { on = false; };
+  }, []);
+
   // Admin only: publish the deck being edited as the site-wide welcome deck.
   const publishTemplate = () => {
     if (!window.confirm(`Make “${deckRef.current.title || "Untitled"}” the welcome deck that every NEW user starts with? Existing users keep their decks.`)) return;
@@ -623,7 +632,7 @@ export default function StudioApp() {
         onInsert={insertElement} onUndo={doUndo} onRedo={doRedo} canUndo={undo.length > 0} canRedo={redo.length > 0}
         onPresent={() => { setStartAt(current); setPresenting(true); }}
         library={library} currentId={deck.id} onOpenDeck={openDeck} onNewDeck={newPresentation} onDuplicateDeck={duplicateCurrentDeck} onDeleteDeck={deleteDeck}
-        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onReview={() => setReviewing(true)} onHelp={() => setHelping(true)} onPublishTemplate={isAdmin() ? publishTemplate : null} saved={saved} cloud={cloud}
+        onImport={importDeck} onExport={exportDeck} onExportHtml={exportHtml} onExportPptx={exportPptx} onGeneratePages={() => setGenPages(true)} onReview={() => setReviewing(true)} onHelp={() => setHelping(true)} onPublishTemplate={canAdmin ? publishTemplate : null} saved={saved} cloud={cloud}
       />
 
       <div className="st-body">

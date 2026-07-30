@@ -68,9 +68,9 @@ function cookieAuthedUser(req) {
   return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(expected)) ? user : null;
 }
 
-// → Netlify Identity user id, or null. The bearer token is validated by
-// asking the site's own GoTrue instance who it belongs to — no shared JWT
-// secret needed, and revoked/expired tokens fail naturally.
+// → { id, email } for a valid Netlify Identity bearer token, or null. The
+// token is validated by asking the site's own GoTrue instance who it belongs
+// to — no shared JWT secret needed, and revoked/expired tokens fail naturally.
 async function identityAuthedUser(req) {
   const m = /^Bearer\s+(\S+)$/i.exec(req.headers.get("authorization") || "");
   if (!m) return null;
@@ -79,8 +79,17 @@ async function identityAuthedUser(req) {
     const r = await fetch(base + "/.netlify/identity/user", { headers: { Authorization: "Bearer " + m[1] } });
     if (!r.ok) return null;
     const u = await r.json();
-    return u && typeof u.id === "string" && /^[a-f0-9-]{16,64}$/i.test(u.id) ? u.id : null;
+    if (!(u && typeof u.id === "string" && /^[a-f0-9-]{16,64}$/i.test(u.id))) return null;
+    return { id: u.id, email: typeof u.email === "string" ? u.email.trim().toLowerCase() : "" };
   } catch { return null; }
+}
+
+// Identity accounts whose (confirmed) email is listed in ADMIN_EMAILS get
+// admin rights — i.e. they may change the welcome-deck template. Their own
+// decks stay in their ordinary per-user namespace.
+function adminEmails() {
+  return (process.env.ADMIN_EMAILS || "")
+    .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
 }
 
 export default async (req) => {
@@ -88,8 +97,10 @@ export default async (req) => {
   // with a cookie-gate username), then the cookie gate.
   let prefix = null, isAdmin = false;
   const idUser = await identityAuthedUser(req);
-  if (idUser) prefix = `iduser:${idUser}`;
-  else {
+  if (idUser) {
+    prefix = `iduser:${idUser.id}`;
+    isAdmin = !!idUser.email && adminEmails().includes(idUser.email);
+  } else {
     const cUser = cookieAuthedUser(req);
     // The admin account keeps the former "default" user's namespace so data
     // from before the admin rename stays in place.
@@ -98,6 +109,9 @@ export default async (req) => {
   if (!prefix) return Response.json({ error: "unauthorized" }, { status: 401 });
 
   const url = new URL(req.url);
+
+  // Who am I? Lets the client show admin-only UI without guessing.
+  if (url.searchParams.get("me")) return Response.json({ admin: isAdmin });
 
   // ── Welcome-deck template (site-global "__template__" key). Any signed-in
   // user may read it (their first library is seeded from it); ONLY admin may

@@ -65,9 +65,18 @@ export async function syncLibrary(currentId) {
   return { pulled };
 }
 
+// → { admin } for the signed-in caller, or null when unreachable/signed out.
+export async function cloudMe() {
+  try {
+    const r = await fetch(API + "?me=1", { credentials: "same-origin", headers: { ...(await authHeader()) } });
+    return r.ok ? await r.json() : null;
+  } catch { return null; }
+}
+
 // ── Welcome-deck template ──────────────────────────────────────────────────
 // Site-global default deck: any signed-in user reads it (a new library is
-// seeded from it); only admin (the EDITOR_PASSWORD account) can publish it.
+// seeded from it); only admin can publish it (the EDITOR_PASSWORD account,
+// or an Identity account listed in ADMIN_EMAILS).
 // Null when none is set or the API is unreachable — callers fall back to the
 // built-in starter.
 export async function cloudGetTemplate() {

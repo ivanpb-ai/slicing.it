@@ -6,6 +6,8 @@
 #                       many users; each user sees only their own decks. The
 #                       app detects it automatically — no env vars needed.
 #                       Leave EDITOR_USERS / EDITOR_PASSWORD unset.
+#                       ADMIN_EMAILS (comma-separated) grants admin rights —
+#                       i.e. publishing the welcome deck — to those accounts.
 #   EDITOR_USERS        env var — small fixed user list as comma-separated
 #                       "username:password" pairs (e.g. "alice:pw1,bob:pw2");
 #                       "admin" and "default" are reserved names.

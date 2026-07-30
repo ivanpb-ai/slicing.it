@@ -21,7 +21,9 @@ Generic-only (stays in this repo):
 - `src/js/studio/auth.js` + Netlify Identity (open self-registration,
   JWT-validated decks API); open access when nothing is configured;
   `EDITOR_PASSWORD` here stores admin's decks under the legacy
-  "default" namespace
+  "default" namespace; `ADMIN_EMAILS` grants admin rights (welcome-deck
+  publishing) to listed Identity accounts — intentionally NOT ported to
+  the Telia editor, which has no Identity
 - Self-hosted Perplexity proxy (`netlify/functions/perplexity.mjs`;
   `generate-pages.js` here has two modes: none/perplexity)
 - Generic starter deck, README/netlify.toml docs

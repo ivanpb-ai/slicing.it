@@ -67,6 +67,13 @@ In the Identity settings you can switch registration between *Open* and
 (Google, GitHub, …) — the widget picks these up automatically. Leave
 `EDITOR_USERS`/`EDITOR_PASSWORD` unset in this mode.
 
+Set `ADMIN_EMAILS` (comma-separated, e.g. `you@example.com,cto@example.com`)
+to grant **admin rights** to specific Identity accounts: those users get the
+Decks → **★ Set as welcome deck** action, which publishes the deck they are
+editing as the default deck every new user starts with. Everyone else can
+read the welcome deck (their first library is seeded from it) but never
+change it. Admins' own decks stay in their ordinary private namespace.
+
 **Env-var accounts (small fixed team).**
 
 | Variable | Effect |

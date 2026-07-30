@@ -58,7 +58,13 @@ the reserved `admin` account's credential — usable alongside EDITOR_USERS,
 never by regular users, with "admin" ignored in EDITOR_USERS; the
 admin-published welcome-deck template — site-global "__template__" blob,
 readable by any signed-in user to seed a new library, writable by admin
-only via Decks → "★ Set as welcome deck", built-in starter as fallback).
+only via Decks → "★ Set as welcome deck", built-in starter as fallback;
+the Insert → Image dialog — upload from device, Openverse search with an
+`?ov_q=` server passthrough fallback, and Replicate flux-1.1-pro
+generation via `netlify/functions/generate-image.mjs`, token in
+`REPLICATE_API_TOKEN`/`TEXT_TO_IMAGE` read server-side only, the function
+gated by each site's own auth: Telia reuses decks' `authedPrefix`,
+generic accepts Identity bearer / cookie / fully-open site).
 Auth changes
 must be ported to both, translating the cookie/pepper names listed above.
 

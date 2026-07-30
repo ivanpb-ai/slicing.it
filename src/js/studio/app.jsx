@@ -17,6 +17,7 @@ import { exportDeckPptx } from "./export-pptx";
 import { API_MODES, generateDeckPages, downloadPage, downloadPagesZip } from "./generate-pages";
 import { lintDeck } from "./lint";
 import { arrangeElements } from "./auto-arrange";
+import { ImageInsertDialog } from "./image-insert";
 import { syncLibrary, cloudPut, cloudDelete, cloudGetTemplate, cloudPutTemplate } from "./cloud";
 
 const cloneSlide = (s) => ({ ...cloneDeep(s), id: uid("slide"), elements: s.elements.map((e) => ({ ...cloneDeep(e), id: uid("el") })) });
@@ -298,7 +299,7 @@ const HELP_SECTIONS = [
   },
   {
     title: "✚ Insert",
-    body: <>Adds a block to the current slide: headings, text, kickers, counters, buttons, lists, cards, icons, images, shapes, quotes, progress rings, orbit/radar/loop visuals — and charts. “Chart” opens a picker with the full PowerPoint chart family (column, bar, line, area, combo, pie, doughnut, radar, bubble, waterfall); the data is edited in a mini-table in the Inspector and the chart redraws live.</>,
+    body: <>Adds a block to the current slide: headings, text, kickers, counters, buttons, lists, cards, icons, images, shapes, quotes, progress rings, orbit/radar/loop visuals — and charts. “Chart” opens a picker with the full PowerPoint chart family (column, bar, line, area, combo, pie, doughnut, radar, bubble, waterfall); the data is edited in a mini-table in the Inspector and the chart redraws live. “Image” opens a picker with three sources: upload a file from your device, search free openly-licensed photos (Openverse), or generate one from a short text description with AI (flux-1.1-pro).</>,
   },
   {
     title: "✦ Arrange",
@@ -400,6 +401,7 @@ export default function StudioApp() {
   const [genPages, setGenPages] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [helping, setHelping] = useState(false);
+  const [imgOpen, setImgOpen] = useState(false);
   // Mobile: the side panels become slide-in drawers toggled by the FABs.
   const [navOpen, setNavOpen] = useState(false);
   const [inspOpen, setInspOpen] = useState(false);
@@ -552,10 +554,19 @@ export default function StudioApp() {
   const changeSlide = useCallback((patch, cp = false) => { if (cp) checkpoint(); patchSlide(current, (s) => ({ ...s, ...patch })); }, [checkpoint, current]);
 
   const insertElement = (type, chartKind) => {
+    // Images go through the source picker (upload / Openverse / AI generate).
+    if (type === "image") { setImgOpen(true); return; }
     checkpoint();
     const el = createElement(type, type === "chart" && chartKind ? chartDefaults(chartKind) : {});
     patchSlide(current, (s) => ({ ...s, elements: [...s.elements, el] }));
     setSelectedId(el.id);
+  };
+  const insertImage = (over) => {
+    checkpoint();
+    const el = createElement("image", over);
+    patchSlide(current, (s) => ({ ...s, elements: [...s.elements, el] }));
+    setSelectedId(el.id);
+    setImgOpen(false);
   };
   const duplicateElement = (id) => {
     checkpoint();
@@ -829,6 +840,7 @@ export default function StudioApp() {
       {reviewing && <ReviewDialog deck={deck} onClose={() => setReviewing(false)}
         onGoto={(i, elId) => { setReviewing(false); setCurrent(i); setSelectedId(elId); setEditingId(null); }} />}
       {genPages && <GeneratePagesDialog deck={deck} onClose={() => setGenPages(false)} />}
+      {imgOpen && <ImageInsertDialog onInsert={insertImage} onClose={() => setImgOpen(false)} />}
       {helping && <HelpDialog onClose={() => setHelping(false)} />}
       {siteCopy && <SiteCopyOverlay onClose={closeSiteCopy} />}
       {presenting && <Present deck={deck} startIndex={startAt} onClose={() => setPresenting(false)} />}
@@ -1027,6 +1039,27 @@ const STUDIO_CSS = `
 
 /* generate interactive pages dialog */
 .st-gen-backdrop{position:fixed;inset:0;z-index:950;background:rgba(10,2,20,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;}
+.st-imgdlg{width:min(680px,94vw);}
+.st-imgtabs{display:flex;gap:6px;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.st-imgtab{background:none;border:1px solid transparent;border-radius:8px;color:rgba(244,224,255,0.75);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;}
+.st-imgtab:hover{background:rgba(244,224,255,0.07);color:#fff;}
+.st-imgtab.on{background:rgba(153,10,227,0.22);border-color:rgba(153,10,227,0.5);color:#fff;}
+.st-dropzone{display:flex;flex-direction:column;align-items:center;gap:6px;border:1.5px dashed rgba(244,224,255,0.3);border-radius:12px;padding:34px 16px;cursor:pointer;text-align:center;transition:border-color .15s,background .15s;}
+.st-dropzone:hover{border-color:rgba(153,10,227,0.7);background:rgba(153,10,227,0.08);}
+.st-dropzone-icon{font-size:34px;}
+.st-dropzone span{color:rgba(244,224,255,0.55);font-size:12.5px;}
+.st-imgrow{display:flex;gap:8px;align-items:center;}
+.st-imginput,.st-imgprompt,.st-imgselect{flex:1;background:rgba(20,5,40,0.6);border:1px solid var(--line);border-radius:8px;color:inherit;font:inherit;font-size:13.5px;padding:8px 10px;}
+.st-imgprompt{resize:vertical;width:100%;}
+.st-imgselect{flex:none;width:auto;margin-left:4px;}
+.st-ovgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-height:320px;overflow-y:auto;}
+.st-ovitem{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:0;background:rgba(20,5,40,0.5);cursor:pointer;aspect-ratio:4/3;}
+.st-ovitem img{width:100%;height:100%;object-fit:cover;display:block;}
+.st-ovitem span{position:absolute;left:4px;bottom:4px;background:rgba(10,2,20,0.75);border-radius:4px;padding:1px 5px;font-size:9.5px;letter-spacing:.5px;color:rgba(244,224,255,0.85);}
+.st-ovitem:hover{border-color:rgba(153,10,227,0.8);}
+.st-genprev{width:100%;max-height:320px;object-fit:contain;border-radius:10px;border:1px solid var(--line);background:rgba(20,5,40,0.5);}
+.st-imgbusy{color:#00D4FF;}
+.st-imgerr{color:#ff7a7a;}
 .st-gen{width:min(600px,92vw);max-height:86vh;overflow-y:auto;background:#22093b;border:1px solid var(--line);border-radius:14px;padding:16px 18px 18px;box-shadow:0 24px 70px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:10px;}
 .st-gen-head{display:flex;align-items:center;justify-content:space-between;font-size:15px;}
 .st-gen-sub{margin:0;font-size:12.5px;color:${P.dim};line-height:1.5;}
